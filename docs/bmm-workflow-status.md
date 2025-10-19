@@ -22,17 +22,17 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: 1.2
-TODO_TITLE: Database Setup and Connection
+TODO_STORY: 1.3
+TODO_TITLE: Template Data Model and Storage
 IN_PROGRESS_STORY:
 IN_PROGRESS_TITLE:
-STORIES_DONE: ["1.1"]
+STORIES_DONE: ["1.1", "1.2"]
 
 ## Next Action
 
-NEXT_ACTION: Review Story 1.1 (Project Infrastructure Setup) and approve when satisfied
-NEXT_COMMAND: Run story-approved workflow to mark Story 1.1 complete and advance queue
-NEXT_AGENT: scrum-master
+NEXT_ACTION: Review Story 1.2 and mark as approved, or begin Story 1.3 (Template Data Model and Storage)
+NEXT_COMMAND: Run story-approved for Story 1.2, or run story-context + dev-story for Story 1.3
+NEXT_AGENT: developer
 
 ## Story Backlog
 
@@ -62,17 +62,30 @@ NEXT_AGENT: scrum-master
 ## Completed Stories
 
 ### Story 1.1: Project Infrastructure Setup ✓
-- **Status:** Ready for Review
+- **Status:** Done
 - **Completed:** 2025-10-19
 - **Summary:** Next.js 14.2 project with TypeScript, Tailwind CSS, ShadCN UI, navigation, and Vercel deployment configuration
 - **All ACs Verified:** 7/7 passing
 - **Files Created:** 19 files (app/, components/, lib/, configuration)
+- **DoD Complete:** All acceptance criteria met, code reviewed, tests passing
+
+### Story 1.2: Database Setup and Connection ✓
+- **Status:** Ready for Review
+- **Completed:** 2025-10-19
+- **Summary:** Supabase PostgreSQL database configured and connected to Next.js application in both local development and Vercel production
+- **All ACs Verified:** 6/6 passing
+- **Files Created:** 4 files (lib/supabase.ts, app/api/db-test/route.ts, .env.local, .env.example)
+- **Files Modified:** package.json, package-lock.json, README.md
+- **Key Features:** Singleton Supabase client, connection test API endpoint, comprehensive error handling, environment variable configuration
+- **Verified:** Local connection working, Vercel deployment working (https://mm-doc-scan.vercel.app/api/db-test)
 
 ---
 
 _Last Updated: 2025-10-19_
-_Status Version: 3.0_
+_Status Version: 3.4_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
 _Story 1.1 Completed: 2025-10-19_
+_Story 1.2 Completed: 2025-10-19_
+_Next: Review Story 1.2 or begin Story 1.3_
