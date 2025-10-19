@@ -1,6 +1,6 @@
 # Story 1.2: Database Setup and Connection
 
-Status: Ready for Review
+Status: Done
 
 ## Story
 
