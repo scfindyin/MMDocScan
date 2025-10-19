@@ -1,0 +1,180 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.2</storyId>
+    <title>Database Setup and Connection</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Supabase PostgreSQL database configured and connected to the Next.js application</iWant>
+    <soThat>I can store and retrieve application data</soThat>
+    <tasks>
+      - Create and configure Supabase project
+      - Install Supabase client SDK (@supabase/supabase-js ^2.38.0)
+      - Configure environment variables (SUPABASE_URL, SUPABASE_ANON_KEY)
+      - Create Supabase client utility (lib/supabase.ts)
+      - Implement database connection test (app/api/db-test/route.ts)
+      - Test local development connection
+      - Configure Vercel deployment environment variables
+      - Verify Vercel deployment connection
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Supabase project created and configured with PostgreSQL database</criterion>
+    <criterion id="AC2">Database connection established from Next.js using Supabase client SDK</criterion>
+    <criterion id="AC3">Environment variables configured for database credentials (SUPABASE_URL, SUPABASE_ANON_KEY)</criterion>
+    <criterion id="AC4">Database connection verified with test query</criterion>
+    <criterion id="AC5">Basic error handling implemented for database connection failures</criterion>
+    <criterion id="AC6">Connection works in both local development and Vercel deployment</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification: MMDocScan Complete Solution</title>
+        <section>External Services - Supabase</section>
+        <snippet>Supabase PostgreSQL (managed cloud database) for template storage. Free tier: 500MB database storage, 2GB bandwidth/month. Use @supabase/supabase-js SDK (version ^2.38.0) with environment variables for credentials (SUPABASE_URL, SUPABASE_ANON_KEY). No document persistence - only templates stored in database.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification: MMDocScan Complete Solution</title>
+        <section>Data Models and Contracts - Templates Table</section>
+        <snippet>CREATE TABLE templates with id (UUID), name (VARCHAR), template_type (VARCHAR), fields (JSONB), custom_prompt (TEXT), created_at/updated_at timestamps. Field structure in JSONB includes name, type (string|number|date), category (header|detail), and optional description.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification: MMDocScan Complete Solution</title>
+        <section>Integration Points - Supabase Database</section>
+        <snippet>Protocol: PostgreSQL over HTTPS (REST API or direct connection). Authentication: Service role key for server-side, anon key for client-side. Connection pooling handled by Supabase. Migrations: Manual SQL scripts or Supabase Studio UI.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>MMDocScan - Epic Breakdown</title>
+        <section>Story 1.2: Database Setup and Connection</section>
+        <snippet>As a developer, I want Supabase PostgreSQL database configured and connected to the Next.js application, so that I can store and retrieve application data. Prerequisites: Story 1.1 (Project Infrastructure Setup).</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.1.md</path>
+        <title>Story 1.1: Project Infrastructure Setup</title>
+        <section>Dev Notes - Project Structure</section>
+        <snippet>Foundation structure: /app directory for routes and layouts (Next.js 14 standard), /components for reusable UI, /components/ui for ShadCN components, /lib for shared utilities. Environment variables pattern: .env.local for local development, Vercel UI for deployment variables.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>MMDocScan Product Requirements Document</title>
+        <section>Non-Functional Requirements</section>
+        <snippet>NFR001: Browser Compatibility - Support latest versions of Chrome, Firefox, Safari, Edge. NFR002: Extraction Accuracy - Sufficient AI extraction accuracy with confidence scoring. NFR003: Usability - Intuitive interface for non-technical users comfortable with standard business software.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>lib/utils.ts</path>
+        <kind>utility</kind>
+        <symbol>cn</symbol>
+        <lines>1-6</lines>
+        <reason>Existing utility function pattern in /lib directory - new Supabase client should follow similar structure</reason>
+      </artifact>
+      <artifact>
+        <path>app/layout.tsx</path>
+        <kind>layout</kind>
+        <symbol>RootLayout</symbol>
+        <lines>N/A</lines>
+        <reason>Root layout component - shows Next.js 14 App Router structure for API routes</reason>
+      </artifact>
+      <artifact>
+        <path>app/page.tsx</path>
+        <kind>page</kind>
+        <symbol>Home</symbol>
+        <lines>N/A</lines>
+        <reason>Homepage component - demonstrates existing Next.js page structure</reason>
+      </artifact>
+      <artifact>
+        <path>components/navigation.tsx</path>
+        <kind>component</kind>
+        <symbol>Navigation</symbol>
+        <lines>N/A</lines>
+        <reason>Navigation component - shows component structure and TypeScript patterns used in project</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <production>
+          <package name="next" version="^14.2.0" purpose="React framework with SSR and API routes"/>
+          <package name="react" version="^18.2.0" purpose="UI library"/>
+          <package name="react-dom" version="^18.2.0" purpose="React DOM renderer"/>
+          <package name="@radix-ui/react-slot" version="^1.2.3" purpose="Radix UI primitives for ShadCN"/>
+          <package name="class-variance-authority" version="^0.7.1" purpose="Component variant management"/>
+          <package name="clsx" version="^2.1.1" purpose="Conditional className utility"/>
+          <package name="tailwind-merge" version="^3.3.1" purpose="Tailwind class merging"/>
+          <package name="lucide-react" version="^0.546.0" purpose="Icon library"/>
+          <package name="@supabase/supabase-js" version="^2.38.0" purpose="Supabase client SDK (TO BE INSTALLED)"/>
+        </production>
+        <development>
+          <package name="typescript" version="^5.3.0" purpose="Type safety"/>
+          <package name="@types/node" version="^20.0.0" purpose="Node.js type definitions"/>
+          <package name="@types/react" version="^18.2.0" purpose="React type definitions"/>
+          <package name="@types/react-dom" version="^18.2.0" purpose="React DOM type definitions"/>
+          <package name="tailwindcss" version="^3.4.0" purpose="Utility-first CSS framework"/>
+          <package name="autoprefixer" version="^10.4.0" purpose="CSS vendor prefixing"/>
+          <package name="postcss" version="^8.4.0" purpose="CSS processing"/>
+          <package name="eslint" version="^8.0.0" purpose="Code linting"/>
+          <package name="eslint-config-next" version="^14.2.0" purpose="Next.js ESLint configuration"/>
+          <package name="prettier" version="^3.1.0" purpose="Code formatting"/>
+        </development>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Use Next.js 14 App Router conventions for API routes (app/api/[route]/route.ts)</constraint>
+    <constraint>Follow singleton pattern for Supabase client in /lib directory (similar to utils.ts)</constraint>
+    <constraint>Use TypeScript with strict mode for type safety</constraint>
+    <constraint>Environment variables: .env.local for local development, never commit to repository</constraint>
+    <constraint>Supabase Free Tier limits: 500MB database storage, 2GB bandwidth/month - optimize queries</constraint>
+    <constraint>Level 2 project complexity: Simple architecture, direct Supabase client usage (no ORM)</constraint>
+    <constraint>Export configured Supabase client as singleton to prevent multiple connection instances</constraint>
+    <constraint>Error handling: User-friendly messages without exposing credentials or secrets</constraint>
+    <constraint>Follow existing project structure from Story 1.1: /lib for utilities, /app/api for API routes</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>Supabase Client API</name>
+      <kind>library</kind>
+      <signature>import { createClient } from '@supabase/supabase-js' | createClient(url: string, anonKey: string)</signature>
+      <path>node_modules/@supabase/supabase-js</path>
+    </interface>
+    <interface>
+      <name>Next.js API Route Handler</name>
+      <kind>framework</kind>
+      <signature>export async function GET(request: Request) { return Response.json({ data }) }</signature>
+      <path>app/api/[route]/route.ts</path>
+    </interface>
+    <interface>
+      <name>Environment Variables</name>
+      <kind>configuration</kind>
+      <signature>process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY</signature>
+      <path>.env.local</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Manual verification for Story 1.2. Test database connection locally via /api/db-test endpoint and verify deployment on Vercel. Future: Jest + React Testing Library for unit tests, Playwright for E2E. Coverage target: 70%+ for critical paths.</standards>
+    <locations>Tests will be added in future stories. Common patterns: __tests__/ directories, *.test.ts/*.spec.ts files, app/api/[route]/route.test.ts for API route tests</locations>
+    <ideas>
+      <idea ac="AC1">Manual: Verify Supabase project created via Supabase dashboard UI</idea>
+      <idea ac="AC2">Manual: Import Supabase client in lib/supabase.ts and verify no errors</idea>
+      <idea ac="AC3">Manual: Check .env.local contains SUPABASE_URL and SUPABASE_ANON_KEY; verify .env.example created</idea>
+      <idea ac="AC4">Manual: Navigate to /api/db-test, verify 200 response with connection success message</idea>
+      <idea ac="AC5">Manual: Temporarily use invalid credentials, verify error handling returns 500 with user-friendly message (no secrets exposed)</idea>
+      <idea ac="AC6">Manual: Deploy to Vercel, access /api/db-test on deployed URL, verify successful connection</idea>
+      <idea ac="future">Unit test: Test Supabase client initialization with mocked environment variables</idea>
+      <idea ac="future">Integration test: Test database connection with test Supabase instance</idea>
+    </ideas>
+  </tests>
+</story-context>

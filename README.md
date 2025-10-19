@@ -12,6 +12,7 @@ MMDocScan is a Next.js application that enables users to create document templat
 - **Language:** TypeScript 5.3+
 - **Styling:** Tailwind CSS 3.4+
 - **UI Components:** ShadCN (Radix UI + Tailwind)
+- **Database:** Supabase PostgreSQL
 - **Deployment:** Vercel
 
 ## Local Development Setup
@@ -34,12 +35,38 @@ cd MMDocScan
 npm install
 ```
 
-3. Run the development server:
+3. Configure Supabase database connection:
+
+   a. Create a Supabase project at [https://supabase.com](https://supabase.com)
+
+   b. Copy `.env.example` to `.env.local`:
+   ```bash
+   cp .env.example .env.local
+   ```
+
+   c. Get your Supabase credentials from Project Settings → API:
+      - Project URL
+      - Anon/Public Key
+
+   d. Update `.env.local` with your credentials:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+   ```
+
+   e. Verify the connection by starting the dev server and visiting:
+   ```
+   http://localhost:3000/api/db-test
+   ```
+
+   You should see: `{"success": true, "message": "Database connection successful..."}`
+
+4. Run the development server:
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ### Available Scripts
 
@@ -70,15 +97,29 @@ Once linked, Vercel automatically deploys:
 
 ### Environment Variables
 
-If needed, add environment variables in Vercel Dashboard:
+**Required for Production:**
+
+Add Supabase credentials in Vercel Dashboard:
+
 1. Go to Project Settings → Environment Variables
-2. Add variables for development, preview, and production
+
+2. Add the following variables:
+   - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anon/public key
+
+3. Set these variables for all environments (Production, Preview, Development)
+
+4. Redeploy to apply the changes
+
+**Note:** Never commit `.env.local` to the repository - it's already in `.gitignore`
 
 ## Project Structure
 
 ```
 /
 ├── app/                    # Next.js app directory
+│   ├── api/               # API routes (serverless functions)
+│   │   └── db-test/      # Database connection test endpoint
 │   ├── layout.tsx         # Root layout
 │   ├── page.tsx           # Homepage
 │   └── globals.css        # Global styles
@@ -86,7 +127,10 @@ If needed, add environment variables in Vercel Dashboard:
 │   ├── ui/               # ShadCN components
 │   └── navigation.tsx    # Navigation component
 ├── lib/                  # Utility functions
+│   ├── supabase.ts      # Supabase client configuration
 │   └── utils.ts         # Helper utilities
+├── .env.local           # Local environment variables (not committed)
+├── .env.example         # Environment variables template
 └── public/              # Static assets
 ```
 
