@@ -83,7 +83,7 @@
     <action>Update File List section with any new, modified, or deleted files (paths relative to repo root)</action>
     <action>Add completion notes to Dev Agent Record if significant changes were made (summarize intent, approach, and any follow-ups)</action>
     <action>Append a brief entry to Change Log describing the change</action>
-    <action>Save the story file</action>
+    <action>Save the story file (DO NOT COMMIT - batching for final commit)</action>
     <check>Determine if more incomplete tasks remain</check>
     <check>If more tasks remain → <goto step="1">Next task</goto></check>
     <check>If no tasks remain → <goto step="6">Completion</goto></check>
@@ -95,6 +95,7 @@
     <action>Confirm File List includes every changed file</action>
     <action>Execute story definition-of-done checklist, if the story includes one</action>
     <action>Update the story Status to: Ready for Review</action>
+    <action>Save the story file (DO NOT COMMIT - batching for final commit)</action>
     <check>If any task is incomplete → Return to step 1 to complete remaining work (Do NOT finish with partial progress)</check>
     <check>If regression failures exist → STOP and resolve before completing</check>
     <check>If File List is incomplete → Update it before completing</check>
@@ -111,17 +112,57 @@
     <action>Find the most recent file (by date in filename)</action>
 
     <check if="status file exists">
-      <invoke-workflow path="{project-root}/bmad/bmm/workflows/workflow-status">
-        <param>mode: update</param>
-        <param>action: set_current_workflow</param>
-        <param>workflow_name: dev-story</param>
-      </invoke-workflow>
+      <action>Read the current status file</action>
+      <action>Update CURRENT_WORKFLOW to: dev-story</action>
+      <action>Move {{current_story_id}} from IN_PROGRESS_STORY to STORIES_DONE array</action>
+      <action>Clear IN_PROGRESS_STORY and IN_PROGRESS_TITLE fields</action>
+      <action>Add completed story summary to Completed Stories section</action>
+      <action>Update NEXT_ACTION with next recommended step</action>
+      <action>Increment status version number</action>
+      <action>Save the status file (DO NOT COMMIT - batching for final commit)</action>
+    </check>
 
-      <check if="success == true">
-        <output>✅ Status updated: Story {{current_story_id}} ready for review</output>
-      </check>
+    <check if="status file not found">
+      <output>Note: No status file found - running in standalone mode</output>
+    </check>
+  </step>
 
-      <output>**✅ Story Implementation Complete, {user_name}!**
+  <step n="9" goal="Commit all changes in single atomic operation" critical="true">
+    <action>Stage ALL modified files in a single git add command:</action>
+    - Implementation code files (new/modified source code)
+    - Story file ({{story_path}})
+    - Status file (bmm-workflow-status.md) if it exists
+    - Any other documentation or configuration files modified during implementation
+
+    <action>Create ONE comprehensive commit with message format:</action>
+    ```
+    Complete Story {{current_story_id}}: {{story_title}}
+
+    Implementation:
+    - [List key implementation changes]
+    - [List files created/modified]
+
+    Story Updates:
+    - All tasks marked complete (X task groups, Y subtasks)
+    - Updated Dev Agent Record with completion notes
+    - Status: Ready for Review
+
+    Workflow Status:
+    - Story {{current_story_id}} moved to STORIES_DONE
+    - Progress: {{completion_percentage}}% (Z of N stories complete)
+
+    All acceptance criteria verified and passing.
+
+    🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+    Co-Authored-By: Claude <noreply@anthropic.com>
+    ```
+
+    <action>Push ONCE to origin/main to trigger single Vercel deployment</action>
+
+    <critical>This single commit/push replaces multiple separate commits, reducing Vercel deployments from 3+ to 1</critical>
+
+    <output>**✅ Story Implementation Complete, {user_name}!**
 
 **Story Details:**
 - Story ID: {{current_story_id}}
@@ -129,9 +170,11 @@
 - File: {{story_path}}
 - Status: Ready for Review
 
-**Status file updated:**
-- Current step: dev-story (Story {{current_story_id}}) ✓
-- Progress: {{new_progress_percentage}}%
+**All Changes Committed:**
+- ✅ Implementation code committed
+- ✅ Story file updated with completion notes
+- ✅ Workflow status file updated
+- ✅ Single push to trigger deployment
 
 **Next Steps:**
 1. Review the implemented story and test the changes
@@ -139,23 +182,7 @@
 3. When satisfied, run `story-approved` to mark story complete and advance the queue
 
 Or check status anytime with: `workflow-status`
-      </output>
-    </check>
-
-    <check if="status file not found">
-      <output>**✅ Story Implementation Complete, {user_name}!**
-
-**Story Details:**
-- Story ID: {{current_story_id}}
-- Title: {{current_story_title}}
-- File: {{story_path}}
-- Status: Ready for Review
-
-Note: Running in standalone mode (no status file).
-
-To track progress across workflows, run `workflow-status` first.
-      </output>
-    </check>
+    </output>
   </step>
 
 </workflow>
