@@ -14,7 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowLeft, Plus, Trash2, ArrowUp, ArrowDown, Upload, X, FileText } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ArrowLeft, Plus, Trash2, ArrowUp, ArrowDown, Upload, X, FileText, Sparkles, Loader2 } from "lucide-react";
 import { TemplateType, FieldType } from "@/types/template";
 
 /**
@@ -30,6 +32,13 @@ interface FieldDefinition {
   id: string; // Unique ID for React keys
   name: string;
   type: FieldType;
+  category: "header" | "detail";
+}
+
+// Suggested field from Claude API
+interface SuggestedField {
+  field_name: string;
+  field_type: "text" | "number" | "date" | "currency";
   category: "header" | "detail";
 }
 
@@ -68,6 +77,13 @@ export default function NewTemplatePage() {
   const [sampleDocument, setSampleDocument] = useState<File | null>(null);
   const [skipSampleUpload, setSkipSampleUpload] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // AI field suggestion state (Story 1.7)
+  const [analysisGuidance, setAnalysisGuidance] = useState("");
+  const [suggestedFields, setSuggestedFields] = useState<SuggestedField[]>([]);
+  const [selectedSuggestions, setSelectedSuggestions] = useState<Set<number>>(new Set());
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   // File validation constants
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -153,6 +169,105 @@ export default function NewTemplatePage() {
     setSkipSampleUpload(true);
     setSampleDocument(null);
     setUploadError(null);
+  };
+
+  // Convert File to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove data URL prefix (e.g., "data:application/pdf;base64,")
+        const base64 = result.split(",")[1];
+        resolve(base64);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  // Get AI field suggestions
+  const handleGetFieldSuggestions = async () => {
+    if (!sampleDocument) return;
+
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+
+    try {
+      // Convert File to base64
+      const base64Document = await fileToBase64(sampleDocument);
+
+      // Call API
+      const response = await fetch("/api/extract/suggest-fields", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          base64Document,
+          documentType: sampleDocument.type,
+          guidancePrompt: analysisGuidance.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to analyze document");
+      }
+
+      const data = await response.json();
+      setSuggestedFields(data.suggestedFields || []);
+      setSelectedSuggestions(new Set()); // Reset selections
+    } catch (error) {
+      setAnalysisError(
+        error instanceof Error
+          ? error.message
+          : "Unable to analyze document. Please try again or define fields manually."
+      );
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // Toggle suggestion selection
+  const toggleSuggestion = (index: number) => {
+    const newSelections = new Set(selectedSuggestions);
+    if (newSelections.has(index)) {
+      newSelections.delete(index);
+    } else {
+      newSelections.add(index);
+    }
+    setSelectedSuggestions(newSelections);
+  };
+
+  // Select all suggestions
+  const selectAllSuggestions = () => {
+    setSelectedSuggestions(new Set(suggestedFields.map((_, i) => i)));
+  };
+
+  // Deselect all suggestions
+  const deselectAllSuggestions = () => {
+    setSelectedSuggestions(new Set());
+  };
+
+  // Add selected suggestions to fields
+  const handleAddSelectedFields = () => {
+    const newFields: FieldDefinition[] = suggestedFields
+      .filter((_, index) => selectedSuggestions.has(index))
+      .map((sf) => ({
+        id: crypto.randomUUID(),
+        name: sf.field_name,
+        type: sf.field_type as FieldType,
+        category: sf.category,
+      }));
+
+    // Append to existing fields (don't overwrite)
+    setFields([...fields, ...newFields]);
+
+    // Clear suggestions
+    setSuggestedFields([]);
+    setSelectedSuggestions(new Set());
+    setAnalysisGuidance("");
   };
 
   // Add new field to array
@@ -475,6 +590,131 @@ export default function NewTemplatePage() {
                 File uploaded successfully
               </div>
             </>
+          )}
+        </div>
+      )}
+
+      {/* AI Field Suggestions Section (Story 1.7) */}
+      {sampleDocument && (
+        <div className="mb-8 border rounded-lg p-6 bg-card">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              AI Field Suggestions
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Let AI analyze your document and suggest extractable fields
+            </p>
+          </div>
+
+          {/* Analysis Guidance Textarea */}
+          <div className="space-y-2 mb-4">
+            <Label htmlFor="analysisGuidance">
+              Help AI Understand Your Document{" "}
+              <span className="text-sm font-normal text-muted-foreground">
+                (Optional)
+              </span>
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Provide context to help AI better understand your document structure (e.g., &quot;Line items are in a table on page 2&quot;)
+            </p>
+            <Textarea
+              id="analysisGuidance"
+              placeholder="e.g., 'This is an invoice. Line items are in a table on page 2. Dates are in MM/DD/YYYY format.'"
+              value={analysisGuidance}
+              onChange={(e) => setAnalysisGuidance(e.target.value)}
+              rows={2}
+              className="min-h-[60px]"
+              disabled={isAnalyzing || isLoading}
+            />
+          </div>
+
+          {/* Get AI Field Suggestions Button */}
+          <Button
+            onClick={handleGetFieldSuggestions}
+            disabled={isAnalyzing || isLoading}
+            className="w-full sm:w-auto"
+          >
+            {isAnalyzing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Analyzing Document...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Get AI Field Suggestions
+              </>
+            )}
+          </Button>
+
+          {/* Analysis Error */}
+          {analysisError && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-800 text-sm">
+              {analysisError}
+            </div>
+          )}
+
+          {/* Suggested Fields Display */}
+          {suggestedFields.length > 0 && (
+            <div className="mt-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium">
+                  {suggestedFields.length} field{suggestedFields.length !== 1 ? "s" : ""} suggested
+                </h3>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={selectAllSuggestions}
+                    disabled={isLoading}
+                  >
+                    Select All
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={deselectAllSuggestions}
+                    disabled={isLoading}
+                  >
+                    Deselect All
+                  </Button>
+                </div>
+              </div>
+
+              {/* Suggested Fields List */}
+              <div className="border rounded-lg divide-y">
+                {suggestedFields.map((field, index) => (
+                  <div
+                    key={index}
+                    className="p-3 hover:bg-accent/50 transition-colors flex items-center gap-3"
+                  >
+                    <Checkbox
+                      checked={selectedSuggestions.has(index)}
+                      onCheckedChange={() => toggleSuggestion(index)}
+                      disabled={isLoading}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{field.field_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Type: <span className="capitalize">{field.field_type}</span> • Category:{" "}
+                        <span className="capitalize">{field.category}</span>
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add Selected Fields Button */}
+              <Button
+                onClick={handleAddSelectedFields}
+                disabled={selectedSuggestions.size === 0 || isLoading}
+                className="w-full"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Selected Fields ({selectedSuggestions.size})
+              </Button>
+            </div>
           )}
         </div>
       )}

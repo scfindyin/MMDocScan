@@ -35,26 +35,31 @@ cd MMDocScan
 npm install
 ```
 
-3. Configure Supabase database connection:
+3. Configure environment variables:
 
    a. Create a Supabase project at [https://supabase.com](https://supabase.com)
 
-   b. Copy `.env.example` to `.env.local`:
+   b. Create an Anthropic account at [https://console.anthropic.com](https://console.anthropic.com)
+
+   c. Copy `.env.example` to `.env.local`:
    ```bash
    cp .env.example .env.local
    ```
 
-   c. Get your Supabase credentials from Project Settings → API:
+   d. Get your Supabase credentials from Project Settings → API:
       - Project URL
       - Anon/Public Key
 
-   d. Update `.env.local` with your credentials:
+   e. Get your Anthropic API key from [https://console.anthropic.com/account/keys](https://console.anthropic.com/account/keys)
+
+   f. Update `.env.local` with your credentials:
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+   ANTHROPIC_API_KEY=your-anthropic-api-key-here
    ```
 
-   e. Verify the connection by starting the dev server and visiting:
+   g. Verify the database connection by starting the dev server and visiting:
    ```
    http://localhost:3000/api/db-test
    ```
@@ -99,13 +104,14 @@ Once linked, Vercel automatically deploys:
 
 **Required for Production:**
 
-Add Supabase credentials in Vercel Dashboard:
+Add environment variables in Vercel Dashboard:
 
 1. Go to Project Settings → Environment Variables
 
 2. Add the following variables:
    - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anon/public key
+   - `ANTHROPIC_API_KEY` - Your Anthropic Claude API key
 
 3. Set these variables for all environments (Production, Preview, Development)
 
