@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowLeft, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ArrowUp, ArrowDown, Upload, X, FileText } from "lucide-react";
 import { TemplateType, FieldType } from "@/types/template";
 
 /**
@@ -62,6 +63,97 @@ export default function NewTemplatePage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  // File upload state (Story 1.6)
+  const [sampleDocument, setSampleDocument] = useState<File | null>(null);
+  const [skipSampleUpload, setSkipSampleUpload] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // File validation constants
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const ACCEPTED_MIME_TYPES = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/plain",
+  ];
+
+  // Validate uploaded file
+  const validateFile = (file: File): string | null => {
+    if (!ACCEPTED_MIME_TYPES.includes(file.type)) {
+      return "File type not supported. Please upload PDF, Word (.doc, .docx), or text file.";
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return `File size exceeds 10MB limit. File size: ${(file.size / 1024 / 1024).toFixed(1)}MB`;
+    }
+
+    if (file.size === 0) {
+      return "File is empty. Please upload a valid document.";
+    }
+
+    return null; // Valid file
+  };
+
+  // Format file size for display
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  };
+
+  // Configure react-dropzone
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: {
+      "application/pdf": [".pdf"],
+      "application/msword": [".doc"],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+        ".docx",
+      ],
+      "text/plain": [".txt"],
+    },
+    maxSize: MAX_FILE_SIZE,
+    multiple: false,
+    onDrop: (acceptedFiles, rejectedFiles) => {
+      if (rejectedFiles.length > 0) {
+        const rejection = rejectedFiles[0];
+        if (rejection.errors[0].code === "file-too-large") {
+          setUploadError(`File size exceeds 10MB limit. File size: ${(rejection.file.size / 1024 / 1024).toFixed(1)}MB`);
+        } else if (rejection.errors[0].code === "file-invalid-type") {
+          setUploadError("File type not supported. Please upload PDF, Word (.doc, .docx), or text file.");
+        } else {
+          setUploadError(rejection.errors[0].message);
+        }
+        return;
+      }
+
+      if (acceptedFiles.length > 0) {
+        const file = acceptedFiles[0];
+        const validationError = validateFile(file);
+
+        if (validationError) {
+          setUploadError(validationError);
+          return;
+        }
+
+        setSampleDocument(file);
+        setUploadError(null);
+      }
+    },
+  });
+
+  // Remove uploaded file
+  const removeFile = () => {
+    setSampleDocument(null);
+    setUploadError(null);
+  };
+
+  // Handle skip upload
+  const handleSkip = () => {
+    setSkipSampleUpload(true);
+    setSampleDocument(null);
+    setUploadError(null);
+  };
 
   // Add new field to array
   const addField = () => {
@@ -274,6 +366,118 @@ export default function NewTemplatePage() {
           </Select>
         </div>
       </div>
+
+      {/* Sample Document Upload Section (Optional) - Story 1.6 */}
+      {!skipSampleUpload && (
+        <div className="mb-8 border rounded-lg p-6 bg-card">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold mb-2">
+              Upload Sample Document{" "}
+              <span className="text-sm font-normal text-muted-foreground">
+                (Optional)
+              </span>
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Upload a sample document to enable AI field suggestions (Story 1.7) and test extraction (Story 1.9)
+            </p>
+          </div>
+
+          {!sampleDocument ? (
+            <>
+              {/* Dropzone */}
+              <div
+                {...getRootProps()}
+                className={`
+                  border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+                  transition-colors
+                  ${
+                    isDragActive
+                      ? "border-primary bg-primary/5"
+                      : "border-muted-foreground/25 hover:border-primary/50 hover:bg-accent/50"
+                  }
+                `}
+              >
+                <input {...getInputProps()} />
+                <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                {isDragActive ? (
+                  <p className="text-lg font-medium">Drop file here...</p>
+                ) : (
+                  <>
+                    <p className="text-lg font-medium mb-2">
+                      Drag file here or click to browse
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Accepts PDF, Word (.doc, .docx), and text files
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Maximum file size: 10MB
+                    </p>
+                  </>
+                )}
+              </div>
+
+              {/* Upload Error */}
+              {uploadError && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-800 text-sm">
+                  {uploadError}
+                </div>
+              )}
+
+              {/* Skip Button */}
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  onClick={handleSkip}
+                  disabled={isLoading}
+                  type="button"
+                >
+                  Skip - Define Fields Manually
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Uploaded File Info */}
+              <div className="border rounded-lg p-4 bg-background">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3 flex-1">
+                    <FileText className="h-10 w-10 text-primary flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">
+                        {sampleDocument.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Type: {sampleDocument.type || "Unknown"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Size: {formatFileSize(sampleDocument.size)}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={removeFile}
+                    disabled={isLoading}
+                    title="Remove file"
+                    type="button"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Success Message */}
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md text-green-800 text-sm flex items-center gap-2">
+                <div className="h-4 w-4 rounded-full bg-green-500 flex items-center justify-center">
+                  <div className="h-2 w-2 bg-white rounded-full" />
+                </div>
+                File uploaded successfully
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Fields Section */}
       <div className="mb-8">
