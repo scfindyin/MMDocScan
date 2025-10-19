@@ -1,0 +1,134 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.1</storyId>
+    <title>Project Infrastructure Setup</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>a working Next.js application deployed to Vercel with basic routing</iWant>
+    <soThat>I have a solid foundation for building MMDocScan features</soThat>
+    <tasks>
+      - Initialize Next.js project with TypeScript (AC: #1)
+      - Configure Tailwind CSS (AC: #2)
+      - Install and verify ShadCN component library (AC: #3)
+      - Create basic application layout (AC: #4, #6)
+      - Set up Vercel deployment (AC: #5)
+      - Configure development environment (AC: #7)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Next.js 14+ project initialized with TypeScript</criterion>
+    <criterion id="AC2">Tailwind CSS configured and working</criterion>
+    <criterion id="AC3">ShadCN component library installed and verified</criterion>
+    <criterion id="AC4">Basic application layout with navigation placeholder</criterion>
+    <criterion id="AC5">Deployed to Vercel with automatic deployments on commit</criterion>
+    <criterion id="AC6">Homepage displays "MMDocScan" title and basic navigation structure</criterion>
+    <criterion id="AC7">Development environment runs locally without errors</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification: MMDocScan Complete Solution</title>
+        <section>System Architecture Alignment</section>
+        <snippet>Architecture Pattern: Monolithic Next.js application with serverless API routes. Frontend: Next.js 14 with React Server Components, ShadCN UI library, Tailwind CSS. Deployment: Vercel for hosting and CI/CD.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification: MMDocScan Complete Solution</title>
+        <section>Frontend Dependencies</section>
+        <snippet>Core dependencies: next (^14.0.0), react (^18.2.0), react-dom (^18.2.0), tailwindcss (^3.4.0), @radix-ui/react-* (ShadCN components), typescript (^5.3.0). ShadCN uses copy-paste component pattern with Radix UI primitives.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification: MMDocScan Complete Solution</title>
+        <section>External Services</section>
+        <snippet>Vercel: Application hosting, serverless functions, CI/CD. Free tier: 100GB bandwidth/month. Auto-deploy from Git repository. Configuration via environment variables.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>MMDocScan Product Requirements Document</title>
+        <section>Non-Functional Requirements</section>
+        <snippet>NFR001: Browser Compatibility - System shall support latest versions of Chrome, Firefox, Safari, and Edge browsers on desktop and tablet devices. NFR003: Usability - System shall provide an intuitive interface suitable for non-technical users.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>MMDocScan - Epic Breakdown</title>
+        <section>Epic 1: Project Foundation</section>
+        <snippet>Epic 1 establishes foundational infrastructure and initial functionality. Story 1.1 creates the technical foundation with Next.js, Vercel deployment, and basic UI setup. No prerequisites.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <!-- No existing code - greenfield project. First story establishes initial codebase. -->
+    </code>
+    <dependencies>
+      <node>
+        <package name="next" version="^14.0.0" scope="dependencies" />
+        <package name="react" version="^18.2.0" scope="dependencies" />
+        <package name="react-dom" version="^18.2.0" scope="dependencies" />
+        <package name="@radix-ui/react-*" version="latest" scope="dependencies" note="Multiple packages for ShadCN" />
+        <package name="tailwindcss" version="^3.4.0" scope="devDependencies" />
+        <package name="class-variance-authority" version="latest" scope="dependencies" />
+        <package name="clsx" version="latest" scope="dependencies" />
+        <package name="tailwind-merge" version="latest" scope="dependencies" />
+        <package name="lucide-react" version="latest" scope="dependencies" />
+        <package name="typescript" version="^5.3.0" scope="devDependencies" />
+        <package name="@types/node" version="^20.0.0" scope="devDependencies" />
+        <package name="@types/react" version="^18.2.0" scope="devDependencies" />
+        <package name="@types/react-dom" version="^18.2.0" scope="devDependencies" />
+        <package name="eslint" version="^8.0.0" scope="devDependencies" />
+        <package name="eslint-config-next" version="^14.0.0" scope="devDependencies" />
+        <package name="prettier" version="^3.1.0" scope="devDependencies" />
+        <package name="postcss" version="^8.4.0" scope="devDependencies" />
+        <package name="autoprefixer" version="^10.4.0" scope="devDependencies" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Use Next.js App Router (app directory) instead of Pages Router for React Server Components support</constraint>
+    <constraint type="architecture">Implement React Server Components as default; mark client components explicitly with 'use client' directive</constraint>
+    <constraint type="ui">Follow ShadCN copy-paste component pattern - components owned in codebase, not npm dependencies</constraint>
+    <constraint type="performance">Minimize bundle size to stay within Vercel free tier bandwidth limits (100GB/month)</constraint>
+    <constraint type="complexity">Level 2 project: Simple architecture, minimal abstraction, prioritize speed to production</constraint>
+    <constraint type="compatibility">Support latest versions of Chrome, Firefox, Safari, Edge browsers</constraint>
+    <constraint type="security">No authentication required for MVP (single-user internal tool)</constraint>
+    <constraint type="cost">Design must stay within Vercel and Supabase free tier limits</constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- No existing interfaces - first story establishes foundation -->
+  </interfaces>
+
+  <tests>
+    <standards>
+      Manual verification for infrastructure setup story. Testing framework setup deferred to later stories.
+      Smoke tests required: Homepage loads (200 status), Navigation renders, Tailwind styles apply, ShadCN component renders,
+      Dev server starts without errors, Production build completes successfully.
+      Future testing: Jest + React Testing Library for unit tests, Playwright for E2E, 70%+ coverage target.
+    </standards>
+    <locations>
+      <!-- Testing infrastructure to be established in future stories -->
+      __tests__/ (future)
+      *.test.tsx (future)
+      e2e/ (future)
+    </locations>
+    <ideas>
+      <idea ac="AC1">Verify package.json contains next@^14.0.0 and TypeScript configuration is valid</idea>
+      <idea ac="AC2">Test Tailwind utility class applies correctly (e.g., bg-blue-500 renders blue background)</idea>
+      <idea ac="AC3">Verify ShadCN component (Button) renders with correct Radix UI primitives</idea>
+      <idea ac="AC4">Test navigation component renders with expected structure and links</idea>
+      <idea ac="AC5">Manual: Verify Vercel deployment URL is accessible and auto-deploys on commit</idea>
+      <idea ac="AC6">Test homepage displays "MMDocScan" text and navigation structure</idea>
+      <idea ac="AC7">Manual: Run npm run dev and npm run build, verify no errors in console</idea>
+    </ideas>
+  </tests>
+</story-context>
