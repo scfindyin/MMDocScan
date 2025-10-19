@@ -22,16 +22,16 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: 1.6
-TODO_TITLE: Sample Document Upload for Template Creation
-IN_PROGRESS_STORY:
-IN_PROGRESS_TITLE:
+TODO_STORY: 1.7
+TODO_TITLE: Claude API Integration and AI Field Suggestion
+IN_PROGRESS_STORY: 1.6
+IN_PROGRESS_TITLE: Sample Document Upload for Template Creation
 STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5"]
 
 ## Next Action
 
-NEXT_ACTION: Story 1.5 complete and ready for review. Review the story or approve and begin Story 1.6 (Sample Document Upload)
-NEXT_COMMAND: Run story-approved workflow to mark Story 1.5 done, or load DEV agent for Story 1.6
+NEXT_ACTION: Story 1.5 approved and marked done. Story 1.6 is now IN PROGRESS and ready for development
+NEXT_COMMAND: Run dev-story workflow to implement Story 1.6
 NEXT_AGENT: developer
 
 ## Story Backlog
@@ -105,8 +105,9 @@ NEXT_AGENT: developer
 - **DoD Complete:** All acceptance criteria met, code reviewed, build/lint passing, ready for approval
 
 ### Story 1.5: Manual Template Builder - Field Definition ✓
-- **Status:** Ready for Review
+- **Status:** Done
 - **Completed:** 2025-10-19
+- **Approved:** 2025-10-19
 - **Summary:** Complete template builder with manual field definition, dynamic field management (add/remove/reorder), form validation, and database integration
 - **All ACs Verified:** 9/9 passing
 - **Files Created:** 5 ShadCN components (form, input, select, radio-group, label)
@@ -121,7 +122,7 @@ NEXT_AGENT: developer
 ---
 
 _Last Updated: 2025-10-19_
-_Status Version: 4.8_
+_Status Version: 4.9_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_

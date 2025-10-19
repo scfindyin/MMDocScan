@@ -1,6 +1,6 @@
 # Story 1.5: Manual Template Builder - Field Definition
 
-Status: Ready for Review
+Status: Done
 
 ## Story
 
