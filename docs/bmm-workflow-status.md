@@ -22,16 +22,16 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: 1.5
-TODO_TITLE: Manual Template Builder - Field Definition
-IN_PROGRESS_STORY:
-IN_PROGRESS_TITLE:
+TODO_STORY: 1.6
+TODO_TITLE: Sample Document Upload for Template Creation
+IN_PROGRESS_STORY: 1.5
+IN_PROGRESS_TITLE: Manual Template Builder - Field Definition
 STORIES_DONE: ["1.1", "1.2", "1.3", "1.4"]
 
 ## Next Action
 
-NEXT_ACTION: Review Story 1.4 and approve, or begin Story 1.5 (Manual Template Builder)
-NEXT_COMMAND: Run story-approved for Story 1.4 when ready, then story-context and dev-story for Story 1.5
+NEXT_ACTION: Generate Story Context for Story 1.5, then begin development with dev-story workflow
+NEXT_COMMAND: Run story-context for Story 1.5, then dev-story to begin implementation
 NEXT_AGENT: developer
 
 ## Story Backlog
@@ -93,7 +93,7 @@ NEXT_AGENT: developer
 - **DoD Complete:** All acceptance criteria met, code reviewed, tests passing, deployed to production
 
 ### Story 1.4: Template List and Management UI ✓
-- **Status:** Ready for Review
+- **Status:** Done
 - **Completed:** 2025-10-19
 - **Summary:** Template list page with table/card responsive layout, data fetching, empty state, and navigation
 - **All ACs Verified:** 7/7 passing
@@ -107,12 +107,12 @@ NEXT_AGENT: developer
 ---
 
 _Last Updated: 2025-10-19_
-_Status Version: 4.3_
+_Status Version: 4.4_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
 _Story 1.1 Completed: 2025-10-19_
 _Story 1.2 Approved: 2025-10-19_
 _Story 1.3 Approved: 2025-10-19_
-_Story 1.4 Ready for Review: 2025-10-19_
-_Next: Review and approve Story 1.4, or begin Story 1.5_
+_Story 1.4 Approved: 2025-10-19_
+_Next: Generate Story Context for Story 1.5, then begin development_

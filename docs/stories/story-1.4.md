@@ -1,6 +1,6 @@
 # Story 1.4: Template List and Management UI
 
-Status: Ready for Review
+Status: Done
 
 ## Story
 
