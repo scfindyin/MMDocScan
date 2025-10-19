@@ -15,7 +15,9 @@
       "Bash(git init)",
       "Bash(git branch -m main)",
       "Bash(git add .)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nInitial Next.js project setup with ShadCN UI\n\n- Initialize Next.js 14.2 with TypeScript and App Router\n- Configure Tailwind CSS with ShadCN design tokens\n- Install and verify ShadCN Button component\n- Create navigation component with MMDocScan branding\n- Add basic application layout with responsive design\n- Configure ESLint and Prettier\n- Set up Vercel deployment configuration\n- Document local development and deployment setup\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitial Next.js project setup with ShadCN UI\n\n- Initialize Next.js 14.2 with TypeScript and App Router\n- Configure Tailwind CSS with ShadCN design tokens\n- Install and verify ShadCN Button component\n- Create navigation component with MMDocScan branding\n- Add basic application layout with responsive design\n- Configure ESLint and Prettier\n- Set up Vercel deployment configuration\n- Document local development and deployment setup\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(timeout 10 npm run dev)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []
