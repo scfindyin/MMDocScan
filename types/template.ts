@@ -101,11 +101,19 @@ export interface UpdateTemplateRequest {
 }
 
 /**
+ * Template List Item
+ * Extended Template with field count for list views
+ */
+export interface TemplateListItem extends Template {
+  field_count?: number;
+}
+
+/**
  * Template List Response
  * Used for GET /api/templates
  */
 export interface TemplateListResponse {
-  templates: Template[];
+  templates: TemplateListItem[];
 }
 
 /**

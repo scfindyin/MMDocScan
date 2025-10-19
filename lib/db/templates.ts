@@ -9,6 +9,7 @@
 import { supabase } from '@/lib/supabase';
 import {
   Template,
+  TemplateListItem,
   TemplateField,
   TemplatePrompt,
   TemplateWithRelations,
@@ -90,20 +91,51 @@ export async function createTemplate(
 }
 
 /**
- * Get all templates (basic fields only)
+ * Get all templates with field counts
  */
-export async function getTemplates(): Promise<Template[]> {
+export async function getTemplates(): Promise<TemplateListItem[]> {
   try {
-    const { data, error } = await supabase
+    // Use RPC function to get templates with field counts
+    // Note: Supabase doesn't support COUNT(*) in select directly, so we use a workaround
+    // We'll fetch templates and then get field counts separately
+    const { data: templates, error: templatesError } = await supabase
       .from('templates')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) {
-      throw new Error(`Failed to fetch templates: ${error.message}`);
+    if (templatesError) {
+      throw new Error(`Failed to fetch templates: ${templatesError.message}`);
     }
 
-    return data || [];
+    if (!templates || templates.length === 0) {
+      return [];
+    }
+
+    // Get field counts for all templates
+    const { data: fieldCounts, error: countsError } = await supabase
+      .from('template_fields')
+      .select('template_id')
+      .in('template_id', templates.map(t => t.id));
+
+    if (countsError) {
+      console.error('Failed to fetch field counts:', countsError.message);
+      // Return templates without field counts if query fails
+      return templates.map(t => ({ ...t, field_count: 0 }));
+    }
+
+    // Count fields per template
+    const fieldCountMap = new Map<string, number>();
+    if (fieldCounts) {
+      fieldCounts.forEach(fc => {
+        fieldCountMap.set(fc.template_id, (fieldCountMap.get(fc.template_id) || 0) + 1);
+      });
+    }
+
+    // Merge field counts with templates
+    return templates.map(template => ({
+      ...template,
+      field_count: fieldCountMap.get(template.id) || 0
+    }));
   } catch (error: any) {
     console.error('Error in getTemplates:', error);
     throw error;

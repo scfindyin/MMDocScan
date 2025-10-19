@@ -22,16 +22,16 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: 1.4
-TODO_TITLE: Template List and Management UI
+TODO_STORY: 1.5
+TODO_TITLE: Manual Template Builder - Field Definition
 IN_PROGRESS_STORY:
 IN_PROGRESS_TITLE:
-STORIES_DONE: ["1.1", "1.2", "1.3"]
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4"]
 
 ## Next Action
 
-NEXT_ACTION: Review Story 1.3 or begin Story 1.4 (Template List and Management UI)
-NEXT_COMMAND: Run story-approved to mark Story 1.3 complete, or run story-context + dev-story for Story 1.4
+NEXT_ACTION: Review Story 1.4 and approve, or begin Story 1.5 (Manual Template Builder)
+NEXT_COMMAND: Run story-approved for Story 1.4 when ready, then story-context and dev-story for Story 1.5
 NEXT_AGENT: developer
 
 ## Story Backlog
@@ -92,14 +92,27 @@ NEXT_AGENT: developer
 - **Verified:** All 7 CRUD test cases passing in local environment, build passes with zero TypeScript errors
 - **DoD Complete:** All acceptance criteria met, code reviewed, tests passing, deployed to production
 
+### Story 1.4: Template List and Management UI ✓
+- **Status:** Ready for Review
+- **Completed:** 2025-10-19
+- **Summary:** Template list page with table/card responsive layout, data fetching, empty state, and navigation
+- **All ACs Verified:** 7/7 passing
+- **Files Created:** 6 files (app/templates/page.tsx, app/templates/new/page.tsx, app/templates/[id]/page.tsx, components/ui/ table/card/alert)
+- **Files Modified:** types/template.ts (added TemplateListItem with field_count), lib/db/templates.ts (enhanced getTemplates)
+- **ShadCN Components:** Installed table, card, alert components
+- **Key Features:** Responsive layout (desktop table, tablet cards), field count display, template type labels, date formatting, loading/error/empty states, template selection navigation
+- **Verified:** Build passing, lint passing, all 45 subtasks complete, field counts working (tested with 3 templates)
+- **DoD Complete:** All acceptance criteria met, code reviewed, build/lint passing, ready for approval
+
 ---
 
 _Last Updated: 2025-10-19_
-_Status Version: 3.9_
+_Status Version: 4.3_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
 _Story 1.1 Completed: 2025-10-19_
 _Story 1.2 Approved: 2025-10-19_
 _Story 1.3 Approved: 2025-10-19_
-_Next: Begin Story 1.4 (Template List and Management UI)_
+_Story 1.4 Ready for Review: 2025-10-19_
+_Next: Review and approve Story 1.4, or begin Story 1.5_
