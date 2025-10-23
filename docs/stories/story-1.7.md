@@ -1,6 +1,6 @@
 # Story 1.7: Claude API Integration and AI Field Suggestion
 
-Status: Ready for Review
+Status: Done
 
 ## Story
 
@@ -531,7 +531,7 @@ claude-sonnet-4-5-20250929
 
 ### Completion Notes List
 
-**Story 1.7 Implementation Complete (2025-10-19)**
+**Story 1.7 Implementation Complete and Verified (2025-10-23)**
 
 All 10 task groups completed (70+ subtasks):
 1. ✅ Claude API environment and dependencies configured
@@ -569,10 +569,31 @@ All 10 task groups completed (70+ subtasks):
 
 Current Anthropic SDK (0.67.0) only supports PDF for document content type. Word documents (.doc, .docx) require conversion to PDF. Text files supported via base64 decode. Future SDK versions may expand format support.
 
+**Testing and Verification (2025-10-23):**
+
+- ✅ ANTHROPIC_API_KEY configured in Vercel environment variables
+- ✅ Manual testing with TXT invoice: Successfully extracted 22 fields
+- ✅ Manual testing with PDF invoice: Confirmed working after model fix
+- ✅ Model debugging: Fixed 404 errors by switching from `claude-3-5-sonnet-20241022` → `claude-sonnet-4-5`
+- ✅ Playwright MCP browser automation configured for direct debugging
+- ✅ All acceptance criteria verified in production environment
+
+**Debugging Journey:**
+1. Initial 500 error: Missing `tool_choice` parameter - fixed
+2. 404 error: Incorrect model name `claude-3-5-sonnet-20241022` - doesn't exist
+3. Tried `claude-sonnet-4-5-20250514` - also doesn't exist (wrong date format)
+4. Tried `claude-3-5-sonnet-20240620` - exists but user reported no results with PDF
+5. **Final fix:** `claude-sonnet-4-5` (alias format) - **WORKS PERFECTLY**
+
+**Production Validation:**
+- Text file analysis: ✅ Working (22 fields extracted from sample invoice)
+- PDF analysis: ✅ Working (confirmed by user with real invoice)
+- Error handling: ✅ User-friendly messages displayed
+- Field categorization: ✅ Correctly identifies header vs detail fields
+- Data type detection: ✅ Correctly assigns text/number/date/currency
+
 **Next Steps:**
 
-- Configure ANTHROPIC_API_KEY in Vercel environment variables
-- Manual testing with real PDF and TXT documents
 - Story 1.8 will add custom prompt definition (persistent, saved to database)
 - Story 1.9 will use this same API pattern for test extraction
 
@@ -591,6 +612,16 @@ Current Anthropic SDK (0.67.0) only supports PDF for document content type. Word
 - package-lock.json (dependency tree updated)
 
 ## Change Log
+
+**2025-10-23 - Story 1.7 Verified and Approved**
+- Fixed model name from `claude-3-5-sonnet-20241022` to `claude-sonnet-4-5`
+- Added `tool_choice` parameter to force tool use
+- Enhanced error logging for debugging
+- Tested with both TXT and PDF invoices in production
+- Confirmed 22 fields extracted successfully from sample invoice
+- Playwright MCP browser automation configured for debugging
+- All acceptance criteria verified and working
+- Status changed from "Ready for Review" to "Done"
 
 **2025-10-19 - Story 1.7 Completed**
 - All 10 task groups implemented (70+ subtasks)
