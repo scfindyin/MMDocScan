@@ -21,31 +21,29 @@ PHASE_4_COMPLETE: false
 
 ## Development Queue
 
-STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: 1.10
-TODO_TITLE: Save Validated Template
-IN_PROGRESS_STORY: 1.9
-IN_PROGRESS_TITLE: Test Extraction on Sample Document
+STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
+TODO_STORY: 2.1
+TODO_TITLE: Production Document Upload Interface
+IN_PROGRESS_STORY:
+IN_PROGRESS_TITLE:
 STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8"]
 
 ## Next Action
 
-NEXT_ACTION: Story 1.8 approved and marked done. Story 1.9 moved to IN PROGRESS - ready for implementation
-NEXT_COMMAND: Load developer agent and run dev-story workflow to implement Story 1.9
-NEXT_AGENT: developer
+NEXT_ACTION: Epic 1 complete (8/8 stories done)! Epic 2 stories need to be drafted. Start with Story 2.1.
+NEXT_COMMAND: Load SM agent and run create-story workflow to draft Story 2.1
+NEXT_AGENT: sm
 ## Story Backlog
 
-### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories)
-- Story 1.1: Project Infrastructure Setup
-- Story 1.2: Database Setup and Connection
-- Story 1.3: Template Data Model and Storage
-- Story 1.4: Template List and Management UI
-- Story 1.5: Manual Template Builder - Field Definition
-- Story 1.6: Sample Document Upload for Template Creation
-- Story 1.7: Claude API Integration and AI Field Suggestion
-- Story 1.8: Custom Prompt Definition
-- Story 1.9: Test Extraction on Sample Document
-- Story 1.10: Save Validated Template
+### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (8 stories) ✅ COMPLETE
+- Story 1.1: Project Infrastructure Setup ✓
+- Story 1.2: Database Setup and Connection ✓
+- Story 1.3: Template Data Model and Storage ✓
+- Story 1.4: Template List and Management UI ✓
+- Story 1.5: Manual Template Builder - Field Definition ✓
+- Story 1.6: Sample Document Upload for Template Creation ✓
+- Story 1.7: Claude API Integration and AI Field Suggestion ✓
+- Story 1.8: Custom Prompt Definition ✓
 
 ### Epic 2: Production Document Processing & Excel Export (9 stories)
 - Story 2.1: Production Document Upload Interface
@@ -175,6 +173,7 @@ _Story 1.4 Approved: 2025-10-19_
 _Story 1.5 Approved: 2025-10-19_
 _Story 1.6 Approved: 2025-10-19_
 _Story 1.7 Completed: 2025-10-19_
-_Story 1.8 Completed: 2025-10-23_
-_Progress: 8 of 19 stories complete (42.1%), Story 1.8 ready for review_
-_Next: Review Story 1.8 or implement Story 1.9_
+_Story 1.8 Approved: 2025-10-23_
+_Epic 1 Complete: 8 of 8 stories done (100%)_
+_Progress: 8 of 17 stories complete (47.1%), Epic 1 done, Epic 2 stories need drafting_
+_Next: Load SM agent to draft Epic 2 stories starting with Story 2.1_
