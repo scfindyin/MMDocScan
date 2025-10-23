@@ -114,12 +114,12 @@
     <check if="status file exists">
       <action>Read the current status file</action>
       <action>Update CURRENT_WORKFLOW to: dev-story</action>
-      <action>Move {{current_story_id}} from IN_PROGRESS_STORY to STORIES_DONE array</action>
-      <action>Clear IN_PROGRESS_STORY and IN_PROGRESS_TITLE fields</action>
-      <action>Add completed story summary to Completed Stories section</action>
-      <action>Update NEXT_ACTION with next recommended step</action>
+      <action>DO NOT move story from IN_PROGRESS - leave it there with "Ready for Review" status</action>
+      <action>Update NEXT_ACTION to: "Story {{current_story_id}} implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified."</action>
+      <action>Update NEXT_COMMAND to: "Run story-approved workflow to mark story done and advance queue"</action>
       <action>Increment status version number</action>
       <action>Save the status file (DO NOT COMMIT - batching for final commit)</action>
+      <critical>Story remains IN_PROGRESS until story-approved workflow is run</critical>
     </check>
 
     <check if="status file not found">
@@ -136,7 +136,7 @@
 
     <action>Create ONE comprehensive commit with message format:</action>
     ```
-    Complete Story {{current_story_id}}: {{story_title}}
+    Implement Story {{current_story_id}}: {{story_title}}
 
     Implementation:
     - [List key implementation changes]
@@ -148,8 +148,8 @@
     - Status: Ready for Review
 
     Workflow Status:
-    - Story {{current_story_id}} moved to STORIES_DONE
-    - Progress: {{completion_percentage}}% (Z of N stories complete)
+    - Story {{current_story_id}} remains IN_PROGRESS (Ready for Review)
+    - Awaiting story-approved workflow to mark done and advance queue
 
     All acceptance criteria verified and passing.
 

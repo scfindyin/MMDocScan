@@ -22,17 +22,17 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: 1.9
-TODO_TITLE: Test Extraction on Sample Document
-IN_PROGRESS_STORY:
-IN_PROGRESS_TITLE:
+TODO_STORY: 1.10
+TODO_TITLE: Save Validated Template
+IN_PROGRESS_STORY: 1.9
+IN_PROGRESS_TITLE: Test Extraction on Sample Document
 STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8"]
 
 ## Next Action
 
-NEXT_ACTION: Story 1.8 complete and ready for review, or begin Story 1.9 implementation
-NEXT_COMMAND: Review Story 1.8 or load developer agent to implement Story 1.9
-NEXT_AGENT: reviewer or developer
+NEXT_ACTION: Story 1.8 approved and marked done. Story 1.9 moved to IN PROGRESS - ready for implementation
+NEXT_COMMAND: Load developer agent and run dev-story workflow to implement Story 1.9
+NEXT_AGENT: developer
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories)
