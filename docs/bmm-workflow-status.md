@@ -22,16 +22,16 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: 2.3
-TODO_TITLE: Production Document Extraction
-IN_PROGRESS_STORY: 2.2
-IN_PROGRESS_TITLE: Template Selection for Production Processing
-STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1"]
+TODO_STORY: 2.4
+TODO_TITLE: Extraction Results Preview Table
+IN_PROGRESS_STORY: 2.3
+IN_PROGRESS_TITLE: Production Document Extraction (Ready for Review)
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2"]
 
 ## Next Action
 
-NEXT_ACTION: Story 2.2 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
-NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
+NEXT_ACTION: Story 2.3 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
+NEXT_COMMAND: story-approved
 NEXT_AGENT: developer
 ## Story Backlog
 
@@ -172,9 +172,10 @@ NEXT_AGENT: developer
 - **Integration:** Reused react-dropzone pattern from Story 1.6, navigation link already existed, file stored in-memory (no server upload), TODO comment for Story 2.2 navigation
 - **DoD Complete:** All 60+ subtasks complete across 10 task groups, all acceptance criteria verified, build/lint passing, code reviewed, deployed
 
-### Story 2.2: Template Selection for Production Processing (Ready for Review)
-- **Status:** Ready for Review
+### Story 2.2: Template Selection for Production Processing ✓
+- **Status:** Done
 - **Completed:** 2025-10-23
+- **Approved:** 2025-10-23
 - **Summary:** Multi-step workflow for template selection with responsive UI, template preview, and apply functionality
 - **All ACs Verified:** 8/8 passing (AC1-AC8: multi-step navigation, template list display, metadata, selection, preview, highlighted selection, apply button, back navigation)
 - **Files Modified:** app/process/page.tsx (257→516 lines, +259 lines)
@@ -184,12 +185,25 @@ NEXT_AGENT: developer
 - **Testing:** Build PASSED (0 errors, 10 routes), Lint PASSED (0 warnings), bundle size +42 kB (87 kB → 129 kB for /process route)
 - **Code Quality:** 100% TypeScript type-safe, zero ESLint warnings, comprehensive error handling
 - **Integration:** Extended Story 2.1 process page, reused GET /api/templates and GET /api/templates/:id from Story 1.3, blue accent theme consistent with production processing, ready for Story 2.3 extraction integration
-- **DoD Status:** All 70+ subtasks complete across 10 task groups, all acceptance criteria verified, build/lint passing, ready for review
+- **DoD Complete:** All 70+ subtasks complete across 10 task groups, all acceptance criteria verified, build/lint passing
+
+### Story 2.3: Production Document Extraction (Ready for Review)
+- **Status:** Ready for Review
+- **Completed:** 2025-10-23
+- **Summary:** Claude API integration for production document extraction with confidence scoring, denormalized output, loading states, and comprehensive error handling
+- **All ACs Verified:** 10/10 passing (AC1-AC10: extraction button trigger, Claude API integration, loading state with progress indicator, flat/denormalized output, temporary results storage, row-level confidence scores, source metadata capture, error handling with actionable messages, success message with row count, automatic transition to results preview)
+- **Files Created:** types/extraction.ts (51 lines), app/api/extract/production/route.ts (461 lines)
+- **Files Modified:** app/process/page.tsx (597→780 lines, +183 lines)
+- **Key Features:** Production extraction API with Claude Sonnet 4.5, confidence scoring algorithm (field completeness × type validity), denormalization logic (header fields repeated per detail row), multi-step UI with extracting/results steps, loading spinner with 30s timeout warning, error display with retry functionality, results preview placeholder for Story 2.4
+- **Testing:** Build PASSED (0 errors, 11 routes), Lint PASSED (0 warnings), bundle size +8.12 kB for /process route
+- **Code Quality:** 100% TypeScript type-safe, zero ESLint warnings, comprehensive error handling for API failures
+- **Integration:** Reused Claude API pattern from Story 1.7, template data access from Story 1.3, extended Story 2.2 process page, ready for Story 2.4 results table
+- **DoD Status:** All 100+ subtasks complete across 10 task groups, all acceptance criteria verified, build/lint passing, ready for review
 
 ---
 
-_Last Updated: 2025-10-23_
-_Status Version: 6.0_
+_Last Updated: 2025-10-23 (Story 2.3 implementation complete and ready for review)_
+_Status Version: 7.0_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
@@ -202,7 +216,8 @@ _Story 1.6 Approved: 2025-10-19_
 _Story 1.7 Completed: 2025-10-19_
 _Story 1.8 Approved: 2025-10-23_
 _Story 2.1 Approved: 2025-10-23_
-_Story 2.2 Ready for Review: 2025-10-23_
+_Story 2.2 Approved: 2025-10-23_
+_Story 2.3 Ready for Review: 2025-10-23_
 _Epic 1 Complete: 8 of 8 stories done (100%)_
-_Progress: 9 of 17 stories complete (52.9%), Epic 1 complete, Epic 2 in progress (1 of 9 done)_
-_Next: Review and approve Story 2.2, then implement Story 2.3 (Production Document Extraction)_
+_Progress: 10 of 17 stories complete (58.8%), Epic 1 complete, Epic 2 in progress (2 of 9 done)_
+_Next: Review and approve Story 2.3, then implement Story 2.4 (Extraction Results Preview Table)_

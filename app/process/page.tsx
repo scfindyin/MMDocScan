@@ -5,8 +5,9 @@ import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, FileText, File as FileIcon, X, ArrowRight, CheckCircle2, Eye, PlayCircle, AlertCircle } from "lucide-react";
+import { Upload, FileText, File as FileIcon, X, ArrowRight, CheckCircle2, Eye, PlayCircle, AlertCircle, Loader2 } from "lucide-react";
 import type { TemplateListItem, TemplateField, TemplatePrompt } from "@/types/template";
+import type { ExtractedRow } from "@/types/extraction";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProcessDocumentsPage() {
   // Multi-step workflow state
-  const [step, setStep] = useState<'upload' | 'select-template'>('upload');
+  const [step, setStep] = useState<'upload' | 'select-template' | 'extracting' | 'results'>('upload');
 
   // File upload state
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -39,6 +40,12 @@ export default function ProcessDocumentsPage() {
     prompts: TemplatePrompt[];
   } | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+
+  // Extraction state
+  const [extractedData, setExtractedData] = useState<ExtractedRow[] | null>(null);
+  const [extractionError, setExtractionError] = useState<string | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractionRetryable, setExtractionRetryable] = useState(false);
 
   // Fetch templates when step changes to 'select-template'
   useEffect(() => {
@@ -235,14 +242,80 @@ export default function ProcessDocumentsPage() {
     }
   };
 
+  // Convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          // Extract base64 data after the comma (remove data:...;base64, prefix)
+          const base64 = reader.result.split(',')[1];
+          resolve(base64);
+        } else {
+          reject(new Error('Failed to read file'));
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
   // Handle apply template and extract
-  const handleApplyTemplate = () => {
+  const handleApplyTemplate = async () => {
     if (!selectedTemplateId || !uploadedFile) return;
 
-    // TODO: Trigger extraction in Story 2.3
-    console.log('Apply Template & Extract clicked');
-    console.log('Selected Template ID:', selectedTemplateId);
-    console.log('Uploaded File:', uploadedFile.name);
+    setIsExtracting(true);
+    setStep('extracting');
+    setExtractionError(null);
+
+    try {
+      // Convert file to base64
+      const base64Document = await fileToBase64(uploadedFile);
+
+      // Call extraction API
+      const response = await fetch('/api/extract/production', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documentBase64: base64Document,
+          templateId: selectedTemplateId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setExtractionError(data.error || 'Extraction failed. Please try again.');
+        setExtractionRetryable(data.retryable !== false);
+        setIsExtracting(false);
+        return;
+      }
+
+      // Success: store extracted data and transition to results
+      setExtractedData(data.data);
+      setIsExtracting(false);
+      setStep('results');
+    } catch (error) {
+      console.error('Extraction error:', error);
+      setExtractionError('Network error. Please check connection and retry.');
+      setExtractionRetryable(true);
+      setIsExtracting(false);
+    }
+  };
+
+  // Handle retry extraction
+  const handleRetryExtraction = () => {
+    setExtractionError(null);
+    handleApplyTemplate();
+  };
+
+  // Handle cancel extraction (return to template selection)
+  const handleCancelExtraction = () => {
+    setStep('select-template');
+    setExtractionError(null);
+    setExtractionRetryable(false);
   };
 
   return (
@@ -260,7 +333,7 @@ export default function ProcessDocumentsPage() {
       </div>
 
       {/* Conditional rendering based on step */}
-      {step === 'upload' ? (
+      {step === 'upload' && (
         <>
           {/* Error Display */}
           {error && (
@@ -361,7 +434,9 @@ export default function ProcessDocumentsPage() {
         </div>
       )}
         </>
-      ) : (
+      )}
+
+      {step === 'select-template' && (
         <div>
           {/* Back Button */}
           <div className="mb-6">
@@ -511,6 +586,129 @@ export default function ProcessDocumentsPage() {
               </Button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Extracting Step - Loading State */}
+      {step === 'extracting' && (
+        <div className="flex flex-col items-center justify-center py-16">
+          {!extractionError ? (
+            <>
+              {/* Loading Spinner */}
+              <div className="mb-6">
+                <Loader2 className="h-16 w-16 text-blue-600 animate-spin" />
+              </div>
+
+              {/* Loading Messages */}
+              <h2 className="text-2xl font-semibold mb-2 text-blue-600">
+                Extracting data from document...
+              </h2>
+              <p className="text-muted-foreground mb-4">
+                This may take up to 30 seconds
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Processing your document with AI
+              </p>
+            </>
+          ) : (
+            <>
+              {/* Error Display */}
+              <Alert variant="destructive" className="max-w-2xl mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <p className="font-semibold mb-2">Extraction Failed</p>
+                  <p>{extractionError}</p>
+                </AlertDescription>
+              </Alert>
+
+              {/* Retry and Cancel Buttons */}
+              <div className="flex gap-4">
+                {extractionRetryable && (
+                  <Button onClick={handleRetryExtraction} className="bg-blue-600 hover:bg-blue-700">
+                    Retry Extraction
+                  </Button>
+                )}
+                <Button variant="outline" onClick={handleCancelExtraction}>
+                  Cancel
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Results Step - Placeholder for Story 2.4 */}
+      {step === 'results' && (
+        <div>
+          {/* Success Message */}
+          <Alert className="mb-6 border-green-500 bg-green-50">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <AlertDescription>
+              <p className="font-semibold text-green-900">
+                Extraction complete - {extractedData?.length || 0} rows extracted
+              </p>
+            </AlertDescription>
+          </Alert>
+
+          {/* Results Preview Placeholder */}
+          <Card>
+            <CardContent className="p-8 text-center">
+              <h2 className="text-2xl font-semibold mb-4">Results Preview</h2>
+              <p className="text-muted-foreground mb-4">
+                {extractedData?.length || 0} rows extracted from {uploadedFile?.name}
+              </p>
+              <p className="text-sm text-muted-foreground mb-6">
+                Full results table will be implemented in Story 2.4
+              </p>
+
+              {/* Template Info */}
+              {selectedTemplateId && (
+                <div className="mb-6">
+                  <p className="text-sm text-muted-foreground">
+                    Template: {templates.find(t => t.id === selectedTemplateId)?.name}
+                  </p>
+                </div>
+              )}
+
+              {/* Preview extracted data (first 3 rows) */}
+              {extractedData && extractedData.length > 0 && (
+                <div className="mt-6 text-left">
+                  <h3 className="font-semibold mb-3">Sample Data (First 3 rows)</h3>
+                  <div className="space-y-2 max-w-2xl mx-auto">
+                    {extractedData.slice(0, 3).map((row, index) => (
+                      <div key={row.rowId} className="p-3 bg-gray-50 rounded-md">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-sm font-medium">Row {index + 1}</span>
+                          <span className="text-xs text-muted-foreground">
+                            Confidence: {(row.confidence * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="text-xs space-y-1">
+                          {Object.entries(row.fields).slice(0, 3).map(([key, value]) => (
+                            <div key={key}>
+                              <span className="font-medium">{key}:</span> {String(value)}
+                            </div>
+                          ))}
+                          {Object.keys(row.fields).length > 3 && (
+                            <div className="text-muted-foreground">
+                              ... and {Object.keys(row.fields).length - 3} more fields
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TODO Comment for Story 2.4 */}
+              <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-900">
+                  <strong>TODO:</strong> Full results table in Story 2.4
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
