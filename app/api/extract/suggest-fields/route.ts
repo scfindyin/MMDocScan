@@ -135,6 +135,7 @@ export async function POST(request: NextRequest) {
           },
         },
       ],
+      tool_choice: { type: "tool", name: "suggest_fields" },
     })
 
     // Parse tool use response
@@ -157,6 +158,12 @@ export async function POST(request: NextRequest) {
 
     // Handle specific Anthropic API errors
     if (error instanceof Anthropic.APIError) {
+      console.error("Anthropic API Error:", {
+        status: error.status,
+        message: error.message,
+        name: error.name,
+      })
+
       if (error.status === 401) {
         return NextResponse.json(
           { error: "Invalid API key. Please contact support." },
@@ -169,6 +176,20 @@ export async function POST(request: NextRequest) {
           { status: 429 }
         )
       }
+
+      // Return more specific error message for debugging
+      return NextResponse.json(
+        { error: `API Error: ${error.message}` },
+        { status: 500 }
+      )
+    }
+
+    // Log non-Anthropic errors
+    if (error instanceof Error) {
+      console.error("General Error:", {
+        message: error.message,
+        stack: error.stack,
+      })
     }
 
     return NextResponse.json(
