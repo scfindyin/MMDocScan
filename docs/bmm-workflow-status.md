@@ -12,7 +12,7 @@ WORKFLOW_PATH: greenfield-level-2.yaml
 ## Current State
 
 CURRENT_PHASE: 4
-CURRENT_WORKFLOW: dev-story
+CURRENT_WORKFLOW: story-approved
 CURRENT_AGENT: developer
 PHASE_1_COMPLETE: true
 PHASE_2_COMPLETE: true
@@ -22,16 +22,16 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: 2.2
-TODO_TITLE: Template Selection for Production Processing
-IN_PROGRESS_STORY: 2.1
-IN_PROGRESS_TITLE: Production Document Upload Interface
-STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8"]
+TODO_STORY: 2.3
+TODO_TITLE: Production Document Extraction
+IN_PROGRESS_STORY: 2.2
+IN_PROGRESS_TITLE: Template Selection for Production Processing
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1"]
 
 ## Next Action
 
-NEXT_ACTION: Story 2.1 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
-NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
+NEXT_ACTION: Story 2.1 approved and marked done. Story 2.2 moved to IN_PROGRESS. Next: Draft Story 2.2 or implement if already drafted.
+NEXT_COMMAND: Check if Story 2.2 exists, if not run SM agent to draft it, then run dev-story workflow
 NEXT_AGENT: developer
 ## Story Backlog
 
@@ -159,10 +159,23 @@ NEXT_AGENT: developer
 - **Integration:** Positioned after Fields section before Sample Document Upload, reuses Textarea from Story 1.7, uses template_prompts table from Story 1.3, prompt accessible for Story 1.9 (test extraction)
 - **DoD Status:** All 39 subtasks complete across 6 task groups, all acceptance criteria verified, build/lint passing, ready for review
 
+### Story 2.1: Production Document Upload Interface ✓
+- **Status:** Done
+- **Completed:** 2025-10-23
+- **Approved:** 2025-10-23
+- **Summary:** Production document upload page with drag-and-drop file upload, file validation (PDF/Word/TXT, 10MB limit), file display card, and "Next: Select Template" button
+- **All ACs Verified:** 9/9 passing
+- **Files Created:** app/process/page.tsx (249 lines)
+- **Key Features:** Drag-and-drop with visual feedback, click-to-browse file picker, file type/size validation with error messages, file info card (filename, type, size, icons), remove and re-upload functionality, blue accent theme (distinct from template creation), responsive design (desktop and tablet)
+- **Testing:** Build PASSED (0 errors, 10 routes), Lint PASSED (0 warnings), bundle size 2.94 kB page / 116 kB First Load JS
+- **Code Quality:** 100% TypeScript type-safe, zero ESLint warnings, client-side validation only
+- **Integration:** Reused react-dropzone pattern from Story 1.6, navigation link already existed, file stored in-memory (no server upload), TODO comment for Story 2.2 navigation
+- **DoD Complete:** All 60+ subtasks complete across 10 task groups, all acceptance criteria verified, build/lint passing, code reviewed, deployed
+
 ---
 
 _Last Updated: 2025-10-23_
-_Status Version: 5.8_
+_Status Version: 5.9_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
@@ -174,6 +187,7 @@ _Story 1.5 Approved: 2025-10-19_
 _Story 1.6 Approved: 2025-10-19_
 _Story 1.7 Completed: 2025-10-19_
 _Story 1.8 Approved: 2025-10-23_
+_Story 2.1 Approved: 2025-10-23_
 _Epic 1 Complete: 8 of 8 stories done (100%)_
-_Progress: 8 of 17 stories complete (47.1%), Epic 1 done, Epic 2 stories need drafting_
-_Next: Load SM agent to draft Epic 2 stories starting with Story 2.1_
+_Progress: 9 of 17 stories complete (52.9%), Epic 1 complete, Epic 2 in progress (1 of 9 done)_
+_Next: Draft Story 2.2 (Template Selection) or implement if already drafted_
