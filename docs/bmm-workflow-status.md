@@ -12,7 +12,7 @@ WORKFLOW_PATH: greenfield-level-2.yaml
 ## Current State
 
 CURRENT_PHASE: 4
-CURRENT_WORKFLOW: story-approved
+CURRENT_WORKFLOW: dev-story
 CURRENT_AGENT: developer
 PHASE_1_COMPLETE: true
 PHASE_2_COMPLETE: true
@@ -30,8 +30,8 @@ STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1"]
 
 ## Next Action
 
-NEXT_ACTION: Story 2.1 approved and marked done. Story 2.2 moved to IN_PROGRESS. Next: Draft Story 2.2 or implement if already drafted.
-NEXT_COMMAND: Check if Story 2.2 exists, if not run SM agent to draft it, then run dev-story workflow
+NEXT_ACTION: Story 2.2 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
+NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
 NEXT_AGENT: developer
 ## Story Backlog
 
@@ -172,10 +172,24 @@ NEXT_AGENT: developer
 - **Integration:** Reused react-dropzone pattern from Story 1.6, navigation link already existed, file stored in-memory (no server upload), TODO comment for Story 2.2 navigation
 - **DoD Complete:** All 60+ subtasks complete across 10 task groups, all acceptance criteria verified, build/lint passing, code reviewed, deployed
 
+### Story 2.2: Template Selection for Production Processing (Ready for Review)
+- **Status:** Ready for Review
+- **Completed:** 2025-10-23
+- **Summary:** Multi-step workflow for template selection with responsive UI, template preview, and apply functionality
+- **All ACs Verified:** 8/8 passing (AC1-AC8: multi-step navigation, template list display, metadata, selection, preview, highlighted selection, apply button, back navigation)
+- **Files Modified:** app/process/page.tsx (257→516 lines, +259 lines)
+- **Files Created:** components/ui/dialog.tsx, components/ui/skeleton.tsx (ShadCN components)
+- **Dependencies Added:** @radix-ui/react-dialog
+- **Key Features:** Multi-step state management ('upload' → 'select-template'), template fetching with loading/error/empty states, responsive 2-column grid layout, radio-style selection with blue border and checkmark, template preview dialog with fields and prompts, "Apply Template & Extract" button with enabled/disabled logic, back navigation preserving file state
+- **Testing:** Build PASSED (0 errors, 10 routes), Lint PASSED (0 warnings), bundle size +42 kB (87 kB → 129 kB for /process route)
+- **Code Quality:** 100% TypeScript type-safe, zero ESLint warnings, comprehensive error handling
+- **Integration:** Extended Story 2.1 process page, reused GET /api/templates and GET /api/templates/:id from Story 1.3, blue accent theme consistent with production processing, ready for Story 2.3 extraction integration
+- **DoD Status:** All 70+ subtasks complete across 10 task groups, all acceptance criteria verified, build/lint passing, ready for review
+
 ---
 
 _Last Updated: 2025-10-23_
-_Status Version: 5.9_
+_Status Version: 6.0_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
@@ -188,6 +202,7 @@ _Story 1.6 Approved: 2025-10-19_
 _Story 1.7 Completed: 2025-10-19_
 _Story 1.8 Approved: 2025-10-23_
 _Story 2.1 Approved: 2025-10-23_
+_Story 2.2 Ready for Review: 2025-10-23_
 _Epic 1 Complete: 8 of 8 stories done (100%)_
 _Progress: 9 of 17 stories complete (52.9%), Epic 1 complete, Epic 2 in progress (1 of 9 done)_
-_Next: Draft Story 2.2 (Template Selection) or implement if already drafted_
+_Next: Review and approve Story 2.2, then implement Story 2.3 (Production Document Extraction)_
