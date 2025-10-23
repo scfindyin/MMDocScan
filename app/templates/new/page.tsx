@@ -16,7 +16,12 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Plus, Trash2, ArrowUp, ArrowDown, Upload, X, FileText, Sparkles, Loader2 } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ArrowLeft, Plus, Trash2, ArrowUp, ArrowDown, Upload, X, FileText, Sparkles, Loader2, ChevronDown } from "lucide-react";
 import { TemplateType, FieldType } from "@/types/template";
 
 /**
@@ -84,6 +89,10 @@ export default function NewTemplatePage() {
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<number>>(new Set());
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  // Custom prompt state (Story 1.8)
+  const [customPrompt, setCustomPrompt] = useState("");
+  const [promptTipsOpen, setPromptTipsOpen] = useState(false);
 
   // File validation constants
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -367,11 +376,22 @@ export default function NewTemplatePage() {
         display_order: index,
       }));
 
+      // Build prompts array if custom prompt is provided (Story 1.8)
+      const prompts = customPrompt.trim()
+        ? [
+            {
+              prompt_text: customPrompt.trim(),
+              prompt_type: "custom",
+            },
+          ]
+        : undefined;
+
       // Build request payload
       const payload = {
         name: templateName,
         template_type: templateType,
         fields: apiFields,
+        ...(prompts && { prompts }),
       };
 
       // Call API
@@ -889,6 +909,108 @@ export default function NewTemplatePage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Custom AI Prompts Section (Story 1.8) */}
+      <div className="mb-8 border rounded-lg p-6 bg-card">
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold mb-2">
+            Custom AI Prompts{" "}
+            <span className="text-sm font-normal text-muted-foreground">
+              (Optional)
+            </span>
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Add custom instructions to guide AI extraction for this template
+          </p>
+        </div>
+
+        {/* Custom Prompt Textarea */}
+        <div className="space-y-2 mb-4">
+          <Label htmlFor="customPrompt">
+            Custom Extraction Instructions{" "}
+            <span className="text-sm font-normal text-muted-foreground">
+              (Optional)
+            </span>
+          </Label>
+          <Textarea
+            id="customPrompt"
+            placeholder="Extract all line items as separate rows. Format dates as YYYY-MM-DD."
+            value={customPrompt}
+            onChange={(e) => setCustomPrompt(e.target.value)}
+            rows={7}
+            className="min-h-[140px]"
+            disabled={isLoading}
+          />
+          <p className="text-sm text-muted-foreground">
+            {customPrompt.length} characters
+          </p>
+        </div>
+
+        {/* Prompt Tips Collapsible Section */}
+        <Collapsible open={promptTipsOpen} onOpenChange={setPromptTipsOpen}>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              className="flex items-center gap-2 w-full justify-start p-0 h-auto font-normal text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${
+                  promptTipsOpen ? "rotate-180" : ""
+                }`}
+              />
+              Prompt Tips - How to write effective extraction prompts
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-3 space-y-3 text-sm text-muted-foreground">
+            <div>
+              <h4 className="font-medium text-foreground mb-1">
+                Be specific about formats
+              </h4>
+              <p>
+                Example: &quot;Format all dates as YYYY-MM-DD&quot; or &quot;Round
+                currency values to 2 decimal places&quot;
+              </p>
+            </div>
+            <div>
+              <h4 className="font-medium text-foreground mb-1">
+                Describe line item handling
+              </h4>
+              <p>
+                Example: &quot;Extract each line item as a separate row&quot; or
+                &quot;Combine multi-line descriptions into single cell&quot;
+              </p>
+            </div>
+            <div>
+              <h4 className="font-medium text-foreground mb-1">
+                Clarify header vs detail fields
+              </h4>
+              <p>
+                Example: &quot;Repeat invoice number and date on each line
+                item&quot; or &quot;Header fields should appear once at the
+                top&quot;
+              </p>
+            </div>
+            <div>
+              <h4 className="font-medium text-foreground mb-1">
+                Reference field names from your template
+              </h4>
+              <p>
+                Example: &quot;Extract &apos;quantity&apos; as integer, &apos;unit_price&apos; as
+                decimal with 2 places&quot;
+              </p>
+            </div>
+            <div>
+              <h4 className="font-medium text-foreground mb-1">
+                Provide examples for complex cases
+              </h4>
+              <p>
+                Example: &quot;If total includes tax, extract both &apos;subtotal&apos;
+                and &apos;tax_amount&apos; separately&quot;
+              </p>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
 
       {/* Submit Error */}

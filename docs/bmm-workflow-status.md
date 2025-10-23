@@ -22,18 +22,17 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: 1.8
-TODO_TITLE: Custom Prompt Definition
+TODO_STORY: 1.9
+TODO_TITLE: Test Extraction on Sample Document
 IN_PROGRESS_STORY:
 IN_PROGRESS_TITLE:
-STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7"]
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8"]
 
 ## Next Action
 
-NEXT_ACTION: Story 1.7 ready for review - review the story or approve and move to Story 1.8
-NEXT_COMMAND: Run story-approved to mark Story 1.7 complete and begin Story 1.8, or use review workflow to examine implementation
-NEXT_AGENT: developer
-
+NEXT_ACTION: Story 1.8 complete and ready for review, or begin Story 1.9 implementation
+NEXT_COMMAND: Review Story 1.8 or load developer agent to implement Story 1.9
+NEXT_AGENT: reviewer or developer
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories)
@@ -148,10 +147,24 @@ NEXT_AGENT: developer
 - **Integration:** Seamlessly integrated with Story 1.6 (sample document upload) and Story 1.5 (field definition), analysis guidance temporary (not persisted)
 - **DoD Status:** All 70+ subtasks complete, build/lint passing, ready for review and manual testing
 
+### Story 1.8: Custom Prompt Definition ✓
+- **Status:** Ready for Review
+- **Completed:** 2025-10-23
+- **Summary:** Custom AI prompts section for template builder with textarea, real-time character count, collapsible prompt tips, and database persistence
+- **All ACs Verified:** 7/7 passing
+- **Files Created:** components/ui/collapsible.tsx (ShadCN component)
+- **Files Modified:** app/templates/new/page.tsx (920→1029 lines, +109 lines)
+- **Dependencies Added:** @radix-ui/react-collapsible (via ShadCN CLI)
+- **Key Features:** Custom prompt textarea (7 rows, 140px min-height), real-time character count display, collapsible prompt tips section with 5 tip categories (defaults collapsed), optional field (template can be saved with/without prompt), prompts stored in template_prompts table with prompt_type='custom', seamless integration with existing form
+- **Testing:** Build PASSED (0 errors, 9 routes), Lint PASSED (0 warnings), bundle size 52.9 kB
+- **Code Quality:** 100% TypeScript type-safe, zero ESLint warnings, proper HTML entity escaping, consistent with ShadCN design system
+- **Integration:** Positioned after Fields section before Sample Document Upload, reuses Textarea from Story 1.7, uses template_prompts table from Story 1.3, prompt accessible for Story 1.9 (test extraction)
+- **DoD Status:** All 39 subtasks complete across 6 task groups, all acceptance criteria verified, build/lint passing, ready for review
+
 ---
 
-_Last Updated: 2025-10-19_
-_Status Version: 5.4_
+_Last Updated: 2025-10-23_
+_Status Version: 5.7_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
@@ -162,5 +175,6 @@ _Story 1.4 Approved: 2025-10-19_
 _Story 1.5 Approved: 2025-10-19_
 _Story 1.6 Approved: 2025-10-19_
 _Story 1.7 Completed: 2025-10-19_
-_Progress: 7 of 19 stories complete (36.8%)_
-_Next: Review and approve Story 1.7, then implement Story 1.8_
+_Story 1.8 Completed: 2025-10-23_
+_Progress: 8 of 19 stories complete (42.1%), Story 1.8 ready for review_
+_Next: Review Story 1.8 or implement Story 1.9_
