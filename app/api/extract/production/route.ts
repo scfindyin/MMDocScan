@@ -52,16 +52,23 @@ function calculateConfidence(
 
 /**
  * Validate field value matches expected type
+ * NOTE: All values are strings now, so validation checks if they contain valid data
  */
 function validateFieldType(value: any, fieldType: string): boolean {
+  if (!value || value === '') return false;
+
   switch (fieldType) {
     case 'number':
     case 'currency':
-      return !isNaN(parseFloat(value));
+      // Allow formatted numbers: "1,234.56", "$1,234.56", etc.
+      // Strip common formatting characters and check if result is numeric
+      const numStr = String(value).replace(/[$,\s]/g, '');
+      return !isNaN(parseFloat(numStr)) && numStr.trim() !== '';
     case 'date':
-      return !isNaN(Date.parse(value));
+      // Allow various date formats
+      return !isNaN(Date.parse(String(value)));
     case 'text':
-      return typeof value === 'string';
+      return typeof value === 'string' && value.trim() !== '';
     default:
       return true;
   }
@@ -185,6 +192,7 @@ export async function POST(request: NextRequest) {
     const detailFields = template.fields.filter((f) => !f.is_header);
 
     // Build extraction schema for tool calling
+    // NOTE: All fields are type 'string' to allow formatting per user instructions
     const extractionSchema = {
       type: 'object',
       properties: {
@@ -194,8 +202,8 @@ export async function POST(request: NextRequest) {
             headerFields.map((f) => [
               f.field_name,
               {
-                type: f.field_type === 'number' || f.field_type === 'currency' ? 'number' : 'string',
-                description: `Extract ${f.field_name} from document`,
+                type: 'string',
+                description: `Extract ${f.field_name} (${f.field_type}) from document following user formatting instructions`,
               },
             ])
           ),
@@ -208,8 +216,8 @@ export async function POST(request: NextRequest) {
               detailFields.map((f) => [
                 f.field_name,
                 {
-                  type: f.field_type === 'number' || f.field_type === 'currency' ? 'number' : 'string',
-                  description: `Extract ${f.field_name} from line item`,
+                  type: 'string',
+                  description: `Extract ${f.field_name} (${f.field_type}) from line item following user formatting instructions`,
                 },
               ])
             ),
@@ -219,8 +227,26 @@ export async function POST(request: NextRequest) {
       required: ['header_fields', 'detail_rows'],
     };
 
-    // Build extraction prompt
-    let extractionPrompt = 'Extract structured data from this document based on the following template:\n\n';
+    // Build extraction prompt with improved structure and additive mode
+    let extractionPrompt = 'IMPORTANT: Follow these instructions precisely and completely.\n\n';
+
+    // 1. Custom instructions FIRST (highest priority if provided)
+    if (customPrompt && customPrompt.trim()) {
+      extractionPrompt += 'PRIMARY EXTRACTION INSTRUCTIONS:\n';
+      extractionPrompt += `${customPrompt.trim()}\n\n`;
+    }
+
+    // 2. Template prompts (always include if exist - additive mode)
+    if (template.prompts && template.prompts.length > 0) {
+      extractionPrompt += 'TEMPLATE GUIDANCE:\n';
+      template.prompts.forEach((p) => {
+        extractionPrompt += `${p.prompt_text}\n`;
+      });
+      extractionPrompt += '\n';
+    }
+
+    // 3. Field list
+    extractionPrompt += 'Extract structured data from this document based on the following template:\n\n';
 
     if (headerFields.length > 0) {
       extractionPrompt += 'Header Fields (document-level information):\n';
@@ -238,21 +264,19 @@ export async function POST(request: NextRequest) {
       extractionPrompt += '\n';
     }
 
-    // Add custom prompt override if provided, otherwise use template prompts
-    if (customPrompt && customPrompt.trim()) {
-      // Use custom prompt (overrides template prompts)
-      extractionPrompt += `Additional extraction guidance:\n${customPrompt.trim()}\n\n`;
-    } else if (template.prompts && template.prompts.length > 0) {
-      // Use template prompts (no override provided)
-      extractionPrompt += 'Additional extraction guidance:\n';
-      template.prompts.forEach((p) => {
-        extractionPrompt += `${p.prompt_text}\n`;
-      });
-      extractionPrompt += '\n';
-    }
-
-    extractionPrompt +=
-      'Extract all data accurately. If a field is not present in the document, use null or empty string. For detail rows, extract all line items or repeating sections.';
+    // 4. Formatting emphasis and final instructions
+    extractionPrompt += 'CRITICAL EXTRACTION REQUIREMENTS:\n';
+    extractionPrompt += '- ALL fields must be returned as strings to allow custom formatting\n';
+    extractionPrompt += '- FOLLOW ALL USER FORMATTING INSTRUCTIONS EXACTLY - they override defaults\n';
+    extractionPrompt += '- If user specifies number formatting (commas, separators), apply it precisely\n';
+    extractionPrompt += '- If user specifies date format (mm-dd-yyyy, YYYY-MM-DD, etc.), use that exact format\n';
+    extractionPrompt += '- If user specifies currency formatting, include symbols and separators as requested\n';
+    extractionPrompt += '- Default formatting (when no instructions given):\n';
+    extractionPrompt += '  - Date fields: YYYY-MM-DD\n';
+    extractionPrompt += '  - Currency fields: Include symbol and decimals (e.g., $1,234.56)\n';
+    extractionPrompt += '  - Number fields: Plain numbers without formatting\n';
+    extractionPrompt += '- If a field is not present in the document, use null or empty string\n';
+    extractionPrompt += '- For detail rows, extract all line items or repeating sections\n';
 
     // Detect document type from base64 header
     let documentType = 'application/pdf';

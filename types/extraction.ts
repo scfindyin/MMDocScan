@@ -67,6 +67,7 @@ export const TestExtractionRequestSchema = z.object({
     is_header: z.boolean(),
   })).min(1, 'At least one field is required'),
   customPrompt: z.string().optional(),
+  filename: z.string().optional().default('document.pdf'),
 });
 
 export type TestExtractionRequest = z.infer<typeof TestExtractionRequestSchema>;

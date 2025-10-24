@@ -369,6 +369,7 @@ export default function ProcessDocumentsPage() {
         body: JSON.stringify({
           documentBase64: base64Document,
           templateId: selectedTemplateId,
+          filename: uploadedFile.name,
         }),
       });
 
@@ -726,6 +727,7 @@ export default function ProcessDocumentsPage() {
           documentBase64: base64Document,
           templateId: selectedTemplateId,
           customPrompt: promptOverride, // Send updated prompt
+          filename: uploadedFile.name,
         }),
       });
 
@@ -1239,7 +1241,7 @@ export default function ProcessDocumentsPage() {
               size="lg"
             >
               <RefreshCw className="mr-2 h-5 w-5" />
-              Adjust Prompts & Re-extract
+              Add Extraction Instructions & Re-extract
             </Button>
             <Button
               onClick={handleProcessAnother}
@@ -1267,7 +1269,7 @@ export default function ProcessDocumentsPage() {
               <Card>
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold">Adjust Extraction Prompts</h3>
+                    <h3 className="text-lg font-semibold">Add Extraction Instructions</h3>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1278,19 +1280,19 @@ export default function ProcessDocumentsPage() {
                   </div>
 
                   <p className="text-sm text-muted-foreground">
-                    Modify the extraction instructions below and re-extract to improve results.
+                    Add extraction-specific instructions below. These will be combined with your template&apos;s existing prompts to improve results.
                   </p>
 
                   {/* Prompt Textarea */}
                   <div className="space-y-2">
                     <label htmlFor="prompt-override" className="text-sm font-medium">
-                      Extraction Instructions
+                      Additional Extraction Instructions
                     </label>
                     <Textarea
                       id="prompt-override"
                       value={promptOverride}
                       onChange={(e) => setPromptOverride(e.target.value)}
-                      placeholder="Enter custom extraction instructions..."
+                      placeholder="e.g., Extract dates as YYYY-MM-DD, include currency symbols..."
                       rows={7}
                       className="min-h-[140px] font-mono text-sm"
                       disabled={isReExtracting}

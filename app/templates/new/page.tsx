@@ -323,6 +323,7 @@ export default function NewTemplatePage() {
           documentBase64: base64Document,
           templateFields,
           customPrompt: customPrompt.trim() || undefined,
+          filename: sampleDocument.name,
         }),
       });
 
