@@ -22,17 +22,17 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: 2.5
-TODO_TITLE: Review Low-Confidence Extractions
-IN_PROGRESS_STORY: 2.4
-IN_PROGRESS_TITLE: Extraction Results Preview Table
-STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10"]
+TODO_STORY: 2.6
+TODO_TITLE: Iterative Prompt Refinement
+IN_PROGRESS_STORY: 2.5
+IN_PROGRESS_TITLE: Review Low-Confidence Extractions
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4"]
 
 ## Next Action
 
-NEXT_ACTION: Story 2.4 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
-NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
-NEXT_AGENT: developer
+NEXT_ACTION: Story 2.4 approved and marked done. Story 2.5 marked IN PROGRESS. Draft story with SM agent using create-story workflow.
+NEXT_COMMAND: create-story
+NEXT_AGENT: scrum-master
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) ✅ COMPLETE (10 of 10 complete)
@@ -47,12 +47,12 @@ NEXT_AGENT: developer
 - Story 1.9: Test Extraction on Sample Document ✓
 - Story 1.10: Save Validated Template ✓
 
-### Epic 2: Production Document Processing & Excel Export (9 stories) 🔄 IN PROGRESS (3 of 9 complete)
+### Epic 2: Production Document Processing & Excel Export (9 stories) 🔄 IN PROGRESS (4 of 9 complete)
 - Story 2.1: Production Document Upload Interface ✓
 - Story 2.2: Template Selection for Production Processing ✓
 - Story 2.3: Production Document Extraction ✓
-- Story 2.4: Extraction Results Preview Table 🔄 IN PROGRESS (Ready for Review)
-- Story 2.5: Review Low-Confidence Extractions
+- Story 2.4: Extraction Results Preview Table ✓
+- Story 2.5: Review Low-Confidence Extractions 🔄 IN PROGRESS
 - Story 2.6: Iterative Prompt Refinement
 - Story 2.7: Excel File Generation
 - Story 2.8: Excel Export and Download
@@ -230,10 +230,23 @@ NEXT_AGENT: developer
 - **Epic 1 Complete:** Final story in Epic 1 - users can now create, test, save, and edit templates
 - **DoD Complete:** All acceptance criteria met, code reviewed, build/lint passing, deployed
 
+### Story 2.4: Extraction Results Preview Table ✓
+- **Status:** Done
+- **Completed:** 2025-10-23
+- **Approved:** 2025-10-23
+- **Summary:** Comprehensive results preview table with sortable columns, confidence filtering, and responsive design
+- **All ACs Verified:** 11/11 passing (AC1-AC11: Excel format matching, all fields as columns, extracted values display, confidence scoring, visual flagging, metadata columns, sorting, filtering, row count summary, scrollable table, responsive layout)
+- **Files Created:** components/ui/tooltip.tsx (ShadCN component)
+- **Files Modified:** app/process/page.tsx (780 → 1,195 lines, +415 lines)
+- **Key Features:** Dynamic table columns from template fields, type-aware sorting (text/number/currency/date), low-confidence filter toggle, confidence tooltips, filename truncation with hover, sticky table header, row count summary with high/low confidence stats, placeholder buttons for Story 2.6/2.7
+- **Testing:** Build PASSED (0 errors, 12 routes), Lint PASSED (0 warnings), bundle size /process route 148 kB (+60 kB)
+- **TypeScript:** 100% type-safe implementation
+- **DoD Complete:** All acceptance criteria met, code reviewed, build/lint passing, deployed to production
+
 ---
 
-_Last Updated: 2025-10-23 (Story 1.10 approved - Epic 1: COMPLETE - Story 2.4 Ready for Review)_
-_Status Version: 13.0_
+_Last Updated: 2025-10-23 (Story 2.4 approved - Epic 2: 4 of 9 complete - Story 2.5 IN PROGRESS)_
+_Status Version: 14.0_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
@@ -251,7 +264,7 @@ _Story 2.3 Approved: 2025-10-23_
 _Story 1.9 Approved: 2025-10-23_
 _Story 1.10 Approved: 2025-10-23_
 _Epic 1 Status: ✅ COMPLETE - 10 of 10 stories done (100%)_
-_Epic 2 Status: 3 of 9 stories done (33%) - Story 2.4 IN PROGRESS_
-_Progress: 13 of 19 stories complete (68.4%), Story 2.4 IN PROGRESS_
-_Next: Implement Story 2.4 (Extraction Results Preview Table) with DEV agent_
+_Epic 2 Status: 4 of 9 stories done (44.4%) - Story 2.5 IN PROGRESS_
+_Progress: 14 of 19 stories complete (73.7%), Story 2.5 IN PROGRESS_
+_Next: Draft Story 2.5 (Review Low-Confidence Extractions) with SM agent_
 _Milestone Achieved: Epic 1 deliverable - Users can create, test, save, and edit validated extraction templates_
