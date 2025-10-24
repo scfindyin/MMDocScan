@@ -27,6 +27,7 @@ export const ProductionExtractionRequestSchema = z.object({
   documentBase64: z.string().min(1, 'Document content is required'),
   templateId: z.string().uuid('Invalid template ID format'),
   customPrompt: z.string().optional(),
+  filename: z.string().optional().default('document.pdf'),
 });
 
 export type ProductionExtractionRequest = z.infer<typeof ProductionExtractionRequestSchema>;
@@ -38,6 +39,7 @@ export interface ProductionExtractionSuccessResponse {
   success: true;
   data: ExtractedRow[];
   rowCount: number;
+  extractionId?: string; // Story 2.9: Optional extraction ID for navigation to saved extraction
 }
 
 /**
@@ -90,3 +92,45 @@ export interface TestExtractionErrorResponse {
 export type TestExtractionResponse =
   | TestExtractionSuccessResponse
   | TestExtractionErrorResponse;
+
+/**
+ * Database extraction record
+ * Story 2.9: Extraction Session Management
+ */
+export interface ExtractionRecord {
+  id: string;
+  template_id: string;
+  filename: string;
+  extracted_data: ExtractedRow[];
+  row_count: number;
+  created_at: string;
+}
+
+/**
+ * Extraction list item with template name (for recent extractions list)
+ */
+export interface ExtractionListItem {
+  id: string;
+  template_id: string;
+  template_name: string;
+  filename: string;
+  row_count: number;
+  created_at: string;
+}
+
+/**
+ * Extraction detail with full extracted data and template info
+ */
+export interface ExtractionDetail extends ExtractionRecord {
+  template_name: string;
+}
+
+/**
+ * Request to create a new extraction record
+ */
+export interface CreateExtractionRequest {
+  template_id: string;
+  filename: string;
+  extracted_data: ExtractedRow[];
+  row_count: number;
+}

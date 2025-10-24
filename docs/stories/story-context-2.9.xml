@@ -1,0 +1,153 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.9</storyId>
+    <title>Extraction Session Management</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.9.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to return to my recent extractions without re-uploading documents</iWant>
+    <soThat>I can re-export or review previous results</soThat>
+    <tasks>
+- Task 1: Database Schema and Migration (AC: 1, 5, 6, 8)
+- Task 2: Data Access Layer for Extractions (AC: 1, 4, 5)
+- Task 3: API Routes for Extraction Management (AC: 1, 4, 7)
+- Task 4: Auto-Save After Production Extraction (AC: 1)
+- Task 5: Recent Extractions List Page (AC: 2, 3, 7)
+- Task 6: Navigation Link Integration (AC: 2)
+- Task 7: Extraction Details Page with Results Preview (AC: 4, 9)
+- Task 8: Integration Testing and Validation (AC: All)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+AC2.9.1: Extraction results saved to database automatically after successful extraction (ExtractedRow[] as JSONB, template_id FK, filename, timestamp, row_count)
+
+AC2.9.2: "Recent Extractions" navigation link accessible from main navigation (/extractions route, optional badge count)
+
+AC2.9.3: Recent extractions list shows metadata (document name, template name, relative date, row count, sorted newest first)
+
+AC2.9.4: Clicking recent extraction loads results preview with full Story 2.4 functionality (sorting, filtering, confidence display)
+
+AC2.9.5: Recent extractions persist across browser sessions (Supabase database storage)
+
+AC2.9.6: System retains 10 most recent extractions (FIFO retention via database trigger)
+
+AC2.9.7: "Clear History" option with confirmation dialog and success message
+
+AC2.9.8: Extractions auto-expire after 7 days (scheduled cleanup job)
+
+AC2.9.9: Re-export to Excel from saved extraction without document re-upload (reuses Story 2.7 generateExcelFile)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification" section="In-Memory Session State">
+        Current architecture uses in-memory session state only - documents and extraction results held in React state during active session with no persistence.
+      </doc>
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification" section="Data Models - ExtractedRow">
+        ExtractedRow interface defines structure with rowId, confidence (0.0-1.0), fields Record, and sourceMetadata (filename, pageNumber, extractedAt timestamp).
+      </doc>
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Story 2.9">
+        Story requires temporary storage (session storage or database), recent extractions list, re-export capability, 10-item limit, clear history, 7-day auto-expiry.
+      </doc>
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="Out of Scope">
+        Excel-only export for MVP; direct database integration planned for Phase 2. Single-user tool for MVP.
+      </doc>
+    </docs>
+    <code>
+      <artifact path="types/extraction.ts" kind="type-definitions" symbol="ExtractedRow" lines="16-21" reason="Core data structure for extraction results - must be stored as JSONB in extractions table"/>
+      <artifact path="types/extraction.ts" kind="type-definitions" symbol="ProductionExtractionResponse" lines="37-54" reason="API response structure - extraction_id can be added for navigation to saved extraction"/>
+      <artifact path="lib/db/templates.ts" kind="data-access-layer" symbol="createTemplate,getTemplates,getTemplateById" lines="24-201" reason="Pattern to follow for extractions.ts data access layer - same Supabase client usage, error handling, transaction patterns"/>
+      <artifact path="app/api/extract/production/route.ts" kind="api-route" symbol="POST" lines="1-100" reason="Must add auto-save logic after successful extraction - call createExtraction() with results"/>
+      <artifact path="app/api/extract/production/route.ts" kind="utility" symbol="calculateConfidence,denormalizeData" lines="15-76" reason="Algorithms already implemented - extraction results are ready for JSONB storage"/>
+      <artifact path="lib/excel/export.ts" kind="service" symbol="generateExcelFile" lines="45-100" reason="Excel generation function to reuse for re-export from saved extractions"/>
+      <artifact path="app/process/page.tsx" kind="component" symbol="ResultsPreviewTable" lines="900-1100" reason="Results table component should be extracted into reusable component for /extractions/[id] page"/>
+      <artifact path="app/layout.tsx" kind="layout" symbol="Navigation" lines="19" reason="Navigation component where 'Recent Extractions' link must be added"/>
+      <artifact path="components/navigation.tsx" kind="component" symbol="Navigation" lines="1-28" reason="Navigation component structure - add new link between Templates and Process Documents"/>
+      <artifact path="migrations/000_run_all_migrations.sql" kind="migration" symbol="CREATE TABLE templates" lines="21-46" reason="Migration pattern to follow for extractions table - UUID primary key, timestamps, indexes, CASCADE DELETE"/>
+    </code>
+    <dependencies>
+      <node>
+        <dependency name="@supabase/supabase-js" version="^2.75.1" purpose="Database client for extractions CRUD operations"/>
+        <dependency name="exceljs" version="^4.4.0" purpose="Excel generation for re-export from saved extractions"/>
+        <dependency name="zod" version="^4.1.12" purpose="API request/response validation for extraction endpoints"/>
+        <dependency name="next" version="^14.2.0" purpose="API routes and dynamic pages for extractions list/details"/>
+        <dependency name="react" version="^18.2.0" purpose="UI components for extractions list and detail pages"/>
+        <dependency name="@radix-ui/react-dialog" version="^1.1.15" purpose="Confirmation dialog for 'Clear History' destructive action"/>
+        <dependency name="@radix-ui/react-toast" version="^1.2.15" purpose="Success message after clearing history"/>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Use Supabase database for persistence - NO session storage or browser storage. Story 1.3 database patterns must be followed.</constraint>
+    <constraint type="data-model">Store ExtractedRow[] as JSONB in extracted_data column. No document storage - only extraction results and metadata.</constraint>
+    <constraint type="retention">10-item limit enforced at database level via trigger on INSERT. 7-day auto-expiry via Supabase scheduled function.</constraint>
+    <constraint type="component-reuse">Reuse Story 2.4 results table UI components. Reuse Story 2.8 Excel export generateExcelFile() function. No new UI patterns.</constraint>
+    <constraint type="performance">Index on extractions.created_at for sorting. JOIN with templates table for template name display. Limit results to 10 items max.</constraint>
+    <constraint type="file-structure">Follow Next.js 14 App Router conventions: app/extractions/page.tsx (list), app/extractions/[id]/page.tsx (details).</constraint>
+    <constraint type="testing">Integration test: full workflow (Process → Save → View list → Open details → Re-export). Verify 10-item limit and cross-session persistence.</constraint>
+  </constraints>
+  <interfaces>
+    <interface name="GET /api/extractions" kind="REST endpoint">
+      <signature>GET /api/extractions → ExtractionListItem[]</signature>
+      <path>app/api/extractions/route.ts</path>
+      <description>Returns 10 most recent extractions with template name (JOIN). Response: [{id, filename, template_name, row_count, created_at}]</description>
+    </interface>
+    <interface name="GET /api/extractions/:id" kind="REST endpoint">
+      <signature>GET /api/extractions/[id] → ExtractionDetail</signature>
+      <path>app/api/extractions/[id]/route.ts</path>
+      <description>Returns single extraction with full extracted_data JSONB. Response: {id, template_id, filename, extracted_data: ExtractedRow[], row_count, created_at}</description>
+    </interface>
+    <interface name="DELETE /api/extractions" kind="REST endpoint">
+      <signature>DELETE /api/extractions → {success: boolean}</signature>
+      <path>app/api/extractions/route.ts</path>
+      <description>Clears all extractions from database. Returns success confirmation.</description>
+    </interface>
+    <interface name="createExtraction()" kind="Data access function">
+      <signature>createExtraction(data: {template_id: string, filename: string, extracted_data: ExtractedRow[], row_count: number}) → Promise&lt;Extraction&gt;</signature>
+      <path>lib/db/extractions.ts</path>
+      <description>Saves extraction to database. Triggers 10-item limit enforcement if applicable.</description>
+    </interface>
+    <interface name="getRecentExtractions()" kind="Data access function">
+      <signature>getRecentExtractions() → Promise&lt;ExtractionListItem[]&gt;</signature>
+      <path>lib/db/extractions.ts</path>
+      <description>Fetches 10 most recent extractions with template name JOIN. Sorted by created_at DESC.</description>
+    </interface>
+    <interface name="getExtractionById()" kind="Data access function">
+      <signature>getExtractionById(id: string) → Promise&lt;ExtractionDetail | null&gt;</signature>
+      <path>lib/db/extractions.ts</path>
+      <description>Fetches single extraction with full extracted_data. Returns null if not found.</description>
+    </interface>
+    <interface name="generateExcelFile()" kind="Export function">
+      <signature>generateExcelFile(extractedData: ExtractedRow[], template: TemplateWithRelations) → Promise&lt;ExcelJS.Buffer&gt;</signature>
+      <path>lib/excel/export.ts</path>
+      <description>Reuse existing function for re-export. Template must be fetched from template_id before calling.</description>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Next.js 14 project with TypeScript. Build validation with `npm run build` and lint with `npm run lint`. Zero TypeScript errors and zero ESLint warnings required. Manual testing for MVP - automated tests deferred to Phase 2.
+    </standards>
+    <locations>
+      No automated test files for MVP. Manual testing workflow documented in Story 2.9 Task 8 subtasks.
+    </locations>
+    <ideas>
+      <test ac="AC2.9.1">Integration: Process document → Verify extraction saved to database with correct template_id, filename, extracted_data JSONB, row_count</test>
+      <test ac="AC2.9.2">UI: Navigate to /extractions from any page → Verify link visible in navigation → Verify route loads correctly</test>
+      <test ac="AC2.9.3">UI: View /extractions list → Verify metadata display (filename, template name, relative date, row count) → Verify sorting (newest first)</test>
+      <test ac="AC2.9.4">Integration: Click extraction from list → Verify /extractions/[id] loads → Verify results table matches Story 2.4 UI → Test sorting/filtering</test>
+      <test ac="AC2.9.5">Integration: Process document → Close browser → Reopen → Navigate to /extractions → Verify extraction still visible</test>
+      <test ac="AC2.9.6">Database: Create 11th extraction → Verify oldest extraction automatically deleted → Verify only 10 remain in database</test>
+      <test ac="AC2.9.7">UI: Click "Clear History" button → Verify confirmation dialog → Confirm deletion → Verify all extractions removed → Verify success toast</test>
+      <test ac="AC2.9.8">Database: Create extraction → Wait 7+ days (or manually adjust created_at) → Run cleanup script → Verify expired extraction removed</test>
+      <test ac="AC2.9.9">Integration: Open saved extraction details → Click "Export to Excel" → Verify Excel file downloads → Verify format matches original export → Verify filename format correct</test>
+    </ideas>
+  </tests>
+</story-context>

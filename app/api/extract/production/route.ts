@@ -1,9 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import { getTemplateById } from '@/lib/db/templates';
+import { createExtraction } from '@/lib/db/extractions';
 import {
   ProductionExtractionRequestSchema,
   ProductionExtractionResponse,
+  ProductionExtractionSuccessResponse,
   ExtractedRow,
 } from '@/types/extraction';
 import { TemplateField } from '@/types/template';
@@ -133,7 +135,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { documentBase64, templateId, customPrompt } = validationResult.data;
+    const { documentBase64, templateId, customPrompt, filename } = validationResult.data;
 
     // Fetch template from database
     const template = await getTemplateById(templateId);
@@ -350,9 +352,6 @@ export async function POST(request: NextRequest) {
     const headerData = extractedData.header_fields || {};
     const detailRows = extractedData.detail_rows || [];
 
-    // Extract filename from request (will be passed from frontend)
-    const filename = 'document.pdf'; // Default filename
-
     // Denormalize data and calculate confidence scores
     const extractedRows = denormalizeData(
       headerData,
@@ -361,12 +360,30 @@ export async function POST(request: NextRequest) {
       filename
     );
 
-    // Return success response
+    // Story 2.9: Auto-save extraction results to database
+    let extractionId: string | undefined;
+    try {
+      const savedExtraction = await createExtraction({
+        template_id: templateId,
+        filename: filename,
+        extracted_data: extractedRows,
+        row_count: extractedRows.length,
+      });
+      extractionId = savedExtraction.id;
+      console.log(`✅ Extraction saved to database: ${extractionId}`);
+    } catch (saveError: any) {
+      // Log error but don't block user workflow
+      console.error('⚠️  Failed to save extraction to database:', saveError.message);
+      console.error('User will still receive extraction results, but history will not be saved');
+    }
+
+    // Return success response with optional extractionId
     return NextResponse.json({
       success: true,
       data: extractedRows,
       rowCount: extractedRows.length,
-    } satisfies ProductionExtractionResponse);
+      extractionId,
+    } satisfies ProductionExtractionSuccessResponse);
   } catch (error) {
     console.error('Error in production extraction API:', error);
 

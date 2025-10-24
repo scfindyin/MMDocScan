@@ -25,14 +25,14 @@ STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1"
 TODO_STORY: None
 TODO_TITLE: None
 IN_PROGRESS_STORY: 2.9
-IN_PROGRESS_TITLE: Extraction Session Management
+IN_PROGRESS_TITLE: Extraction Session Management (Ready for Review)
 STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8"]
 
 ## Next Action
 
-NEXT_ACTION: Story 2.9 (Extraction Session Management) is next in queue. Load SM agent to draft story or DEV agent if already drafted.
-NEXT_COMMAND: Run create-story workflow for Story 2.9 (SM agent) or dev-story if drafted
-NEXT_AGENT: story-manager
+NEXT_ACTION: Story 2.9 (Extraction Session Management) implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
+NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
+NEXT_AGENT: developer
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) ✅ COMPLETE (10 of 10 complete)
@@ -301,8 +301,10 @@ NEXT_AGENT: story-manager
 
 ---
 
-_Last Updated: 2025-10-24 (Story 2.8 approved and marked done - Epic 2: 8 of 9 complete, Story 2.9 moved to IN PROGRESS)_
-_Status Version: 20.0_
+_Last Updated: 2025-10-24 (Story 2.9 context generated - ready for DEV agent)_
+_Status Version: 24.0_
+_Story 2.9 Implementation Complete: 2025-10-24_
+_Story 2.9 Status: Ready for Review (all tasks complete, build passing, awaiting approval)_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_

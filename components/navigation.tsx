@@ -16,6 +16,12 @@ export function Navigation() {
             Templates
           </Link>
           <Link
+            href="/extractions"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Recent Extractions
+          </Link>
+          <Link
             href="/process"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
