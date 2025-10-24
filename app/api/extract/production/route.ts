@@ -236,18 +236,17 @@ export async function POST(request: NextRequest) {
       extractionPrompt += '\n';
     }
 
-    // Add custom prompts from template
-    if (template.prompts && template.prompts.length > 0) {
+    // Add custom prompt override if provided, otherwise use template prompts
+    if (customPrompt && customPrompt.trim()) {
+      // Use custom prompt (overrides template prompts)
+      extractionPrompt += `Additional extraction guidance:\n${customPrompt.trim()}\n\n`;
+    } else if (template.prompts && template.prompts.length > 0) {
+      // Use template prompts (no override provided)
       extractionPrompt += 'Additional extraction guidance:\n';
       template.prompts.forEach((p) => {
         extractionPrompt += `${p.prompt_text}\n`;
       });
       extractionPrompt += '\n';
-    }
-
-    // Add custom prompt override if provided
-    if (customPrompt && customPrompt.trim()) {
-      extractionPrompt += `User guidance:\n${customPrompt.trim()}\n\n`;
     }
 
     extractionPrompt +=
