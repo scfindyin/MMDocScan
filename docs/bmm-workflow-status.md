@@ -30,9 +30,9 @@ STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2
 
 ## Next Action
 
-NEXT_ACTION: Story 2.6 (Iterative Prompt Refinement) moved to IN PROGRESS. Load SM agent and run create-story workflow to draft Story 2.6, or if already drafted, run story-ready workflow to approve.
-NEXT_COMMAND: create-story or story-ready
-NEXT_AGENT: scrum-master
+NEXT_ACTION: Story 2.6 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
+NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
+NEXT_AGENT: developer
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) ✅ COMPLETE (10 of 10 complete)
@@ -258,8 +258,8 @@ NEXT_AGENT: scrum-master
 
 ---
 
-_Last Updated: 2025-10-24 (Story 2.5 approved and done - Epic 2: 5 of 9 complete - Story 2.6 moved to IN PROGRESS)_
-_Status Version: 15.0_
+_Last Updated: 2025-10-24 (Story 2.6 implementation complete - Ready for Review - Epic 2: 5 of 9 complete)_
+_Status Version: 16.0_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_

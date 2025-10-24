@@ -32,6 +32,16 @@ import {
 } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export default function ProcessDocumentsPage() {
   // Multi-step workflow state
@@ -69,6 +79,18 @@ export default function ProcessDocumentsPage() {
   const [showLowConfidenceOnly, setShowLowConfidenceOnly] = useState(false);
   const [selectedTemplateFields, setSelectedTemplateFields] = useState<TemplateField[]>([]);
 
+  // Prompt refinement state
+  const [isPromptPanelOpen, setIsPromptPanelOpen] = useState(false);
+  const [promptOverride, setPromptOverride] = useState<string>('');
+  const [currentPrompt, setCurrentPrompt] = useState<string>('');
+  const [isReExtracting, setIsReExtracting] = useState(false);
+
+  // Template save dialogs
+  const [showUpdateConfirmDialog, setShowUpdateConfirmDialog] = useState(false);
+  const [showSaveAsNewDialog, setShowSaveAsNewDialog] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState<string>('');
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+
   // Toast for placeholder buttons
   const { toast } = useToast();
 
@@ -98,6 +120,16 @@ export default function ProcessDocumentsPage() {
       }
       const data = await response.json();
       setSelectedTemplateFields(data.fields || []);
+
+      // Load template prompts for refinement feature
+      const customPrompt = data.prompts?.find((p: TemplatePrompt) => p.prompt_type === 'custom');
+      if (customPrompt) {
+        setCurrentPrompt(customPrompt.prompt_text);
+        setPromptOverride(customPrompt.prompt_text);
+      } else {
+        setCurrentPrompt('');
+        setPromptOverride('');
+      }
     } catch (err) {
       console.error('Error fetching template fields:', err);
     }
@@ -519,11 +551,195 @@ export default function ProcessDocumentsPage() {
     });
   };
 
-  const handleAdjustPromptsPlaceholder = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Prompt refinement will be implemented in Story 2.6",
-    });
+  // Handle adjust prompts button click
+  const handleAdjustPrompts = () => {
+    setIsPromptPanelOpen(!isPromptPanelOpen);
+  };
+
+  // Handle re-extraction with updated prompt
+  const handleReExtract = async () => {
+    if (!selectedTemplateId || !uploadedFile) return;
+
+    // Validate prompt is not empty
+    if (!promptOverride.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Prompt cannot be empty. Please enter extraction instructions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsReExtracting(true);
+    setExtractionError(null);
+
+    try {
+      // Convert file to base64
+      const base64Document = await fileToBase64(uploadedFile);
+
+      // Call extraction API with prompt override
+      const response = await fetch('/api/extract/production', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documentBase64: base64Document,
+          templateId: selectedTemplateId,
+          customPrompt: promptOverride, // Send updated prompt
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setExtractionError(data.error || 'Re-extraction failed. Please try again.');
+        setExtractionRetryable(data.retryable !== false);
+        setIsReExtracting(false);
+        toast({
+          title: "Re-extraction Failed",
+          description: data.error || 'Failed to re-extract with updated prompt.',
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Success: update extracted data
+      setExtractedData(data.data);
+      setIsReExtracting(false);
+      setIsPromptPanelOpen(false); // Close panel on success
+      toast({
+        title: "Re-extraction Complete",
+        description: `Successfully extracted ${data.data.length} rows with updated prompt.`,
+      });
+    } catch (error) {
+      console.error('Re-extraction error:', error);
+      setExtractionError('Network error. Please check connection and retry.');
+      setExtractionRetryable(true);
+      setIsReExtracting(false);
+      toast({
+        title: "Network Error",
+        description: "Failed to connect to server. Please check your connection and try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle update original template with refined prompts
+  const handleUpdateTemplate = async () => {
+    if (!selectedTemplateId) return;
+
+    setIsSavingTemplate(true);
+
+    try {
+      // Fetch current template data
+      const getResponse = await fetch(`/api/templates/${selectedTemplateId}`);
+      if (!getResponse.ok) {
+        throw new Error('Failed to fetch template');
+      }
+      const templateData = await getResponse.json();
+
+      // Update template with new prompt
+      const updateResponse = await fetch(`/api/templates/${selectedTemplateId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: templateData.template.name,
+          template_type: templateData.template.template_type,
+          fields: templateData.fields,
+          prompts: [
+            {
+              prompt_type: 'custom',
+              prompt_text: promptOverride,
+            },
+          ],
+        }),
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update template');
+      }
+
+      // Update current prompt to match new saved value
+      setCurrentPrompt(promptOverride);
+      setIsSavingTemplate(false);
+      setShowUpdateConfirmDialog(false);
+      toast({
+        title: "Template Updated",
+        description: "Refined prompts saved to original template successfully.",
+      });
+    } catch (error) {
+      console.error('Template update error:', error);
+      setIsSavingTemplate(false);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update template. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle save as new template
+  const handleSaveAsNewTemplate = async () => {
+    if (!selectedTemplateId || !newTemplateName.trim()) return;
+
+    setIsSavingTemplate(true);
+
+    try {
+      // Fetch current template data
+      const getResponse = await fetch(`/api/templates/${selectedTemplateId}`);
+      if (!getResponse.ok) {
+        throw new Error('Failed to fetch template');
+      }
+      const templateData = await getResponse.json();
+
+      // Create new template with refined prompts
+      const createResponse = await fetch('/api/templates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newTemplateName.trim(),
+          template_type: templateData.template.template_type,
+          fields: templateData.fields.map((f: TemplateField) => ({
+            field_name: f.field_name,
+            field_type: f.field_type,
+            is_header: f.is_header,
+            display_order: f.display_order,
+          })),
+          prompts: [
+            {
+              prompt_type: 'custom',
+              prompt_text: promptOverride,
+            },
+          ],
+        }),
+      });
+
+      if (!createResponse.ok) {
+        throw new Error('Failed to create new template');
+      }
+
+      const newTemplate = await createResponse.json();
+      setIsSavingTemplate(false);
+      setShowSaveAsNewDialog(false);
+      setNewTemplateName('');
+      toast({
+        title: "New Template Created",
+        description: `Template "${newTemplateName}" created successfully with ID: ${newTemplate.id}`,
+      });
+    } catch (error) {
+      console.error('Save as new template error:', error);
+      setIsSavingTemplate(false);
+      toast({
+        title: "Creation Failed",
+        description: "Failed to create new template. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -869,7 +1085,7 @@ export default function ProcessDocumentsPage() {
               Export to Excel
             </Button>
             <Button
-              onClick={handleAdjustPromptsPlaceholder}
+              onClick={handleAdjustPrompts}
               variant="outline"
               size="lg"
             >
@@ -884,6 +1100,117 @@ export default function ProcessDocumentsPage() {
               Process Another Document
             </Button>
           </div>
+
+          {/* Prompt Editing Panel */}
+          <Collapsible
+            open={isPromptPanelOpen}
+            onOpenChange={setIsPromptPanelOpen}
+            className="mb-6"
+          >
+            <CollapsibleContent>
+              <Card>
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold">Adjust Extraction Prompts</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsPromptPanelOpen(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    Modify the extraction instructions below and re-extract to improve results.
+                  </p>
+
+                  {/* Prompt Textarea */}
+                  <div className="space-y-2">
+                    <label htmlFor="prompt-override" className="text-sm font-medium">
+                      Extraction Instructions
+                    </label>
+                    <Textarea
+                      id="prompt-override"
+                      value={promptOverride}
+                      onChange={(e) => setPromptOverride(e.target.value)}
+                      placeholder="Enter custom extraction instructions..."
+                      rows={7}
+                      className="min-h-[140px] font-mono text-sm"
+                      disabled={isReExtracting}
+                    />
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{promptOverride.length} characters</span>
+                      {promptOverride !== currentPrompt && (
+                        <span className="text-orange-600 font-medium">Modified from original</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Re-extraction Action Buttons */}
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    <Button
+                      onClick={handleReExtract}
+                      disabled={isReExtracting || !promptOverride.trim()}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {isReExtracting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Re-extracting...
+                        </>
+                      ) : (
+                        <>
+                          <PlayCircle className="mr-2 h-4 w-4" />
+                          Re-extract with Updated Prompt
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setPromptOverride(currentPrompt);
+                        setIsPromptPanelOpen(false);
+                      }}
+                      disabled={isReExtracting}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+
+                  {/* Divider */}
+                  {promptOverride !== currentPrompt && promptOverride.trim() && (
+                    <>
+                      <div className="border-t pt-4 mt-2">
+                        <p className="text-sm font-medium mb-3">Save Refined Prompt</p>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Save your refined extraction instructions back to the template
+                        </p>
+
+                        {/* Template Save Buttons */}
+                        <div className="flex flex-wrap gap-3">
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowUpdateConfirmDialog(true)}
+                            disabled={isSavingTemplate}
+                          >
+                            Update Original Template
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowSaveAsNewDialog(true)}
+                            disabled={isSavingTemplate}
+                          >
+                            Save as New Template
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Row Count Summary and Filter Controls */}
           <Card className="mb-6">
@@ -1183,6 +1510,93 @@ export default function ProcessDocumentsPage() {
               Failed to load template details
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Update Template Confirmation Dialog */}
+      <Dialog open={showUpdateConfirmDialog} onOpenChange={setShowUpdateConfirmDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Original Template?</DialogTitle>
+            <DialogDescription>
+              This will update the original template with the refined prompts. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowUpdateConfirmDialog(false)}
+              disabled={isSavingTemplate}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateTemplate}
+              disabled={isSavingTemplate}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSavingTemplate ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                'Update Template'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save as New Template Dialog */}
+      <Dialog open={showSaveAsNewDialog} onOpenChange={setShowSaveAsNewDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save as New Template</DialogTitle>
+            <DialogDescription>
+              Create a new template with the refined prompts while preserving the original.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="new-template-name" className="text-sm font-medium">
+                Template Name
+              </label>
+              <Input
+                id="new-template-name"
+                value={newTemplateName}
+                onChange={(e) => setNewTemplateName(e.target.value)}
+                placeholder="Enter new template name..."
+                disabled={isSavingTemplate}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowSaveAsNewDialog(false);
+                setNewTemplateName('');
+              }}
+              disabled={isSavingTemplate}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveAsNewTemplate}
+              disabled={isSavingTemplate || !newTemplateName.trim()}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSavingTemplate ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Template'
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

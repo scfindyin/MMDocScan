@@ -1,0 +1,286 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.6</storyId>
+    <title>Iterative Prompt Refinement</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.6.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to adjust extraction prompts and re-run extraction if results aren't satisfactory</iWant>
+    <soThat>I can improve extraction accuracy without starting over</soThat>
+    <tasks>
+      - Task 1: Prompt Editing UI Component (8 subtasks)
+      - Task 2: Re-extraction Logic with State Preservation (9 subtasks)
+      - Task 3: Save Refined Prompts to Template (8 subtasks)
+      - Task 4: Error Handling and Edge Cases (7 subtasks)
+      - Task 5: Integration Testing and Validation (10 subtasks)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Prompt Adjustment Interface - "Adjust Prompts" button available in results preview, clicking reveals prompt editing interface with current prompts pre-populated
+    2. Prompt Modification - User can modify prompt instructions in editable text area
+    3. Re-extraction Trigger - "Re-extract" button triggers new extraction with updated prompts
+    4. State Preservation - Original document and template preserved in memory during re-extraction
+    5. Results Update - New results replace previous results in preview table (ExtractedRow[] format with confidence scores)
+    6. Iterative Loop - User can adjust prompts and re-extract multiple times without limit
+    7. Save to Original Template - "Update Template" option saves refined prompts back to the original template in database
+    8. Save as New Template - "Save as New Template" option creates new template with refined prompts while preserving original
+    9. Loading States - Clear loading indicators during re-extraction
+    10. Error Handling - Graceful error handling for API failures with retry option
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>MMDocScan Product Requirements Document</title>
+        <section>Functional Requirements - FR018</section>
+        <snippet>System shall allow users to adjust prompts and rerun extraction iteratively until results are satisfactory. User Journey step 5: Refine (if needed) - adjust prompts, re-extract, review loop.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification: MMDocScan Complete Solution</title>
+        <section>Workflows and Sequencing - Workflow 2: Production Document Extraction</section>
+        <snippet>Step 7: If unsatisfied with results, adjust prompt and re-send base64 from memory. Iterative refinement loop supports multiple iterations without re-uploading document.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification</title>
+        <section>APIs and Interfaces - /api/extract/production</section>
+        <snippet>POST /api/extract/production accepts {base64Document, templateId, promptOverride?}. Returns ExtractedRow[] with confidence scores. Supports iterative refinement through optional promptOverride parameter.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification</title>
+        <section>Acceptance Criteria - AC2.6</section>
+        <snippet>User can adjust prompts and rerun extraction iteratively. Original document and template preserved during re-extraction. System performs new extraction with updated prompt and displays updated results.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Epic 2 - Story 2.6: Iterative Prompt Refinement</section>
+        <snippet>Complete acceptance criteria for iterative prompt refinement workflow including prompt editing, re-extraction, template saving, and error handling. Enables users to improve extraction accuracy through iteration.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>app/process/page.tsx</path>
+        <kind>component</kind>
+        <symbol>ProcessDocumentsPage</symbol>
+        <lines>1-1195</lines>
+        <reason>Main component for document processing. Contains existing results preview table (Story 2.4) where prompt refinement UI will be added. Manages state for uploadedFile, selectedTemplate, extractedData.</reason>
+      </artifact>
+      <artifact>
+        <path>app/process/page.tsx</path>
+        <kind>state</kind>
+        <symbol>uploadedFile, selectedTemplateId, extractedData</symbol>
+        <lines>41-56</lines>
+        <reason>Critical state variables that must be preserved during re-extraction iterations. uploadedFile holds File object, selectedTemplateId identifies template, extractedData stores results.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/extract/production/route.ts</path>
+        <kind>api-route</kind>
+        <symbol>POST handler</symbol>
+        <lines>1-461</lines>
+        <reason>Production extraction API endpoint. Already supports customPrompt parameter per tech spec. Will be called for re-extraction with promptOverride. Returns ExtractedRow[] with confidence scores.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/extract/production/route.ts</path>
+        <kind>function</kind>
+        <symbol>calculateConfidence</symbol>
+        <lines>15-49</lines>
+        <reason>Calculates confidence scores for extracted rows based on field completeness and type validity. Used in extraction results that will be displayed after re-extraction.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/extract/production/route.ts</path>
+        <kind>function</kind>
+        <symbol>denormalizeData</symbol>
+        <lines>71-112</lines>
+        <reason>Denormalizes extraction data by repeating header fields on detail rows. Ensures re-extraction results maintain same format as initial extraction.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/templates/[id]/route.ts</path>
+        <kind>api-route</kind>
+        <symbol>PUT handler</symbol>
+        <lines>1-200</lines>
+        <reason>Template update API from Story 1.10. Will be used to save refined prompts back to original template. Accepts template fields including custom_prompt for update.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/templates/route.ts</path>
+        <kind>api-route</kind>
+        <symbol>POST handler</symbol>
+        <lines>1-150</lines>
+        <reason>Template creation API from Story 1.5. Will be used for "Save as New Template" workflow to create template with refined prompts while preserving original.</reason>
+      </artifact>
+      <artifact>
+        <path>types/extraction.ts</path>
+        <kind>interface</kind>
+        <symbol>ExtractedRow</symbol>
+        <lines>16-21</lines>
+        <reason>Core data structure for extraction results. Re-extraction must return data in this format with rowId, confidence, fields, and sourceMetadata.</reason>
+      </artifact>
+      <artifact>
+        <path>types/extraction.ts</path>
+        <kind>schema</kind>
+        <symbol>ProductionExtractionRequestSchema</symbol>
+        <lines>26-30</lines>
+        <reason>Zod validation schema for production extraction API. Includes customPrompt as optional parameter, enabling prompt override functionality for re-extraction.</reason>
+      </artifact>
+      <artifact>
+        <path>types/template.ts</path>
+        <kind>interface</kind>
+        <symbol>Template, TemplateField, TemplatePrompt</symbol>
+        <lines>1-50</lines>
+        <reason>Template type definitions. Needed for template update and save-as-new operations. Template includes custom_prompt field for storing refined prompts.</reason>
+      </artifact>
+      <artifact>
+        <path>components/ui/collapsible.tsx</path>
+        <kind>ui-component</kind>
+        <symbol>Collapsible</symbol>
+        <lines>1-50</lines>
+        <reason>ShadCN Collapsible component from Story 1.8. Will be used for prompt editing panel that expands/collapses to reveal prompt textarea.</reason>
+      </artifact>
+      <artifact>
+        <path>components/ui/textarea.tsx</path>
+        <kind>ui-component</kind>
+        <symbol>Textarea</symbol>
+        <lines>1-50</lines>
+        <reason>ShadCN Textarea component from Story 1.7. Will be used for prompt modification input with character count display.</reason>
+      </artifact>
+      <artifact>
+        <path>components/ui/dialog.tsx</path>
+        <kind>ui-component</kind>
+        <symbol>Dialog</symbol>
+        <lines>1-100</lines>
+        <reason>ShadCN Dialog component from Story 2.2. Will be used for confirmation dialogs before template updates and for new template name input.</reason>
+      </artifact>
+      <artifact>
+        <path>hooks/use-toast.ts</path>
+        <kind>hook</kind>
+        <symbol>useToast</symbol>
+        <lines>1-50</lines>
+        <reason>Toast notification hook from Story 1.10. Will be used to display success messages after template updates and save-as-new operations.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="next" version="^14.2.0" />
+        <package name="react" version="^18.2.0" />
+        <package name="react-dom" version="^18.2.0" />
+        <package name="@anthropic-ai/sdk" version="^0.67.0" />
+        <package name="@supabase/supabase-js" version="^2.75.1" />
+        <package name="@radix-ui/react-collapsible" version="^1.1.12" />
+        <package name="@radix-ui/react-dialog" version="^1.1.15" />
+        <package name="@radix-ui/react-toast" version="^1.2.15" />
+        <package name="zod" version="^4.1.12" />
+        <package name="lucide-react" version="^0.546.0" />
+        <package name="tailwind-merge" version="^3.3.1" />
+        <package name="class-variance-authority" version="^0.7.1" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    1. Component Location: Extend app/process/page.tsx (currently ~1,195 lines from Story 2.4) - add prompt editing panel to results preview section
+    2. State Management: Use React useState for promptOverride and re-extraction loading state - preserve uploadedFile and selectedTemplate throughout iterations
+    3. API Reuse: No new API routes needed - reuse /api/extract/production (supports promptOverride parameter) and /api/templates/:id (PUT for updates, POST for new)
+    4. Error Handling Pattern: Follow Story 2.3 pattern - try/catch blocks, user-friendly error messages, retry button on failure
+    5. Loading States: Implement spinner with 30s timeout warning consistent with Story 2.3 extraction flow
+    6. UI Component Reuse: All required ShadCN components already installed (Collapsible from 1.8, Textarea from 1.7, Dialog from 2.2, Toast from 1.10)
+    7. Data Format: ExtractedRow[] format must match Story 2.3 output (rowId, confidence, fields, sourceMetadata) for consistent table rendering
+    8. Denormalization: Re-extraction results must maintain flat/denormalized format with header fields repeated per detail row
+    9. Testing: Build and lint must pass (npm run build && npm run lint) - zero errors required before story completion
+    10. Browser Support: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+ - cross-browser testing required
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>POST /api/extract/production</name>
+      <kind>REST endpoint</kind>
+      <signature>POST /api/extract/production
+Request: { documentBase64: string, templateId: string, customPrompt?: string }
+Response: { success: true, data: ExtractedRow[], rowCount: number } | { success: false, error: string, retryable: boolean }</signature>
+      <path>app/api/extract/production/route.ts</path>
+    </interface>
+    <interface>
+      <name>PUT /api/templates/:id</name>
+      <kind>REST endpoint</kind>
+      <signature>PUT /api/templates/:id
+Request: { name?: string, template_type?: string, fields?: TemplateField[], prompts?: TemplatePrompt[] }
+Response: { id: string, name: string, template_type: string, created_at: string, updated_at: string, fields: TemplateField[], prompts: TemplatePrompt[] }</signature>
+      <path>app/api/templates/[id]/route.ts</path>
+    </interface>
+    <interface>
+      <name>POST /api/templates</name>
+      <kind>REST endpoint</kind>
+      <signature>POST /api/templates
+Request: { name: string, template_type: string, fields: TemplateField[], prompts?: TemplatePrompt[] }
+Response: { id: string, name: string, template_type: string, created_at: string, updated_at: string, fields: TemplateField[], prompts: TemplatePrompt[] }</signature>
+      <path>app/api/templates/route.ts</path>
+    </interface>
+    <interface>
+      <name>ExtractedRow</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface ExtractedRow {
+  rowId: string;
+  confidence: number; // 0.0 - 1.0
+  fields: Record&lt;string, any&gt;; // Header + detail fields
+  sourceMetadata: SourceMetadata;
+}</signature>
+      <path>types/extraction.ts</path>
+    </interface>
+    <interface>
+      <name>ProductionExtractionRequestSchema</name>
+      <kind>Zod schema</kind>
+      <signature>z.object({
+  documentBase64: z.string().min(1),
+  templateId: z.string().uuid(),
+  customPrompt: z.string().optional()
+})</signature>
+      <path>types/extraction.ts</path>
+    </interface>
+    <interface>
+      <name>useToast</name>
+      <kind>React hook</kind>
+      <signature>const { toast } = useToast();
+toast({ title: string, description?: string, variant?: 'default' | 'destructive' })</signature>
+      <path>hooks/use-toast.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows Next.js conventions with Jest + React Testing Library. Unit tests for functions, integration tests for API routes, UI tests for components. Build and lint must pass with zero errors (npm run build && npm run lint). Cross-browser testing required for Chrome, Firefox, Safari, Edge. E2E testing with Playwright for complete user flows.
+    </standards>
+    <locations>
+      - Unit tests: __tests__/ directory
+      - Integration tests: __tests__/api/ directory
+      - Component tests: __tests__/components/ directory
+      - E2E tests: e2e/ directory
+    </locations>
+    <ideas>
+      AC1: Test "Adjust Prompts" button appears in results preview, clicking expands panel with pre-populated prompts
+      AC2: Test prompt textarea allows modification and displays character count
+      AC3: Test "Re-extract" button triggers API call with promptOverride parameter
+      AC4: Test uploadedFile and selectedTemplate state preserved across multiple re-extractions
+      AC5: Test extractedData state updates with new results, preview table refreshes
+      AC6: Test iterative loop - perform 3+ re-extractions without errors
+      AC7: Test "Update Template" saves refined prompts to original template via PUT /api/templates/:id
+      AC8: Test "Save as New Template" creates distinct template via POST /api/templates
+      AC9: Test loading spinner displays during re-extraction, buttons disabled
+      AC10: Test API failure shows error message with retry button, retry works correctly
+      Integration: Test complete workflow - upload document, extract, adjust prompts, re-extract, verify results format matches ExtractedRow[]
+      Edge Case: Test empty prompt validation prevents re-extraction
+      Edge Case: Test network timeout shows 30s warning message
+      Edge Case: Test concurrent re-extraction attempts handled gracefully
+      Build: Verify npm run build passes with 0 errors
+      Lint: Verify npm run lint passes with 0 warnings
+    </ideas>
+  </tests>
+</story-context>
