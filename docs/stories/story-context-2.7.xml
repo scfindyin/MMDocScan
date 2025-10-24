@@ -1,0 +1,244 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.7</storyId>
+    <title>Excel File Generation</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.7.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>to generate Excel (.xlsx) files from extracted data</iWant>
+    <soThat>users can export their results in the required format</soThat>
+    <tasks>
+      - Task 1: Install and configure ExcelJS library
+      - Task 2: Create Excel generation utility function
+      - Task 3: Implement data type formatting (text, number, currency, date)
+      - Task 4: Implement column auto-sizing
+      - Task 5: Format header row (bold, background color)
+      - Task 6: Implement low-confidence row highlighting (conditional formatting)
+      - Task 7: Generate in-memory Excel file (client-side)
+      - Task 8: Integration and error handling
+      - Task 9: Testing (unit, integration, manual)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Excel generation library integrated (ExcelJS)
+    2. Function to convert extraction results to Excel format
+    3. Excel file structure:
+       - Single worksheet with extracted data
+       - Column headers match template field names
+       - Header fields repeated on each detail row (flat/denormalized)
+       - Confidence score column included
+       - Source metadata columns included (filename, page number, extraction timestamp)
+    4. Data types preserved (text, numbers, dates formatted correctly)
+    5. Auto-sized columns for readability
+    6. Header row formatted (bold, background color)
+    7. Low-confidence rows highlighted in Excel (conditional formatting)
+    8. File generated in-memory (client-side using ExcelJS in browser)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown - Story 2.7</title>
+        <section>Epic 2: Production Document Processing & Excel Export</section>
+        <snippet>Story 2.7 requires integration of ExcelJS library to generate .xlsx files with proper structure, data type formatting, auto-sized columns, styled header rows, and conditional formatting for low-confidence rows. File must be generated client-side in-memory.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - Excel Export Service</title>
+        <section>Services and Modules - Excel Export Service</section>
+        <snippet>Excel Export Service generates .xlsx files with metadata and confidence scores using ExcelJS library. Frontend (client-side) execution only. Data flow: ExtractedRow[] from React state → ExcelJS transformation → In-memory Buffer → Download.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - Data Models</title>
+        <section>Extracted Data Structure</section>
+        <snippet>ExtractedRow interface defines rowId (string), confidence (0.0-1.0), fields (Record&lt;string, any&gt; with header+detail fields), sourceMetadata (filename, pageNumber, extractedAt timestamp). Header fields are repeated per detail row in flat/denormalized format.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - Dependencies</title>
+        <section>Frontend Dependencies - ExcelJS</section>
+        <snippet>ExcelJS ^4.4.0 chosen for Excel file generation. Browser-compatible build, pure JavaScript, works in browser and serverless, no native dependencies, comprehensive .xlsx support. Alternatives considered: xlsx (less feature-rich), SheetJS (commercial licensing).</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Functional Requirements FR019-FR021</section>
+        <snippet>FR019: System shall generate Excel (.xlsx) files containing extracted tabular data. FR020: System shall repeat header information for each detail row in the Excel output. FR021: System shall include source document metadata (filename, page numbers) and confidence indicators in the Excel output.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>types/extraction.ts</path>
+        <kind>type-definition</kind>
+        <symbol>ExtractedRow</symbol>
+        <lines>16-21</lines>
+        <reason>Primary data structure for Excel export. Contains rowId, confidence score (0.0-1.0), fields (Record&lt;string, any&gt;), and sourceMetadata (filename, pageNumber, extractedAt). This is the input to the Excel generation function.</reason>
+      </artifact>
+      <artifact>
+        <path>types/extraction.ts</path>
+        <kind>type-definition</kind>
+        <symbol>SourceMetadata</symbol>
+        <lines>6-10</lines>
+        <reason>Metadata structure included in each ExtractedRow. Contains filename (string), optional pageNumber (number), and extractedAt (ISO 8601 timestamp). Must be included as columns in Excel export.</reason>
+      </artifact>
+      <artifact>
+        <path>types/template.ts</path>
+        <kind>type-definition</kind>
+        <symbol>TemplateField</symbol>
+        <lines>50-58</lines>
+        <reason>Defines field structure with field_name, field_type (text/number/date/currency), and is_header boolean. Used to generate column headers and determine data type formatting in Excel.</reason>
+      </artifact>
+      <artifact>
+        <path>types/template.ts</path>
+        <kind>type-definition</kind>
+        <symbol>FieldType</symbol>
+        <lines>19-24</lines>
+        <reason>Enum defining supported field types: TEXT, NUMBER, DATE, CURRENCY. Critical for applying correct Excel cell formatting and number formats.</reason>
+      </artifact>
+      <artifact>
+        <path>types/template.ts</path>
+        <kind>type-definition</kind>
+        <symbol>TemplateWithRelations</symbol>
+        <lines>76-79</lines>
+        <reason>Complete template structure including fields array. Input to Excel generation function to determine column structure and ordering.</reason>
+      </artifact>
+      <artifact>
+        <path>app/process/page.tsx</path>
+        <kind>component</kind>
+        <symbol>ProcessPage</symbol>
+        <lines>1-1518</lines>
+        <reason>Production document processing UI. Contains extraction results state (ExtractedRow[]). Integration point for Excel export - will call Excel generation utility when user clicks "Export to Excel" button (Story 2.8).</reason>
+      </artifact>
+      <artifact>
+        <path>lib/utils.ts</path>
+        <kind>utility</kind>
+        <symbol>cn</symbol>
+        <lines>1-6</lines>
+        <reason>Standard utility pattern used in project for className merging with Tailwind. Example of lib/ organization pattern to follow for new lib/excel/ module.</reason>
+      </artifact>
+      <artifact>
+        <path>lib/supabase.ts</path>
+        <kind>utility</kind>
+        <symbol>createClient</symbol>
+        <lines>1-10</lines>
+        <reason>Example of singleton service pattern used in lib/ folder. Shows project conventions for creating reusable utility modules.</reason>
+      </artifact>
+      <artifact>
+        <path>lib/db/templates.ts</path>
+        <kind>data-access</kind>
+        <symbol>getTemplateById</symbol>
+        <lines>1-150</lines>
+        <reason>Data access layer pattern for template operations. Demonstrates error handling patterns and TypeScript typing conventions used in lib/ modules.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <next>^14.2.0</next>
+        <react>^18.2.0</react>
+        <react-dom>^18.2.0</react-dom>
+        <typescript>^5.3.0</typescript>
+        <zod>^4.1.12</zod>
+        <lucide-react>^0.546.0</lucide-react>
+        <tailwindcss>^3.4.0</tailwindcss>
+        <anthropic-ai-sdk>^0.67.0</anthropic-ai-sdk>
+        <supabase-supabase-js>^2.75.1</supabase-supabase-js>
+        <radix-ui>Multiple packages for UI components</radix-ui>
+      </node>
+      <note>ExcelJS ^4.4.0 needs to be added as a new dependency for this story. Browser-compatible build required.</note>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Place Excel utilities in lib/excel/ following existing lib/ organization pattern (lib/utils.ts, lib/supabase.ts, lib/db/templates.ts)
+    - Use TypeScript with strict type safety for all Excel operations
+    - Client-side execution only - no server-side processing or storage
+    - File must be generated in-memory using ExcelJS writeBuffer() method
+    - Data must be in flat/denormalized format with header fields repeated per detail row
+    - Confidence score threshold for highlighting: &lt; 0.7 = low confidence (yellow/orange background)
+    - Column width constraints: min 10, max 50 character width
+    - Header row styling: Bold font, background color (#D3D3D3 light gray or #4472C4 blue), centered text
+    - Data type formatting based on FieldType enum: TEXT (string), NUMBER (numeric with decimals), CURRENCY ($#,##0.00), DATE (YYYY-MM-DD)
+    - Follow existing error handling patterns from lib/db/templates.ts
+    - Export function signature: generateExcelFile(extractedData: ExtractedRow[], template: TemplateWithRelations): Promise&lt;Buffer&gt;
+    - Integration point: app/process/page.tsx will import and call this utility (Story 2.8)
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>generateExcelFile</name>
+      <kind>function-signature</kind>
+      <signature>generateExcelFile(extractedData: ExtractedRow[], template: TemplateWithRelations): Promise&lt;Buffer&gt;</signature>
+      <path>lib/excel/export.ts</path>
+      <description>Main Excel generation function. Takes extracted data and template, returns Excel file as Buffer for download.</description>
+    </interface>
+    <interface>
+      <name>ExtractedRow</name>
+      <kind>TypeScript-interface</kind>
+      <signature>interface ExtractedRow { rowId: string; confidence: number; fields: Record&lt;string, any&gt;; sourceMetadata: SourceMetadata; }</signature>
+      <path>types/extraction.ts</path>
+      <description>Input data structure for Excel export. Each row contains all fields (header + detail) in denormalized format, plus confidence score and source metadata.</description>
+    </interface>
+    <interface>
+      <name>TemplateWithRelations</name>
+      <kind>TypeScript-interface</kind>
+      <signature>interface TemplateWithRelations extends Template { fields?: TemplateField[]; prompts?: TemplatePrompt[]; }</signature>
+      <path>types/template.ts</path>
+      <description>Complete template structure including fields array. Used to determine Excel column headers, ordering, and data type formatting.</description>
+    </interface>
+    <interface>
+      <name>FieldType</name>
+      <kind>TypeScript-enum</kind>
+      <signature>enum FieldType { TEXT = 'text', NUMBER = 'number', DATE = 'date', CURRENCY = 'currency' }</signature>
+      <path>types/template.ts</path>
+      <description>Defines supported field types for data type formatting. Maps to Excel cell formats.</description>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests use Jest + React Testing Library. Test files colocated with source or in __tests__ directories. Integration tests verify full workflows. Manual testing required for Excel file validation (open in Microsoft Excel and Google Sheets). Type safety enforced via TypeScript strict mode. Edge cases tested: empty data, single row, large datasets (100+ rows), missing/null values, Unicode characters, very long text values.
+    </standards>
+    <locations>
+      - lib/excel/__tests__/export.test.ts (new unit tests)
+      - Integration tests in existing test suites for app/process/page.tsx
+    </locations>
+    <ideas>
+      <test ac="1">Test: Install ExcelJS package and verify import works without errors</test>
+      <test ac="2">Test: generateExcelFile function accepts ExtractedRow[] and TemplateWithRelations, returns Promise&lt;Buffer&gt;</test>
+      <test ac="3">Test: Generated workbook contains single worksheet with correct column headers matching template field names + metadata columns</test>
+      <test ac="3">Test: Header fields are repeated on each detail row (denormalized structure validation)</test>
+      <test ac="3">Test: Confidence score column present with numeric values 0.0-1.0</test>
+      <test ac="3">Test: Source metadata columns present (filename, extraction timestamp)</test>
+      <test ac="4">Test: Text fields render as string cells</test>
+      <test ac="4">Test: Number fields render with numeric format and decimal places</test>
+      <test ac="4">Test: Currency fields render with currency format ($#,##0.00)</test>
+      <test ac="4">Test: Date fields render with date format (YYYY-MM-DD)</test>
+      <test ac="5">Test: Column widths are auto-sized based on content</test>
+      <test ac="5">Test: Column widths respect min 10, max 50 constraints</test>
+      <test ac="6">Test: Header row has bold font applied</test>
+      <test ac="6">Test: Header row has background color (#D3D3D3 or #4472C4)</test>
+      <test ac="6">Test: Header row text is center-aligned</test>
+      <test ac="7">Test: Rows with confidence &lt; 0.7 have yellow/orange background fill</test>
+      <test ac="7">Test: Conditional formatting doesn't override cell data visibility</test>
+      <test ac="8">Test: File generated using writeBuffer() method (in-memory)</test>
+      <test ac="8">Test: No server-side storage occurs (client-side only verification)</test>
+      <test ac="all">Test: Error handling for empty data array (0 rows)</test>
+      <test ac="all">Test: Error handling for missing required fields in template</test>
+      <test ac="all">Test: Error handling for malformed ExtractedRow data</test>
+      <test ac="all">Test: Integration test - Full workflow from extraction results to Excel Buffer</test>
+      <test ac="all">Manual test: Open generated .xlsx file in Microsoft Excel - verify formatting</test>
+      <test ac="all">Manual test: Open generated .xlsx file in Google Sheets - verify formatting</test>
+      <test ac="all">Manual test: Verify Unicode characters render correctly</test>
+      <test ac="all">Manual test: Verify very long text values don't break column sizing</test>
+    </ideas>
+  </tests>
+</story-context>

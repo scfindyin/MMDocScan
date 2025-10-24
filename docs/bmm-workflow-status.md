@@ -30,9 +30,9 @@ STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2
 
 ## Next Action
 
-NEXT_ACTION: Story 2.6 approved and complete. Story 2.7 (Excel File Generation) moved to IN PROGRESS. Load SM agent to draft/approve Story 2.7, then implement with DEV agent.
-NEXT_COMMAND: Load SM agent, run create-story workflow for Story 2.7
-NEXT_AGENT: scrum-master
+NEXT_ACTION: Story 2.7 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
+NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
+NEXT_AGENT: developer
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) ✅ COMPLETE (10 of 10 complete)
@@ -272,8 +272,8 @@ NEXT_AGENT: scrum-master
 
 ---
 
-_Last Updated: 2025-10-24 (Story 2.6 approved and done - Epic 2: 6 of 9 complete - Story 2.7 moved to IN PROGRESS)_
-_Status Version: 17.0_
+_Last Updated: 2025-10-24 (Story 2.7 implementation complete - Ready for Review - Epic 2: 6 of 9 complete - Story 2.7 in progress)_
+_Status Version: 17.3_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
@@ -292,8 +292,8 @@ _Story 1.9 Approved: 2025-10-23_
 _Story 1.10 Approved: 2025-10-23_
 _Epic 1 Status: ✅ COMPLETE - 10 of 10 stories done (100%)_
 _Epic 2 Status: 6 of 9 stories done (66.7%) - Story 2.7 in progress_
-_Progress: 16 of 19 stories complete (84.2%), Story 2.7 moved to IN PROGRESS_
-_Next: Load SM agent to draft/approve Story 2.7, then implement with DEV agent_
+_Progress: 16 of 19 stories complete (84.2%), Story 2.7 ready for implementation_
+_Next: Load DEV agent (bmad/bmm/agents/dev.md) and run dev-story to implement Story 2.7_
 _Story 2.5 Approved: 2025-10-24_
 _Story 2.6 Approved: 2025-10-24_
 _Milestone Achieved: Epic 1 deliverable - Users can create, test, save, and edit validated extraction templates_
