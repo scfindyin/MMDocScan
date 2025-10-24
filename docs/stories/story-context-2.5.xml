@@ -1,0 +1,357 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.5</storyId>
+    <title>Review Low-Confidence Extractions</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-23</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>easily identify and review low-confidence extractions</iWant>
+    <soThat>I can assess data quality before export</soThat>
+    <tasks>
+      <taskGroup id="1" name="Validate Existing Low-Confidence Filter Implementation" acs="1,2,3,4,5,6,7">
+        <task id="1.1" name="Review and test existing filter toggle implementation from Story 2.4">
+          <subtask id="1.1.1">Verify "Show low-confidence only" checkbox functions correctly (app/process/page.tsx:913-927)</subtask>
+          <subtask id="1.1.2">Test filter with datasets containing various confidence levels (0%, 50%, 70%, 90%, 100%)</subtask>
+          <subtask id="1.1.3">Verify filter state persists correctly during sorting operations</subtask>
+          <subtask id="1.1.4">Test filter toggle on/off behavior and immediate UI updates</subtask>
+        </task>
+        <task id="1.2" name="Validate confidence score threshold indicator">
+          <subtask id="1.2.1">Verify 0.7 (70%) threshold is correctly applied throughout the codebase</subtask>
+          <subtask id="1.2.2">Test tooltip on Confidence column header displays correct threshold info (app/process/page.tsx:985-993)</subtask>
+          <subtask id="1.2.3">Verify tooltip shows "Low confidence: &lt; 70%" and "High confidence: ≥ 70%"</subtask>
+          <subtask id="1.2.4">Test tooltip visibility on hover across browsers (Chrome, Firefox, Safari, Edge)</subtask>
+        </task>
+        <task id="1.3" name="Validate visual distinction for low-confidence rows">
+          <subtask id="1.3.1">Verify low-confidence rows have yellow/orange background (from Story 2.4)</subtask>
+          <subtask id="1.3.2">Test visual distinction is clear and readable on different screen sizes</subtask>
+          <subtask id="1.3.3">Verify text remains legible on highlighted background</subtask>
+          <subtask id="1.3.4">Test color accessibility (contrast ratios meet WCAG guidelines)</subtask>
+        </task>
+        <task id="1.4" name="Test confidence score sorting functionality">
+          <subtask id="1.4.1">Verify clicking Confidence column header sorts rows by confidence (app/process/page.tsx:979-982)</subtask>
+          <subtask id="1.4.2">Test ascending sort (lowest confidence first)</subtask>
+          <subtask id="1.4.3">Test descending sort (highest confidence first)</subtask>
+          <subtask id="1.4.4">Verify sort direction indicator (arrows) displays correctly</subtask>
+        </task>
+        <task id="1.5" name="Validate summary statistics display">
+          <subtask id="1.5.1">Verify row count summary displays correctly (app/process/page.tsx:888-911)</subtask>
+          <subtask id="1.5.2">Test "X high-confidence, Y low-confidence" display with various datasets</subtask>
+          <subtask id="1.5.3">Verify summary updates when filter is toggled</subtask>
+          <subtask id="1.5.4">Test "Showing X of Y rows" display when filter is active</subtask>
+        </task>
+        <task id="1.6" name="Test 'no low-confidence rows' messaging">
+          <subtask id="1.6.1">Verify celebratory message displays when all rows are high-confidence (app/process/page.tsx:930-939)</subtask>
+          <subtask id="1.6.2">Test message: "No low-confidence rows found. All extractions are high-confidence!"</subtask>
+          <subtask id="1.6.3">Verify green success indicator (CheckCircle icon) displays</subtask>
+          <subtask id="1.6.4">Test message appears when filter is toggled with 100% high-confidence dataset</subtask>
+        </task>
+      </taskGroup>
+      <taskGroup id="2" name="Potential Enhancements and Edge Cases" optional="true" />
+      <taskGroup id="3" name="Documentation and User Guidance" />
+      <taskGroup id="4" name="Integration Testing with Related Stories" />
+      <taskGroup id="5" name="Testing, Build, and Validation (Standard)">
+        <task id="5.1" name="Manual testing across acceptance criteria">
+          <subtask id="5.1.1">AC1 - Verify filter toggle works correctly</subtask>
+          <subtask id="5.1.2">AC2 - Verify threshold indicator displays in tooltip</subtask>
+          <subtask id="5.1.3">AC3 - Verify low-confidence rows are visually distinct</subtask>
+          <subtask id="5.1.4">AC4 - Verify confidence tooltip explains scoring on hover</subtask>
+          <subtask id="5.1.5">AC5 - Verify sorting by confidence score (both directions)</subtask>
+          <subtask id="5.1.6">AC6 - Verify summary stats display high/low confidence counts</subtask>
+          <subtask id="5.1.7">AC7 - Verify "all high-confidence" message displays correctly</subtask>
+        </task>
+        <task id="5.2" name="Cross-browser testing" />
+        <task id="5.3" name="Performance testing" />
+        <task id="5.4" name="Build validation" />
+        <task id="5.5" name="User acceptance testing" />
+      </taskGroup>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">"Show Low-Confidence Only" filter toggle</criterion>
+    <criterion id="2">Confidence score threshold indicator (e.g., &lt; 70% = low confidence)</criterion>
+    <criterion id="3">Low-confidence rows visually distinct from high-confidence rows</criterion>
+    <criterion id="4">Confidence score tooltip explains scoring (hover for details)</criterion>
+    <criterion id="5">Can sort by confidence score (lowest first)</criterion>
+    <criterion id="6">Summary stats displayed: "X high-confidence, Y low-confidence rows"</criterion>
+    <criterion id="7">Clear indication when no low-confidence rows exist ("All extractions high-confidence")</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown - Story 2.5</title>
+        <section>Story 2.5: Review Low-Confidence Extractions</section>
+        <snippet>AC1: "Show Low-Confidence Only" filter toggle. AC2: Confidence score threshold indicator. AC3-7: Visual distinction, tooltip, sorting, summary stats, and "all high-confidence" messaging. Low-confidence threshold: &lt; 70% (lines 360-376)</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR014, FR015 - Confidence Scoring and Flagging</section>
+        <snippet>FR014: System shall generate confidence scores for extracted data rows. FR015: System shall flag low-confidence rows for user review. User Journey Step 4: Review results with confidence indicators and low-confidence flagging (lines 46-51, 97-103)</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - Complete Solution</title>
+        <section>Data Models - ExtractedRow, AC2.5, RISK-1</section>
+        <snippet>ExtractedRow interface includes confidence: number (0.0-1.0). Low-confidence threshold: 0.7 defined in tech spec. AC2.5: System flags low-confidence rows with visual indicators. RISK-1 addresses confidence scoring accuracy for billing validation (lines 121-133, 534-540, 591-602)</snippet>
+      </doc>
+      <doc>
+        <path>docs/technical-decisions.md</path>
+        <title>Technical Decisions Log</title>
+        <section>TD001: Confidence Scoring Granularity</section>
+        <snippet>Decision: Row-level confidence scores rather than per-field. Rationale: Per-field too granular; row-level provides sufficient quality visibility while maintaining usability. Users scan for low-confidence rows needing manual review (lines 16-26)</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.4.md</path>
+        <title>Story 2.4: Extraction Results Preview Table (COMPLETED)</title>
+        <section>Implementation - Lines 888-1108 in app/process/page.tsx</section>
+        <snippet>Story 2.4 already implemented ALL Story 2.5 acceptance criteria: Filter toggle (913-927), threshold tooltip (985-993), visual distinction (yellow/orange background), confidence sorting (979-982), summary stats (888-911), celebratory message (930-939). Story 2.5 focuses on validation/testing of existing implementation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-2.3.md</path>
+        <title>Story 2.3: Production Document Extraction (COMPLETED)</title>
+        <section>Confidence Scoring Algorithm</section>
+        <snippet>Confidence scores calculated in extraction API (app/api/extract/production/route.ts) using field completeness × type validity algorithm. Returns ExtractedRow[] with confidence 0.0-1.0. Referenced by Story 2.5 for validation testing.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>app/process/page.tsx</path>
+        <kind>React Page Component</kind>
+        <symbol>ProcessPage (results step)</symbol>
+        <lines>888-1108</lines>
+        <reason>Primary implementation of all Story 2.5 features: filter toggle, summary stats, confidence sorting, tooltip, visual flagging, celebratory message. All ACs already implemented here.</reason>
+      </artifact>
+      <artifact>
+        <path>app/process/page.tsx</path>
+        <kind>State Variables</kind>
+        <symbol>showLowConfidenceOnly, sortColumn, sortDirection</symbol>
+        <lines>36-38 (approx)</lines>
+        <reason>State management for filter toggle and sorting functionality. Controls which rows are visible and sort order.</reason>
+      </artifact>
+      <artifact>
+        <path>app/process/page.tsx</path>
+        <kind>Helper Functions</kind>
+        <symbol>getFilteredData, getRowCounts, formatConfidence</symbol>
+        <lines>Various (within component)</lines>
+        <reason>Core logic for filtering low-confidence rows, calculating summary statistics, and formatting confidence scores as percentages.</reason>
+      </artifact>
+      <artifact>
+        <path>types/extraction.ts</path>
+        <kind>TypeScript Interface</kind>
+        <symbol>ExtractedRow</symbol>
+        <lines>1-20 (approx)</lines>
+        <reason>Data structure containing confidence field (0.0-1.0) used for filtering and display. Critical to understanding confidence review workflow.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/extract/production/route.ts</path>
+        <kind>API Route</kind>
+        <symbol>POST handler - confidence calculation</symbol>
+        <lines>Various</lines>
+        <reason>Generates confidence scores using field completeness × type validity algorithm. Source of confidence data displayed in Story 2.5 features.</reason>
+      </artifact>
+      <artifact>
+        <path>components/ui/tooltip.tsx</path>
+        <kind>ShadCN Component</kind>
+        <symbol>Tooltip, TooltipTrigger, TooltipContent</symbol>
+        <lines>All</lines>
+        <reason>Tooltip component used to display confidence threshold explanation on hover (AC4). Installed in Story 2.4.</reason>
+      </artifact>
+      <artifact>
+        <path>components/ui/checkbox.tsx</path>
+        <kind>ShadCN Component</kind>
+        <symbol>Checkbox</symbol>
+        <lines>All</lines>
+        <reason>Checkbox component for "Show low-confidence only" filter toggle (AC1).</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="next" version="^14.2.0" purpose="React framework with SSR, API routes" />
+        <package name="react" version="^18.2.0" purpose="UI library" />
+        <package name="@radix-ui/react-tooltip" version="^1.2.8" purpose="Tooltip for confidence threshold explanation" />
+        <package name="@radix-ui/react-checkbox" version="^1.3.3" purpose="Filter toggle checkbox component" />
+        <package name="@radix-ui/react-toast" version="^1.2.15" purpose="Toast notifications" />
+        <package name="lucide-react" version="^0.546.0" purpose="Icons (CheckCircle2, AlertCircle, Info, ArrowUp/Down)" />
+        <package name="tailwindcss" version="^3.4.0" purpose="Utility-first CSS for visual styling and flagging" />
+        <package name="class-variance-authority" version="^0.7.1" purpose="Component variant management" />
+        <package name="clsx" version="^2.1.1" purpose="Conditional className utility" />
+        <package name="tailwind-merge" version="^3.3.1" purpose="Tailwind class merging" />
+        <package name="typescript" version="^5.3.0" purpose="Type safety" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="implementation-status">All 7 acceptance criteria already implemented in Story 2.4 (app/process/page.tsx lines 888-1108). This story focuses on comprehensive VALIDATION and TESTING rather than new implementation.</constraint>
+    <constraint type="threshold">Low-confidence threshold fixed at 0.7 (70%) per tech spec. Do NOT change without updating tech spec and re-validating with stakeholders.</constraint>
+    <constraint type="visual-design">Visual flagging must use yellow/orange background for low-confidence rows with sufficient contrast for readability (WCAG guidelines). Text must remain legible on highlighted background.</constraint>
+    <constraint type="client-side-logic">All filtering and sorting logic is client-side (no API calls). Filter applies before sorting to maintain correct row counts and order.</constraint>
+    <constraint type="state-management">Filter state (showLowConfidenceOnly) must persist during sorting operations. Do NOT reset filter when user sorts columns.</constraint>
+    <constraint type="testing-focus">Primary focus is manual testing, edge case validation, cross-browser compatibility, performance testing, and user acceptance testing of existing implementation.</constraint>
+    <constraint type="integration">Story 2.5 features must integrate seamlessly with Story 2.4 table (sorting, responsive design) and prepare for Story 2.6 (prompt refinement trigger).</constraint>
+    <constraint type="blue-accent-theme">Maintain blue accent theme consistent with production processing workflow (Stories 2.1, 2.2, 2.3, 2.4).</constraint>
+    <constraint type="no-new-files">No new component files required. All functionality exists in app/process/page.tsx. Focus on validation, not implementation.</constraint>
+    <constraint type="accessibility">Tooltip, checkbox, and filter controls must be keyboard-accessible and screen reader compatible (ARIA labels where appropriate).</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>ExtractedRow (Type)</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+        interface ExtractedRow {
+          rowId: string;
+          confidence: number; // 0.0 - 1.0
+          fields: Record&lt;string, any&gt;; // Header + detail fields (flat/denormalized)
+          sourceMetadata: {
+            filename: string;
+            pageNumber?: number;
+            extractedAt: string;
+          };
+        }
+      </signature>
+      <path>types/extraction.ts</path>
+      <usage>Core data structure containing confidence field used for filtering, sorting, and display. Story 2.5 validates correct handling of this interface.</usage>
+    </interface>
+    <interface>
+      <name>getFilteredData Function</name>
+      <kind>Helper Function</kind>
+      <signature>
+        const getFilteredData = (): ExtractedRow[] => {
+          if (!extractedData) return [];
+          if (showLowConfidenceOnly) {
+            return extractedData.filter(row => row.confidence &lt; 0.7);
+          }
+          return extractedData;
+        }
+      </signature>
+      <path>app/process/page.tsx</path>
+      <usage>Filters extraction results to show only low-confidence rows when toggle is enabled. Uses 0.7 threshold. Returns filtered array for table rendering.</usage>
+    </interface>
+    <interface>
+      <name>getRowCounts Function</name>
+      <kind>Helper Function</kind>
+      <signature>
+        const getRowCounts = () => {
+          const total = extractedData?.length || 0;
+          const high = extractedData?.filter(row => row.confidence >= 0.7).length || 0;
+          const low = extractedData?.filter(row => row.confidence &lt; 0.7).length || 0;
+          const filtered = getFilteredData().length;
+          return { total, high, low, filtered };
+        }
+      </signature>
+      <path>app/process/page.tsx</path>
+      <usage>Calculates summary statistics for display: total rows, high-confidence count, low-confidence count, filtered count. Used in AC6 summary stats display.</usage>
+    </interface>
+    <interface>
+      <name>formatConfidence Function</name>
+      <kind>Helper Function</kind>
+      <signature>
+        const formatConfidence = (confidence: number): string => {
+          return `${Math.round(confidence * 100)}%`;
+        }
+      </signature>
+      <path>app/process/page.tsx</path>
+      <usage>Formats confidence score (0.0-1.0) as percentage string for display (e.g., 0.85 → "85%"). Used in confidence column rendering.</usage>
+    </interface>
+    <interface>
+      <name>handleSort Function</name>
+      <kind>Event Handler</kind>
+      <signature>
+        const handleSort = (column: string) => {
+          if (sortColumn === column) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+          } else {
+            setSortColumn(column);
+            setSortDirection('asc');
+          }
+        }
+      </signature>
+      <path>app/process/page.tsx</path>
+      <usage>Handles column header clicks for sorting. Toggles sort direction for active column or sets new sort column. Used for confidence sorting (AC5).</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <framework>Manual Testing (Primary)</framework>
+      <approach>Comprehensive manual testing across all 7 acceptance criteria with multiple datasets and edge cases. Focus on validation of existing implementation rather than unit tests.</approach>
+      <coverage>
+        <item>Functional validation: All ACs with various confidence distributions (0%, 50%, 70%, 100% low-confidence)</item>
+        <item>Edge cases: Boundary testing (confidence = 0.69, 0.70, 0.71), 0 rows, 1 row, 500+ rows</item>
+        <item>Cross-browser: Chrome, Firefox, Safari, Edge (latest versions)</item>
+        <item>Performance: Filter toggle response time (&lt; 100ms target), sorting performance with large datasets</item>
+        <item>Accessibility: Keyboard navigation, screen reader compatibility, color contrast (WCAG)</item>
+        <item>Integration: Seamless operation with Story 2.4 table features (sorting, responsive design)</item>
+        <item>User acceptance: Validate 0.7 threshold appropriateness with real billing documents and stakeholder feedback</item>
+      </coverage>
+      <build-validation>Run `npm run build` and `npm run lint` to verify no regressions. Check bundle size (should be unchanged from Story 2.4).</build-validation>
+    </standards>
+
+    <locations>
+      <location>Manual testing in local development environment (npm run dev)</location>
+      <location>Manual testing on Vercel preview/production deployment</location>
+      <location>Cross-browser testing on physical devices or BrowserStack</location>
+      <location>User acceptance testing with stakeholder/end-user</location>
+      <note>No automated test files exist yet. Story focuses on manual validation and documentation of test results.</note>
+    </locations>
+
+    <ideas>
+      <idea ac="1">
+        <test>Filter Toggle Functional Test</test>
+        <approach>Test "Show low-confidence only" checkbox with datasets containing: (a) 0% low-confidence (all high), (b) 50% low-confidence, (c) 100% low-confidence (all low). Verify checkbox toggles filter state correctly and table updates immediately.</approach>
+      </idea>
+      <idea ac="2">
+        <test>Threshold Indicator Tooltip Test</test>
+        <approach>Hover over Info icon next to Confidence column header. Verify tooltip displays "Low confidence: &lt; 70%" and "High confidence: ≥ 70%". Test across all 4 browsers.</approach>
+      </idea>
+      <idea ac="3">
+        <test>Visual Distinction Test</test>
+        <approach>Extract document with mixed confidence scores. Verify rows with confidence &lt; 0.7 have yellow/orange background. Verify text is legible. Test color contrast ratio meets WCAG AA standard (4.5:1 for normal text).</approach>
+      </idea>
+      <idea ac="4">
+        <test>Confidence Tooltip Explanation Test</test>
+        <approach>Same as AC2 test - tooltip on Confidence header explains scoring methodology. Verify tooltip appears on both hover and keyboard focus (accessibility).</approach>
+      </idea>
+      <idea ac="5">
+        <test>Confidence Sorting Test</test>
+        <approach>Click Confidence column header. Verify first click sorts ascending (lowest first), second click descending (highest first). Verify arrow indicators update correctly. Test with dataset having duplicate confidence values.</approach>
+      </idea>
+      <idea ac="6">
+        <test>Summary Stats Display Test</test>
+        <approach>Extract document and verify summary shows: "Showing X rows (Y high-confidence, Z low-confidence)". Toggle filter and verify summary updates to "Showing X of Y rows". Test with edge cases: 0 rows, all high, all low.</approach>
+      </idea>
+      <idea ac="7">
+        <test>All High-Confidence Message Test</test>
+        <approach>Extract document with all high-confidence rows (confidence ≥ 0.7). Toggle "Show low-confidence only" filter. Verify green success message: "No low-confidence rows found. All extractions are high-confidence!" with CheckCircle icon.</approach>
+      </idea>
+      <idea ac="all">
+        <test>Edge Case: Boundary Testing</test>
+        <approach>Test with confidence scores at exact threshold: 0.69, 0.70, 0.71. Verify 0.69 is flagged low-confidence, 0.70 and 0.71 are high-confidence. Ensure threshold logic is inclusive/exclusive correctly.</approach>
+      </idea>
+      <idea ac="all">
+        <test>Performance Test: Large Datasets</test>
+        <approach>Test filter toggle with 500+ row dataset. Measure response time (target &lt; 100ms). Test sorting performance. Monitor memory usage during filter/sort operations.</approach>
+      </idea>
+      <idea ac="all">
+        <test>Integration Test: Filter + Sort Combination</test>
+        <approach>Enable "Show low-confidence only" filter, then sort by different columns (confidence, field values). Verify filter persists, summary stats update correctly, and sort works only on filtered rows.</approach>
+      </idea>
+      <idea ac="all">
+        <test>User Acceptance Test</test>
+        <approach>Process real billing document with stakeholder. Gather feedback on: (1) Is 0.7 threshold appropriate? (2) Is visual distinction clear? (3) Are summary stats helpful? (4) Does workflow support quality assessment goals?</approach>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

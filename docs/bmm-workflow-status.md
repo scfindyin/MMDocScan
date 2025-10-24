@@ -25,14 +25,14 @@ STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1"
 TODO_STORY: 2.6
 TODO_TITLE: Iterative Prompt Refinement
 IN_PROGRESS_STORY: 2.5
-IN_PROGRESS_TITLE: Review Low-Confidence Extractions
+IN_PROGRESS_TITLE: Review Low-Confidence Extractions (Ready for Review)
 STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4"]
 
 ## Next Action
 
-NEXT_ACTION: Story 2.4 approved and marked done. Story 2.5 marked IN PROGRESS. Draft story with SM agent using create-story workflow.
-NEXT_COMMAND: create-story
-NEXT_AGENT: scrum-master
+NEXT_ACTION: Story 2.5 validation complete and ready for review. All 7 acceptance criteria verified through code review. Run story-approved workflow when Definition of Done is verified.
+NEXT_COMMAND: story-approved
+NEXT_AGENT: developer
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) ✅ COMPLETE (10 of 10 complete)
@@ -52,7 +52,7 @@ NEXT_AGENT: scrum-master
 - Story 2.2: Template Selection for Production Processing ✓
 - Story 2.3: Production Document Extraction ✓
 - Story 2.4: Extraction Results Preview Table ✓
-- Story 2.5: Review Low-Confidence Extractions 🔄 IN PROGRESS
+- Story 2.5: Review Low-Confidence Extractions 🔄 IN PROGRESS (Ready for Review)
 - Story 2.6: Iterative Prompt Refinement
 - Story 2.7: Excel File Generation
 - Story 2.8: Excel Export and Download
@@ -245,8 +245,8 @@ NEXT_AGENT: scrum-master
 
 ---
 
-_Last Updated: 2025-10-23 (Story 2.4 approved - Epic 2: 4 of 9 complete - Story 2.5 IN PROGRESS)_
-_Status Version: 14.0_
+_Last Updated: 2025-10-23 (Story 2.5 validation complete - Epic 2: 4 of 9 complete - Story 2.5 ready for review)_
+_Status Version: 14.4_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
@@ -264,7 +264,7 @@ _Story 2.3 Approved: 2025-10-23_
 _Story 1.9 Approved: 2025-10-23_
 _Story 1.10 Approved: 2025-10-23_
 _Epic 1 Status: ✅ COMPLETE - 10 of 10 stories done (100%)_
-_Epic 2 Status: 4 of 9 stories done (44.4%) - Story 2.5 IN PROGRESS_
-_Progress: 14 of 19 stories complete (73.7%), Story 2.5 IN PROGRESS_
-_Next: Draft Story 2.5 (Review Low-Confidence Extractions) with SM agent_
+_Epic 2 Status: 4 of 9 stories done (44.4%) - Story 2.5 validation complete (ready for review)_
+_Progress: 14 of 19 stories complete (73.7%), Story 2.5 validation complete and ready for review_
+_Next: Review Story 2.5, then run story-approved workflow to mark done and advance queue_
 _Milestone Achieved: Epic 1 deliverable - Users can create, test, save, and edit validated extraction templates_
