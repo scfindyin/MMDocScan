@@ -33,6 +33,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { generateExcelFile } from "@/lib/excel/export";
 import { Input } from "@/components/ui/input";
 import {
   Collapsible,
@@ -90,6 +91,12 @@ export default function ProcessDocumentsPage() {
   const [showSaveAsNewDialog, setShowSaveAsNewDialog] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState<string>('');
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+
+  // Excel export state
+  const [isExporting, setIsExporting] = useState(false);
+  const [showFilenameDialog, setShowFilenameDialog] = useState(false);
+  const [customFilename, setCustomFilename] = useState<string>('');
+  const [exportError, setExportError] = useState<string | null>(null);
 
   // Toast for placeholder buttons
   const { toast } = useToast();
@@ -543,12 +550,144 @@ export default function ProcessDocumentsPage() {
     setShowLowConfidenceOnly(false);
   };
 
-  // Placeholder button handlers
-  const handleExportPlaceholder = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Excel export will be implemented in Story 2.7",
-    });
+  // Generate suggested filename for Excel export
+  const generateFilename = async (): Promise<string> => {
+    if (!uploadedFile) {
+      return 'extraction_results.xlsx';
+    }
+
+    // Fetch template name if we have a selected template
+    let templateName = 'extraction';
+    if (selectedTemplateId) {
+      try {
+        const response = await fetch(`/api/templates/${selectedTemplateId}`);
+        if (response.ok) {
+          const data = await response.json();
+          templateName = data.template.name || 'extraction';
+        }
+      } catch (error) {
+        console.error('Failed to fetch template name for filename:', error);
+      }
+    }
+
+    // Get document name without extension
+    const documentName = uploadedFile.name.replace(/\.[^/.]+$/, '');
+
+    // Get current date in YYYY-MM-DD format
+    const date = new Date().toISOString().split('T')[0];
+
+    // Sanitize: replace spaces with hyphens, remove special characters
+    const sanitize = (str: string) =>
+      str.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
+
+    return `${sanitize(templateName)}_${sanitize(documentName)}_${date}.xlsx`;
+  };
+
+  // Handle Export to Excel button click
+  const handleExportExcel = async () => {
+    if (!extractedData || extractedData.length === 0 || !selectedTemplateId) {
+      toast({
+        title: "Export Error",
+        description: "No data available to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Generate suggested filename and show dialog
+    const suggested = await generateFilename();
+    setCustomFilename(suggested);
+    setShowFilenameDialog(true);
+  };
+
+  // Perform Excel export with chosen filename
+  const performExcelExport = async (filename: string) => {
+    if (!extractedData || !selectedTemplateId) return;
+
+    setIsExporting(true);
+    setExportError(null);
+
+    try {
+      // Fetch full template data (we only have ID in state)
+      const response = await fetch(`/api/templates/${selectedTemplateId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch template data for export');
+      }
+      const templateData = await response.json();
+
+      // Call generateExcelFile from Story 2.7
+      const buffer = await generateExcelFile(extractedData, {
+        ...templateData.template,
+        fields: templateData.fields,
+        prompts: templateData.prompts,
+      });
+
+      // Convert Buffer to Blob for browser download
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+
+      // Create blob URL and trigger download
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      // Close dialog and show success message
+      setShowFilenameDialog(false);
+      setIsExporting(false);
+
+      toast({
+        title: "Excel file downloaded successfully",
+        description: `${extractedData.length} rows exported to ${filename}`,
+      });
+    } catch (error) {
+      console.error('Excel export error:', error);
+      setIsExporting(false);
+      const errorMessage = error instanceof Error
+        ? error.message
+        : 'Failed to generate Excel file';
+
+      setExportError(errorMessage);
+      toast({
+        title: "Export Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle filename dialog confirm
+  const handleFilenameConfirm = () => {
+    if (!customFilename.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Filename cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Ensure .xlsx extension
+    let filename = customFilename.trim();
+    if (!filename.toLowerCase().endsWith('.xlsx')) {
+      filename += '.xlsx';
+    }
+
+    performExcelExport(filename);
+  };
+
+  // Handle quick export with suggested filename
+  const handleQuickExport = async () => {
+    const filename = await generateFilename();
+    setShowFilenameDialog(false);
+    performExcelExport(filename);
   };
 
   // Handle adjust prompts button click
@@ -1077,12 +1216,22 @@ export default function ProcessDocumentsPage() {
           {/* Action Buttons */}
           <div className="mb-6 flex flex-wrap gap-3">
             <Button
-              onClick={handleExportPlaceholder}
+              onClick={handleExportExcel}
+              disabled={!extractedData || extractedData.length === 0 || isExporting}
               className="bg-blue-600 hover:bg-blue-700"
               size="lg"
             >
-              <FileSpreadsheet className="mr-2 h-5 w-5" />
-              Export to Excel
+              {isExporting ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <FileSpreadsheet className="mr-2 h-5 w-5" />
+                  Export to Excel
+                </>
+              )}
             </Button>
             <Button
               onClick={handleAdjustPrompts}
@@ -1098,6 +1247,13 @@ export default function ProcessDocumentsPage() {
               size="lg"
             >
               Process Another Document
+            </Button>
+            <Button
+              onClick={() => window.location.href = '/templates'}
+              variant="outline"
+              size="lg"
+            >
+              Return to Templates
             </Button>
           </div>
 
@@ -1594,6 +1750,77 @@ export default function ProcessDocumentsPage() {
                 </>
               ) : (
                 'Create Template'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Filename Customization Dialog */}
+      <Dialog open={showFilenameDialog} onOpenChange={setShowFilenameDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Export to Excel</DialogTitle>
+            <DialogDescription>
+              Choose a filename for your Excel export or use the suggested name.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="excel-filename" className="text-sm font-medium">
+                Filename
+              </label>
+              <Input
+                id="excel-filename"
+                value={customFilename}
+                onChange={(e) => setCustomFilename(e.target.value)}
+                placeholder="Enter filename..."
+                disabled={isExporting}
+              />
+              <p className="text-xs text-muted-foreground">
+                .xlsx extension will be added automatically if not provided
+              </p>
+            </div>
+            {exportError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{exportError}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowFilenameDialog(false);
+                setExportError(null);
+              }}
+              disabled={isExporting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleQuickExport}
+              disabled={isExporting}
+            >
+              Use Suggested Name
+            </Button>
+            <Button
+              onClick={handleFilenameConfirm}
+              disabled={isExporting || !customFilename.trim()}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Download
+                </>
               )}
             </Button>
           </DialogFooter>

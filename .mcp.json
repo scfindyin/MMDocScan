@@ -6,6 +6,18 @@
         "-y",
         "@executeautomation/playwright-mcp-server"
       ]
+    },
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://postgres:%23170Bugga@db.ttvykbxlufwwfucfrkfy.supabase.co:5432/postgres"
+      ],
+      "env": {
+        "SUPABASE_URL": "https://ttvykbxlufwwfucfrkfy.supabase.co",
+        "SUPABASE_ANON_KEY": "${NEXT_PUBLIC_SUPABASE_ANON_KEY}"
+      }
     }
   }
 }

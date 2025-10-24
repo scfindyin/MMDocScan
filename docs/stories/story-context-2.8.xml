@@ -1,0 +1,148 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.8</storyId>
+    <title>Excel Export and Download</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.8.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to download my extraction results as an Excel file</iWant>
+    <soThat>I can use the data for billing validation in my existing workflows</soThat>
+    <tasks>
+      - Task 1: Add "Export to Excel" button to results preview UI (Import generateExcelFile, add button with styling, enable only when data exists, add loading state)
+      - Task 2: Implement Excel file generation on button click (Create handleExportExcel function, call generateExcelFile utility, generate filename, handle Buffer/Blob conversion, error handling)
+      - Task 3: Implement filename customization (Dialog component for editing, pre-populate with suggested name, validate input, download with custom name)
+      - Task 4: Trigger browser file download (Create blob URL, temporary anchor element, programmatic click, cleanup, cross-browser testing)
+      - Task 5: Display success message (Toast notification: "Excel file downloaded successfully")
+      - Task 6: Verify Excel file integrity (Manual testing in Excel/Google Sheets, verify data/formatting/confidence scores)
+      - Task 7: Add post-export navigation options ("Process Another Document", "Return to Templates", state reset)
+      - Task 8: Error handling and edge cases (Generation failures, blob creation issues, empty results, large datasets, filename sanitization)
+      - Task 9: Testing (Unit tests for export/filename logic, integration tests for full workflow, manual cross-browser testing)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. "Export to Excel" button prominently displayed in results preview
+    2. Clicking button generates Excel file (uses Story 2.7 functionality)
+    3. File download initiated automatically with suggested filename format: [template-name]_[document-name]_[date].xlsx
+    4. User can customize filename before download
+    5. Success message: "Excel file downloaded successfully"
+    6. Downloaded file opens correctly in Excel/Google Sheets
+    7. All data, confidence scores, and metadata present in Excel file
+    8. Formatting preserved (headers, highlighting, data types)
+    9. After export, option to "Process Another Document" or "Return to Templates"
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Story 2.8: Excel Export and Download">
+        Defines acceptance criteria: Export button, file generation, filename format ([template-name]_[document-name]_[date].xlsx), customization dialog, success message, file integrity, formatting preservation, post-export navigation options.
+      </doc>
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification" section="Excel Export Service">
+        Technical architecture: Client-side export using ExcelJS in browser, in-memory Buffer generation, no server-side processing. Data flow: generateExcelFile() → ExcelJS.Buffer → Blob → download.
+      </doc>
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification" section="Workflows and Sequencing - Production Document Extraction">
+        Step 8: Export to Excel → Client-side ExcelJS processing → Download .xlsx file (document cleared from memory).
+      </doc>
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="FR019-FR021">
+        FR019: System shall generate Excel (.xlsx) files containing extracted tabular data. FR020: System shall repeat header information for each detail row in Excel output. FR021: System shall include source document metadata and confidence indicators in Excel output.
+      </doc>
+      <doc path="docs/stories/story-2.7.md" title="Story 2.7: Excel File Generation" section="Complete Implementation">
+        Dependency: lib/excel/export.ts with generateExcelFile() function already implemented. Function signature: (extractedData: ExtractedRow[], template: TemplateWithRelations) => Promise&lt;ExcelJS.Buffer&gt;. Returns in-memory Buffer ready for download.
+      </doc>
+      <doc path="docs/stories/story-2.4.md" title="Story 2.4: Extraction Results Preview Table" section="Integration Point">
+        Results preview table in app/process/page.tsx displays extracted data. Export button should be added to this page below/near the results table with prominent styling.
+      </doc>
+      <doc path="docs/stories/story-1.10.md" title="Story 1.10: Save Validated Template" section="Toast Notification System">
+        Toast system already implemented using components/ui/toast.tsx and hooks/use-toast.ts. Use for success message: "Excel file downloaded successfully" with green variant, auto-dismiss after 3 seconds.
+      </doc>
+    </docs>
+    <code>
+      <artifact path="app/process/page.tsx" kind="page-component" symbol="ProcessDocumentsPage" lines="1-100" reason="Primary integration point - add export button and download logic here. Already has state for extractedData, template, uploadedFile. Multi-step workflow with 'results' step where export button should appear." />
+      <artifact path="lib/excel/export.ts" kind="utility-function" symbol="generateExcelFile" lines="45-50" reason="Core dependency from Story 2.7. Function signature: async generateExcelFile(extractedData: ExtractedRow[], template: TemplateWithRelations): Promise&lt;ExcelJS.Buffer&gt;. Import and call this function when export button clicked." />
+      <artifact path="types/extraction.ts" kind="type-definition" symbol="ExtractedRow" lines="16-21" reason="Type definition for extracted data passed to generateExcelFile(). Interface: { rowId: string, confidence: number, fields: Record&lt;string, any&gt;, sourceMetadata: SourceMetadata }" />
+      <artifact path="types/template.ts" kind="type-definition" symbol="TemplateWithRelations" lines="1-50" reason="Type definition for template parameter. Includes template fields with display_order for column structure." />
+      <artifact path="components/ui/toast.tsx" kind="ui-component" symbol="Toast" reason="Toast notification component from Story 1.10. Use with useToast() hook for success message." />
+      <artifact path="hooks/use-toast.ts" kind="custom-hook" symbol="useToast" reason="Hook for showing toast notifications. Already imported in app/process/page.tsx (line 34). Call toast({ title: 'Excel file downloaded successfully', variant: 'default' })" />
+      <artifact path="components/ui/dialog.tsx" kind="ui-component" symbol="Dialog" reason="Dialog component from Story 2.2, already imported in app/process/page.tsx (lines 12-17). Use for filename customization dialog." />
+      <artifact path="components/ui/button.tsx" kind="ui-component" symbol="Button" reason="Button component already imported (line 5). Use for Export to Excel button with FileSpreadsheet icon (already imported line 8)." />
+    </code>
+    <dependencies>
+      <node>
+        <package name="exceljs" version="^4.4.0" usage="Excel generation via lib/excel/export.ts (Story 2.7)" />
+        <package name="react" version="^18.2.0" usage="React hooks for state management (useState for dialog state)" />
+        <package name="lucide-react" version="^0.546.0" usage="FileSpreadsheet icon for export button (already imported)" />
+        <package name="@radix-ui/react-dialog" version="^1.1.15" usage="Filename customization dialog (ShadCN Dialog component)" />
+        <package name="@radix-ui/react-toast" version="^1.2.15" usage="Success message toast notification" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Module Location: app/process/page.tsx (extend existing document processing page, do not create new file)
+    - Client-side only: All processing in browser, no server-side API routes required
+    - State Management: Use existing React state (extractedData, selectedTemplateId, uploadedFile)
+    - File Download Pattern: Convert ExcelJS.Buffer to Blob, create blob URL, temporary anchor element, programmatic click, cleanup with URL.revokeObjectURL()
+    - Filename Format: [template-name]_[document-name]_[YYYY-MM-DD].xlsx (sanitize: replace spaces with hyphens, remove special characters)
+    - UI Integration: Add export button in 'results' step, position prominently below or near results table
+    - Existing Imports: Reuse Button, Dialog, Toast components already imported in page
+    - Error Handling: Display error message with retry option if Excel generation or download fails
+    - Edge Cases: Disable button when extractedData is empty, handle large datasets (100+ rows), sanitize filenames with special characters
+    - Cross-browser: Verify download works in Chrome, Firefox, Safari, Edge
+  </constraints>
+
+  <interfaces>
+    <interface name="generateExcelFile" kind="function-signature" signature="async function generateExcelFile(extractedData: ExtractedRow[], template: TemplateWithRelations): Promise&lt;ExcelJS.Buffer&gt;" path="lib/excel/export.ts">
+      Core function from Story 2.7. Returns in-memory Excel file as Buffer. Import: import { generateExcelFile } from '@/lib/excel/export';
+    </interface>
+    <interface name="ExtractedRow" kind="type-interface" signature="interface ExtractedRow { rowId: string; confidence: number; fields: Record&lt;string, any&gt;; sourceMetadata: SourceMetadata; }" path="types/extraction.ts">
+      Type for extraction results. Already available in state as extractedData: ExtractedRow[] | null
+    </interface>
+    <interface name="TemplateWithRelations" kind="type-interface" signature="interface TemplateWithRelations extends Template { fields: TemplateField[]; prompts: TemplatePrompt[]; }" path="types/template.ts">
+      Type for template with fields/prompts. Need to fetch full template data when exporting (currently only have templateId in state)
+    </interface>
+    <interface name="useToast" kind="custom-hook" signature="const { toast } = useToast(); toast({ title: string, description?: string, variant?: 'default' | 'destructive' })" path="hooks/use-toast.ts">
+      Hook for toast notifications. Already imported in page (line 34). Use for success message.
+    </interface>
+    <interface name="Blob API" kind="browser-api" signature="new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }); URL.createObjectURL(blob); URL.revokeObjectURL(url);">
+      Browser API for file download. Convert ExcelJS.Buffer to Blob, create download URL, trigger download with anchor element.
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing approach follows project patterns: Unit tests with Jest, integration tests for workflows, manual testing for UI/downloads. Build validation: npm run build (0 errors), npm run lint (0 warnings). Cross-browser manual testing required (Chrome, Firefox, Safari, Edge).
+    </standards>
+    <locations>
+      - Unit tests: Not explicitly configured in this project (Level 2 - manual testing focus)
+      - Integration tests: Manual workflow testing (upload → extract → export → download)
+      - Build validation: npm run build && npm run lint
+      - Manual testing: Download Excel files and open in Excel/Google Sheets
+    </locations>
+    <ideas>
+      AC1: Manual test - Export button appears in results preview, prominently positioned
+      AC2: Unit test - handleExportExcel function calls generateExcelFile with correct params
+      AC3: Unit test - Filename generation logic produces correct format (template_document_date.xlsx)
+      AC4: Manual test - Filename customization dialog allows editing and validates input
+      AC5: Manual test - Toast notification appears with success message after download
+      AC6: Manual test - Downloaded file opens in Microsoft Excel 2016+ without errors
+      AC6: Manual test - Downloaded file opens in Google Sheets without errors
+      AC7: Manual test - Excel file contains all data rows matching preview table row count
+      AC7: Manual test - Excel file includes confidence score column with accurate values
+      AC7: Manual test - Excel file includes source metadata columns (filename, timestamp)
+      AC8: Manual test - Header row formatting preserved (bold, background color)
+      AC8: Manual test - Low-confidence rows highlighted yellow in Excel
+      AC8: Manual test - Data type formatting correct (text, number, currency, date)
+      AC9: Manual test - Post-export buttons appear and function correctly
+      Edge Case: Test with 0 rows (button disabled)
+      Edge Case: Test with 100+ rows (performance)
+      Edge Case: Test with special characters in template/document names (sanitization)
+      Cross-browser: Test download in Chrome, Firefox, Safari, Edge
+    </ideas>
+  </tests>
+</story-context>
