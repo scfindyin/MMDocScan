@@ -22,17 +22,17 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: 2.7
-TODO_TITLE: Excel File Generation
-IN_PROGRESS_STORY: 2.6
-IN_PROGRESS_TITLE: Iterative Prompt Refinement
-STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5"]
+TODO_STORY: 2.8
+TODO_TITLE: Excel Export and Download
+IN_PROGRESS_STORY: 2.7
+IN_PROGRESS_TITLE: Excel File Generation
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6"]
 
 ## Next Action
 
-NEXT_ACTION: Story 2.6 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
-NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
-NEXT_AGENT: developer
+NEXT_ACTION: Story 2.6 approved and complete. Story 2.7 (Excel File Generation) moved to IN PROGRESS. Load SM agent to draft/approve Story 2.7, then implement with DEV agent.
+NEXT_COMMAND: Load SM agent, run create-story workflow for Story 2.7
+NEXT_AGENT: scrum-master
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) ✅ COMPLETE (10 of 10 complete)
@@ -47,14 +47,14 @@ NEXT_AGENT: developer
 - Story 1.9: Test Extraction on Sample Document ✓
 - Story 1.10: Save Validated Template ✓
 
-### Epic 2: Production Document Processing & Excel Export (9 stories) 🔄 IN PROGRESS (4 of 9 complete)
+### Epic 2: Production Document Processing & Excel Export (9 stories) 🔄 IN PROGRESS (6 of 9 complete)
 - Story 2.1: Production Document Upload Interface ✓
 - Story 2.2: Template Selection for Production Processing ✓
 - Story 2.3: Production Document Extraction ✓
 - Story 2.4: Extraction Results Preview Table ✓
 - Story 2.5: Review Low-Confidence Extractions ✓
-- Story 2.6: Iterative Prompt Refinement 🔄 IN PROGRESS
-- Story 2.7: Excel File Generation
+- Story 2.6: Iterative Prompt Refinement ✓
+- Story 2.7: Excel File Generation 🔄 IN PROGRESS
 - Story 2.8: Excel Export and Download
 - Story 2.9: Extraction Session Management
 
@@ -256,10 +256,24 @@ NEXT_AGENT: developer
 - **Code Quality:** All features working correctly, 100% TypeScript type-safe, zero regressions
 - **DoD Complete:** All acceptance criteria verified through code review, build/lint passing, no new implementation required
 
+### Story 2.6: Iterative Prompt Refinement ✓
+- **Status:** Done
+- **Completed:** 2025-10-24
+- **Approved:** 2025-10-24
+- **Summary:** Implemented iterative prompt refinement workflow with collapsible prompt editing panel, re-extraction logic with state preservation, and template save functionality (update original or save as new)
+- **All ACs Verified:** 10/10 passing (AC1-AC10: prompt adjustment interface, modification, re-extraction trigger, state preservation, results update, iterative loop, save to original template, save as new template, loading states, error handling)
+- **Files Modified:** app/process/page.tsx (+410 lines), app/api/extract/production/route.ts (prompt override logic)
+- **Key Features:** Collapsible prompt editing panel with Textarea pre-populated from template, re-extraction logic with full state preservation, "Update Template" with confirmation dialog, "Save as New Template" with name input dialog, comprehensive error handling (empty prompt validation, API failures, network errors)
+- **Testing:** Build PASSED (0 errors, 12 routes), Lint PASSED (0 warnings), bundle size /process route 150 kB (+15 kB)
+- **Tasks Completed:** 5 task groups, 42 subtasks across UI, re-extraction, template save, error handling, and validation
+- **Code Quality:** 100% TypeScript type-safe, zero ESLint warnings, algorithms consistent with existing patterns
+- **Bug Fix:** Custom prompt override logic corrected to properly replace template prompts (commit e0b17ba)
+- **DoD Complete:** All acceptance criteria met, code reviewed, build/lint passing, deployed to production
+
 ---
 
-_Last Updated: 2025-10-24 (Story 2.6 implementation complete - Ready for Review - Epic 2: 5 of 9 complete)_
-_Status Version: 16.0_
+_Last Updated: 2025-10-24 (Story 2.6 approved and done - Epic 2: 6 of 9 complete - Story 2.7 moved to IN PROGRESS)_
+_Status Version: 17.0_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
@@ -277,8 +291,9 @@ _Story 2.3 Approved: 2025-10-23_
 _Story 1.9 Approved: 2025-10-23_
 _Story 1.10 Approved: 2025-10-23_
 _Epic 1 Status: ✅ COMPLETE - 10 of 10 stories done (100%)_
-_Epic 2 Status: 5 of 9 stories done (55.6%) - Story 2.6 in progress_
-_Progress: 15 of 19 stories complete (78.9%), Story 2.6 moved to IN PROGRESS_
-_Next: Load SM agent to draft/approve Story 2.6, then implement with DEV agent_
+_Epic 2 Status: 6 of 9 stories done (66.7%) - Story 2.7 in progress_
+_Progress: 16 of 19 stories complete (84.2%), Story 2.7 moved to IN PROGRESS_
+_Next: Load SM agent to draft/approve Story 2.7, then implement with DEV agent_
 _Story 2.5 Approved: 2025-10-24_
+_Story 2.6 Approved: 2025-10-24_
 _Milestone Achieved: Epic 1 deliverable - Users can create, test, save, and edit validated extraction templates_
