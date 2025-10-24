@@ -5,7 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, FileText, File as FileIcon, X, ArrowRight, CheckCircle2, Eye, PlayCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Upload, FileText, File as FileIcon, X, ArrowRight, CheckCircle2, Eye, PlayCircle, AlertCircle, Loader2, ArrowUpDown, ArrowUp, ArrowDown, Info, FileSpreadsheet, RefreshCw } from "lucide-react";
 import type { TemplateListItem, TemplateField, TemplatePrompt } from "@/types/template";
 import type { ExtractedRow } from "@/types/extraction";
 import {
@@ -16,6 +16,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProcessDocumentsPage() {
   // Multi-step workflow state
@@ -47,12 +63,45 @@ export default function ProcessDocumentsPage() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionRetryable, setExtractionRetryable] = useState(false);
 
+  // Results table state
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [showLowConfidenceOnly, setShowLowConfidenceOnly] = useState(false);
+  const [selectedTemplateFields, setSelectedTemplateFields] = useState<TemplateField[]>([]);
+
+  // Toast for placeholder buttons
+  const { toast } = useToast();
+
   // Fetch templates when step changes to 'select-template'
   useEffect(() => {
     if (step === 'select-template') {
       fetchTemplates();
     }
   }, [step]);
+
+  // Fetch selected template fields when results are ready
+  useEffect(() => {
+    if (step === 'results' && selectedTemplateId && selectedTemplateFields.length === 0) {
+      fetchTemplateFields();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, selectedTemplateId]);
+
+  // Fetch template fields for table columns
+  const fetchTemplateFields = async () => {
+    if (!selectedTemplateId) return;
+
+    try {
+      const response = await fetch(`/api/templates/${selectedTemplateId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch template');
+      }
+      const data = await response.json();
+      setSelectedTemplateFields(data.fields || []);
+    } catch (err) {
+      console.error('Error fetching template fields:', err);
+    }
+  };
 
   // Fetch templates from API
   const fetchTemplates = async () => {
@@ -316,6 +365,165 @@ export default function ProcessDocumentsPage() {
     setStep('select-template');
     setExtractionError(null);
     setExtractionRetryable(false);
+  };
+
+  // Handle column sort
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, default to ascending
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  // Get field data type for sorting
+  const getFieldType = (fieldName: string): string => {
+    const field = selectedTemplateFields.find(f => f.field_name === fieldName);
+    return field?.field_type || 'text';
+  };
+
+  // Sort extracted data
+  const getSortedData = (data: ExtractedRow[]): ExtractedRow[] => {
+    if (!sortColumn) return data;
+
+    return [...data].sort((a, b) => {
+      let aVal: any;
+      let bVal: any;
+
+      // Special columns
+      if (sortColumn === 'confidence') {
+        aVal = a.confidence;
+        bVal = b.confidence;
+      } else if (sortColumn === 'source') {
+        aVal = a.sourceMetadata.filename;
+        bVal = b.sourceMetadata.filename;
+      } else if (sortColumn === 'page') {
+        aVal = a.sourceMetadata.pageNumber || 0;
+        bVal = b.sourceMetadata.pageNumber || 0;
+      } else {
+        // Field columns
+        aVal = a.fields[sortColumn];
+        bVal = b.fields[sortColumn];
+      }
+
+      // Handle null/undefined
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+
+      // Type-specific sorting
+      const fieldType = sortColumn === 'confidence' || sortColumn === 'page' ? 'number' :
+                        sortColumn === 'source' ? 'text' :
+                        getFieldType(sortColumn);
+
+      let comparison = 0;
+      if (fieldType === 'number' || fieldType === 'currency') {
+        const numA = typeof aVal === 'number' ? aVal : parseFloat(String(aVal).replace(/[^0-9.-]/g, ''));
+        const numB = typeof bVal === 'number' ? bVal : parseFloat(String(bVal).replace(/[^0-9.-]/g, ''));
+        comparison = numA - numB;
+      } else if (fieldType === 'date') {
+        const dateA = new Date(aVal).getTime();
+        const dateB = new Date(bVal).getTime();
+        comparison = dateA - dateB;
+      } else {
+        // Text sorting
+        comparison = String(aVal).localeCompare(String(bVal));
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  };
+
+  // Filter extracted data
+  const getFilteredData = (data: ExtractedRow[]): ExtractedRow[] => {
+    if (!showLowConfidenceOnly) return data;
+    return data.filter(row => row.confidence < 0.7);
+  };
+
+  // Get processed data (filtered then sorted)
+  const getProcessedData = (): ExtractedRow[] => {
+    if (!extractedData) return [];
+    const filtered = getFilteredData(extractedData);
+    return getSortedData(filtered);
+  };
+
+  // Calculate row counts
+  const getRowCounts = () => {
+    if (!extractedData) return { total: 0, high: 0, low: 0, filtered: 0 };
+    const total = extractedData.length;
+    const low = extractedData.filter(row => row.confidence < 0.7).length;
+    const high = total - low;
+    const filtered = getProcessedData().length;
+    return { total, high, low, filtered };
+  };
+
+  // Format confidence as percentage
+  const formatConfidence = (confidence: number): string => {
+    return `${(confidence * 100).toFixed(0)}%`;
+  };
+
+  // Format field value based on type
+  const formatFieldValue = (value: any, fieldName: string): string => {
+    if (value == null || value === '') return '—';
+
+    const fieldType = getFieldType(fieldName);
+
+    if (fieldType === 'currency') {
+      const num = typeof value === 'number' ? value : parseFloat(String(value).replace(/[^0-9.-]/g, ''));
+      return isNaN(num) ? String(value) : `$${num.toFixed(2)}`;
+    }
+
+    if (fieldType === 'number') {
+      const num = typeof value === 'number' ? value : parseFloat(String(value));
+      return isNaN(num) ? String(value) : num.toString();
+    }
+
+    if (fieldType === 'date') {
+      try {
+        const date = new Date(value);
+        return date.toLocaleDateString();
+      } catch {
+        return String(value);
+      }
+    }
+
+    return String(value);
+  };
+
+  // Truncate filename with tooltip
+  const truncateFilename = (filename: string, maxLength: number = 30): string => {
+    if (filename.length <= maxLength) return filename;
+    return filename.substring(0, maxLength - 3) + '...';
+  };
+
+  // Handle process another document
+  const handleProcessAnother = () => {
+    setStep('upload');
+    setUploadedFile(null);
+    setSelectedTemplateId(null);
+    setExtractedData(null);
+    setSelectedTemplateFields([]);
+    setSortColumn(null);
+    setSortDirection('asc');
+    setShowLowConfidenceOnly(false);
+  };
+
+  // Placeholder button handlers
+  const handleExportPlaceholder = () => {
+    toast({
+      title: "Coming Soon",
+      description: "Excel export will be implemented in Story 2.7",
+    });
+  };
+
+  const handleAdjustPromptsPlaceholder = () => {
+    toast({
+      title: "Coming Soon",
+      description: "Prompt refinement will be implemented in Story 2.6",
+    });
   };
 
   return (
@@ -637,9 +845,9 @@ export default function ProcessDocumentsPage() {
         </div>
       )}
 
-      {/* Results Step - Placeholder for Story 2.4 */}
+      {/* Results Step - Full Results Table (Story 2.4) */}
       {step === 'results' && (
-        <div>
+        <div className="max-w-full">
           {/* Success Message */}
           <Alert className="mb-6 border-green-500 bg-green-50">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -650,63 +858,251 @@ export default function ProcessDocumentsPage() {
             </AlertDescription>
           </Alert>
 
-          {/* Results Preview Placeholder */}
-          <Card>
-            <CardContent className="p-8 text-center">
-              <h2 className="text-2xl font-semibold mb-4">Results Preview</h2>
-              <p className="text-muted-foreground mb-4">
-                {extractedData?.length || 0} rows extracted from {uploadedFile?.name}
-              </p>
-              <p className="text-sm text-muted-foreground mb-6">
-                Full results table will be implemented in Story 2.4
-              </p>
+          {/* Action Buttons */}
+          <div className="mb-6 flex flex-wrap gap-3">
+            <Button
+              onClick={handleExportPlaceholder}
+              className="bg-blue-600 hover:bg-blue-700"
+              size="lg"
+            >
+              <FileSpreadsheet className="mr-2 h-5 w-5" />
+              Export to Excel
+            </Button>
+            <Button
+              onClick={handleAdjustPromptsPlaceholder}
+              variant="outline"
+              size="lg"
+            >
+              <RefreshCw className="mr-2 h-5 w-5" />
+              Adjust Prompts & Re-extract
+            </Button>
+            <Button
+              onClick={handleProcessAnother}
+              variant="outline"
+              size="lg"
+            >
+              Process Another Document
+            </Button>
+          </div>
 
-              {/* Template Info */}
-              {selectedTemplateId && (
-                <div className="mb-6">
-                  <p className="text-sm text-muted-foreground">
-                    Template: {templates.find(t => t.id === selectedTemplateId)?.name}
-                  </p>
+          {/* Row Count Summary and Filter Controls */}
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                {/* Row Count Summary */}
+                <div className="flex flex-wrap items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">
+                      {showLowConfidenceOnly
+                        ? `Showing ${getRowCounts().filtered} of ${getRowCounts().total} rows`
+                        : `Showing ${getRowCounts().total} rows`}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 text-green-600">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>{getRowCounts().high} high-confidence</span>
+                  </div>
+                  {getRowCounts().low > 0 && (
+                    <div className="flex items-center gap-1 text-orange-600">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{getRowCounts().low} low-confidence</span>
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {/* Preview extracted data (first 3 rows) */}
-              {extractedData && extractedData.length > 0 && (
-                <div className="mt-6 text-left">
-                  <h3 className="font-semibold mb-3">Sample Data (First 3 rows)</h3>
-                  <div className="space-y-2 max-w-2xl mx-auto">
-                    {extractedData.slice(0, 3).map((row, index) => (
-                      <div key={row.rowId} className="p-3 bg-gray-50 rounded-md">
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="text-sm font-medium">Row {index + 1}</span>
-                          <span className="text-xs text-muted-foreground">
-                            Confidence: {(row.confidence * 100).toFixed(0)}%
-                          </span>
-                        </div>
-                        <div className="text-xs space-y-1">
-                          {Object.entries(row.fields).slice(0, 3).map(([key, value]) => (
-                            <div key={key}>
-                              <span className="font-medium">{key}:</span> {String(value)}
-                            </div>
-                          ))}
-                          {Object.keys(row.fields).length > 3 && (
-                            <div className="text-muted-foreground">
-                              ... and {Object.keys(row.fields).length - 3} more fields
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                {/* Filter Toggle */}
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="low-confidence-filter"
+                    checked={showLowConfidenceOnly}
+                    onCheckedChange={(checked) => setShowLowConfidenceOnly(checked === true)}
+                  />
+                  <label
+                    htmlFor="low-confidence-filter"
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    Show low-confidence only
+                  </label>
+                </div>
+              </div>
+
+              {/* No results message for filter */}
+              {showLowConfidenceOnly && getRowCounts().filtered === 0 && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                  <div className="flex items-center gap-2 text-green-700">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <p className="text-sm font-medium">
+                      No low-confidence rows found. All extractions are high-confidence!
+                    </p>
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
 
-              {/* TODO Comment for Story 2.4 */}
-              <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-md">
-                <p className="text-sm text-blue-900">
-                  <strong>TODO:</strong> Full results table in Story 2.4
-                </p>
+          {/* Results Table */}
+          <Card>
+            <CardContent className="p-0">
+              {/* Scrollable Table Container */}
+              <div className="overflow-x-auto">
+                <div className="max-h-[600px] overflow-y-auto">
+                  <TooltipProvider>
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-white z-10 border-b shadow-sm">
+                        <TableRow>
+                          {/* Template Field Columns */}
+                          {selectedTemplateFields
+                            .sort((a, b) => a.display_order - b.display_order)
+                            .map((field) => (
+                              <TableHead
+                                key={field.id}
+                                className="cursor-pointer hover:bg-gray-50 transition-colors"
+                                onClick={() => handleSort(field.field_name)}
+                              >
+                                <div className="flex items-center gap-1">
+                                  <span>{field.field_name}</span>
+                                  {sortColumn === field.field_name && (
+                                    sortDirection === 'asc' ? (
+                                      <ArrowUp className="h-4 w-4" />
+                                    ) : (
+                                      <ArrowDown className="h-4 w-4" />
+                                    )
+                                  )}
+                                  {sortColumn !== field.field_name && (
+                                    <ArrowUpDown className="h-4 w-4 opacity-30" />
+                                  )}
+                                </div>
+                              </TableHead>
+                            ))}
+
+                          {/* Confidence Column */}
+                          <TableHead
+                            className="cursor-pointer hover:bg-gray-50 transition-colors w-32"
+                            onClick={() => handleSort('confidence')}
+                          >
+                            <div className="flex items-center gap-1 justify-end">
+                              <span>Confidence</span>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Info className="h-4 w-4 text-muted-foreground" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Low confidence: &lt; 70%</p>
+                                  <p>High confidence: ≥ 70%</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              {sortColumn === 'confidence' && (
+                                sortDirection === 'asc' ? (
+                                  <ArrowUp className="h-4 w-4" />
+                                ) : (
+                                  <ArrowDown className="h-4 w-4" />
+                                )
+                              )}
+                              {sortColumn !== 'confidence' && (
+                                <ArrowUpDown className="h-4 w-4 opacity-30" />
+                              )}
+                            </div>
+                          </TableHead>
+
+                          {/* Source Column */}
+                          <TableHead
+                            className="cursor-pointer hover:bg-gray-50 transition-colors"
+                            onClick={() => handleSort('source')}
+                          >
+                            <div className="flex items-center gap-1">
+                              <span>Source</span>
+                              {sortColumn === 'source' && (
+                                sortDirection === 'asc' ? (
+                                  <ArrowUp className="h-4 w-4" />
+                                ) : (
+                                  <ArrowDown className="h-4 w-4" />
+                                )
+                              )}
+                              {sortColumn !== 'source' && (
+                                <ArrowUpDown className="h-4 w-4 opacity-30" />
+                              )}
+                            </div>
+                          </TableHead>
+
+                          {/* Page Column */}
+                          <TableHead
+                            className="cursor-pointer hover:bg-gray-50 transition-colors w-24"
+                            onClick={() => handleSort('page')}
+                          >
+                            <div className="flex items-center gap-1">
+                              <span>Page</span>
+                              {sortColumn === 'page' && (
+                                sortDirection === 'asc' ? (
+                                  <ArrowUp className="h-4 w-4" />
+                                ) : (
+                                  <ArrowDown className="h-4 w-4" />
+                                )
+                              )}
+                              {sortColumn !== 'page' && (
+                                <ArrowUpDown className="h-4 w-4 opacity-30" />
+                              )}
+                            </div>
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+
+                      <TableBody>
+                        {getProcessedData().map((row) => {
+                          const isLowConfidence = row.confidence < 0.7;
+                          return (
+                            <TableRow
+                              key={row.rowId}
+                              className={isLowConfidence ? 'bg-yellow-50 border-l-4 border-l-yellow-500' : ''}
+                            >
+                              {/* Template Field Values */}
+                              {selectedTemplateFields
+                                .sort((a, b) => a.display_order - b.display_order)
+                                .map((field) => (
+                                  <TableCell key={field.id}>
+                                    {formatFieldValue(row.fields[field.field_name], field.field_name)}
+                                  </TableCell>
+                                ))}
+
+                              {/* Confidence Value */}
+                              <TableCell className="text-right font-medium">
+                                <span className={isLowConfidence ? 'text-orange-600' : 'text-green-600'}>
+                                  {formatConfidence(row.confidence)}
+                                </span>
+                              </TableCell>
+
+                              {/* Source Filename */}
+                              <TableCell>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="cursor-default">
+                                      {truncateFilename(row.sourceMetadata.filename)}
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{row.sourceMetadata.filename}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+
+                              {/* Page Number */}
+                              <TableCell className="text-center">
+                                {row.sourceMetadata.pageNumber || '—'}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </TooltipProvider>
+                </div>
               </div>
+
+              {/* Empty state (if no data after filtering) */}
+              {getProcessedData().length === 0 && !showLowConfidenceOnly && (
+                <div className="p-8 text-center text-muted-foreground">
+                  <p>No data to display</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

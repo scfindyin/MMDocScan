@@ -30,8 +30,8 @@ STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2
 
 ## Next Action
 
-NEXT_ACTION: Story 2.4 marked IN PROGRESS. Implement with DEV agent to add extraction results preview table.
-NEXT_COMMAND: dev-story
+NEXT_ACTION: Story 2.4 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
+NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
 NEXT_AGENT: developer
 ## Story Backlog
 
@@ -51,7 +51,7 @@ NEXT_AGENT: developer
 - Story 2.1: Production Document Upload Interface ✓
 - Story 2.2: Template Selection for Production Processing ✓
 - Story 2.3: Production Document Extraction ✓
-- Story 2.4: Extraction Results Preview Table 🔄 IN PROGRESS
+- Story 2.4: Extraction Results Preview Table 🔄 IN PROGRESS (Ready for Review)
 - Story 2.5: Review Low-Confidence Extractions
 - Story 2.6: Iterative Prompt Refinement
 - Story 2.7: Excel File Generation
@@ -232,8 +232,8 @@ NEXT_AGENT: developer
 
 ---
 
-_Last Updated: 2025-10-23 (Story 1.10 approved - Epic 1: COMPLETE - Story 2.4 IN PROGRESS)_
-_Status Version: 12.0_
+_Last Updated: 2025-10-23 (Story 1.10 approved - Epic 1: COMPLETE - Story 2.4 Ready for Review)_
+_Status Version: 13.0_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
