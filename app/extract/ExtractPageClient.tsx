@@ -30,14 +30,14 @@ export default function ExtractPageClient() {
 
   const handleMaximizeLeft = () => {
     maximizeLeft();
-    leftPanelRef.current?.resize(95);
-    rightPanelRef.current?.resize(5);
+    leftPanelRef.current?.resize(92);
+    rightPanelRef.current?.resize(8);
   };
 
   const handleMaximizeRight = () => {
     maximizeRight();
-    leftPanelRef.current?.resize(5);
-    rightPanelRef.current?.resize(95);
+    leftPanelRef.current?.resize(8);
+    rightPanelRef.current?.resize(92);
   };
 
   const handleRestoreLeft = () => {
@@ -55,11 +55,11 @@ export default function ExtractPageClient() {
   // Restore panel sizes on mount from localStorage
   useEffect(() => {
     if (isLeftMaximized) {
-      leftPanelRef.current?.resize(95);
-      rightPanelRef.current?.resize(5);
+      leftPanelRef.current?.resize(92);
+      rightPanelRef.current?.resize(8);
     } else if (isRightMaximized) {
-      leftPanelRef.current?.resize(5);
-      rightPanelRef.current?.resize(95);
+      leftPanelRef.current?.resize(8);
+      rightPanelRef.current?.resize(92);
     } else {
       leftPanelRef.current?.resize(leftPanelSize);
       rightPanelRef.current?.resize(rightPanelSize);
@@ -78,7 +78,7 @@ export default function ExtractPageClient() {
       </div>
 
       {/* Resizable Panel Layout */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-hidden">
         <PanelGroup
           direction="horizontal"
           onLayout={handleResize}
@@ -88,11 +88,10 @@ export default function ExtractPageClient() {
           <Panel
             ref={leftPanelRef}
             defaultSize={leftPanelSize}
-            minSize={25}
-            maxSize={95}
-            collapsible={true}
+            minSize={8}
+            maxSize={92}
           >
-            {isRightMaximized ? (
+            {isRightMaximized && rightPanelSize < 15 ? (
               // Thin bar when right is maximized
               <div
                 className="h-full bg-gray-100 border-r flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-all duration-300"
@@ -139,11 +138,10 @@ export default function ExtractPageClient() {
           <Panel
             ref={rightPanelRef}
             defaultSize={rightPanelSize}
-            minSize={60}
-            maxSize={95}
-            collapsible={true}
+            minSize={8}
+            maxSize={92}
           >
-            {isLeftMaximized ? (
+            {isLeftMaximized && leftPanelSize < 15 ? (
               // Thin bar when left is maximized
               <div
                 className="h-full bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-all duration-300"
