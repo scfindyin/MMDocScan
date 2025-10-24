@@ -1,0 +1,329 @@
+<story-context id="story-2.4-context" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>4</storyId>
+    <title>Extraction Results Preview Table</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-23</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to preview the extracted data in a table format</iWant>
+    <soThat>I can review the results before exporting to Excel</soThat>
+    <tasks>
+      - Replace placeholder results step UI in process page with full table component
+      - Build table header from template fields dynamically
+      - Render table rows from extractedData array
+      - Display confidence scores with percentage formatting
+      - Apply visual flagging (yellow/orange background) for low-confidence rows (&lt;0.7 threshold)
+      - Display source metadata columns (filename, page number)
+      - Implement client-side column sorting for all columns
+      - Implement low-confidence filter toggle
+      - Display row count summary with high/low confidence statistics
+      - Implement scrollable table container with sticky header
+      - Create responsive tablet layout
+      - Add placeholder action buttons for Excel export (Story 2.7) and prompt refinement (Story 2.6)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Results displayed in table matching expected Excel output format</criterion>
+    <criterion id="AC2">All defined template fields shown as columns</criterion>
+    <criterion id="AC3">Each row displays extracted values for all fields</criterion>
+    <criterion id="AC4">Row-level confidence score displayed in dedicated column</criterion>
+    <criterion id="AC5">Low-confidence rows visually flagged (yellow/orange background)</criterion>
+    <criterion id="AC6">Source metadata columns included (filename, page number)</criterion>
+    <criterion id="AC7">Table supports basic sorting by any column</criterion>
+    <criterion id="AC8">Table supports basic filtering (e.g., show only low-confidence rows)</criterion>
+    <criterion id="AC9">Row count summary displayed: "Showing X rows"</criterion>
+    <criterion id="AC10">Scrollable table for long result sets</criterion>
+    <criterion id="AC11">Responsive table layout for tablet view</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/PRD.md" title="Product Requirements Document">
+        <section name="User Journeys - Step 4: Review Results">
+          System presents extracted data in preview table. Header fields appear on each row. Detail fields populate individual rows. Each row displays a confidence score. Low-confidence rows flagged with visual indicator.
+        </section>
+        <section name="UI Design Goals - Key Interaction Patterns">
+          Flat table preview showing denormalized output (header info repeated on each detail row). Sortable/filterable columns for reviewing extracted data. Visual confidence indicators (color-coded rows: green=high, yellow=medium, orange=low).
+        </section>
+        <section name="Functional Requirements">
+          FR017: System shall provide preview of extraction results before finalization.
+        </section>
+      </doc>
+
+      <doc path="docs/epics.md" title="Epic Breakdown">
+        <section name="Epic 2 - Story 2.4: Extraction Results Preview Table">
+          11 acceptance criteria covering table display, confidence scoring, sorting, filtering, responsive layout, and metadata display. Prerequisites: Story 2.3 (provides extracted data).
+        </section>
+      </doc>
+
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification">
+        <section name="Data Models - ExtractedRow Interface">
+          interface ExtractedRow { rowId: string; confidence: number (0.0-1.0); fields: Record&lt;string, any&gt;; sourceMetadata: { filename, pageNumber?, extractedAt } }
+        </section>
+        <section name="UI Design Goals">
+          Flat table preview with denormalized output, sortable/filterable columns, visual confidence indicators, responsive layouts. Platform: Web application (desktop and tablet browsers).
+        </section>
+        <section name="Acceptance Criteria">
+          AC2.9: User can preview extraction results before export with sortable/filterable table displaying all extracted data.
+        </section>
+      </doc>
+
+      <doc path="docs/technical-decisions.md" title="Technical Decisions">
+        <section name="TD001: Row-level Confidence Scoring">
+          Threshold: &lt; 0.7 = low confidence (will be flagged with visual indicators)
+        </section>
+      </doc>
+
+      <doc path="docs/stories/story-2.3.md" title="Story 2.3: Production Document Extraction">
+        <section name="Integration Context">
+          Provides extractedData state with ExtractedRow[] array, confidence scores calculated, denormalized flat structure with header fields repeated per detail row. Placeholder results step created for Story 2.4 implementation.
+        </section>
+      </doc>
+
+      <doc path="docs/stories/story-1.4.md" title="Story 1.4: Template List and Management UI">
+        <section name="Table Pattern Reference">
+          Established ShadCN Table component usage for responsive table/card layout. Desktop table view, tablet card view. Field count display, type labels, date formatting, loading/error/empty states.
+        </section>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact path="app/process/page.tsx" kind="page-component" symbol="ProcessDocumentsPage" lines="1-780">
+        <reason>Main page component where results table will be implemented. Currently has placeholder results step (line ~750-780). Contains extractedData state from Story 2.3, selectedTemplateId for fetching fields, multi-step workflow state machine.</reason>
+        <interfaces>
+          - State: extractedData (ExtractedRow[] | null) - populated by Story 2.3 extraction
+          - State: selectedTemplateId (string | null) - used to fetch template for column headers
+          - State: uploadedFile (File | null) - source document metadata
+          - Step state: 'upload' | 'select-template' | 'extracting' | 'results'
+        </interfaces>
+      </artifact>
+
+      <artifact path="types/extraction.ts" kind="type-definitions" symbol="ExtractedRow" lines="16-21">
+        <reason>Primary data structure for table rows. Each row contains rowId, confidence (0.0-1.0), fields (Record&lt;string, any&gt;), and sourceMetadata.</reason>
+        <interfaces>
+          interface ExtractedRow {
+            rowId: string;
+            confidence: number; // 0.0 - 1.0
+            fields: Record&lt;string, any&gt;; // Dynamic fields based on template
+            sourceMetadata: SourceMetadata;
+          }
+
+          interface SourceMetadata {
+            filename: string;
+            pageNumber?: number;
+            extractedAt: string; // ISO 8601
+          }
+        </interfaces>
+      </artifact>
+
+      <artifact path="types/template.ts" kind="type-definitions" symbol="TemplateField" lines="estimated 20-30">
+        <reason>Template field definitions used to build table column headers. Contains field_name, field_type, is_header properties.</reason>
+        <interfaces>
+          interface TemplateField {
+            field_name: string;
+            field_type: 'text' | 'number' | 'date' | 'currency';
+            is_header: boolean;
+            // Additional fields: id, template_id, display_order
+          }
+        </interfaces>
+      </artifact>
+
+      <artifact path="components/ui/table.tsx" kind="component" symbol="Table">
+        <reason>ShadCN Table component for consistent table styling. Already used in Story 1.4 (template list). Provides Table, TableHeader, TableBody, TableRow, TableHead, TableCell primitives.</reason>
+        <pattern>
+          Import: import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table"
+          Usage: Wrap rows in Table, use TableHeader for headers, TableBody for data rows
+        </pattern>
+      </artifact>
+
+      <artifact path="lib/db/templates.ts" kind="data-access-layer" symbol="getTemplateById">
+        <reason>Fetch template by ID to get field definitions for table columns. Already implemented in Story 1.3, used in Story 2.3.</reason>
+        <interfaces>
+          async function getTemplateById(id: string): Promise&lt;Template | null&gt;
+          Returns: Template with fields array (TemplateField[])
+        </interfaces>
+      </artifact>
+
+      <artifact path="app/templates/page.tsx" kind="reference-pattern" symbol="Template table rendering">
+        <reason>Reference for table rendering pattern, sorting, responsive layout. Shows desktop table + tablet card views, field count display, empty states.</reason>
+        <pattern>
+          Desktop: &lt;Table&gt; with responsive classes
+          Tablet: Conditional card layout with Tailwind breakpoints
+          Empty state: Alert component with message
+        </pattern>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="next" version="^14.2.0">Core framework with App Router</package>
+        <package name="react" version="^18.2.0">UI library with hooks for state management</package>
+        <package name="@radix-ui/react-checkbox" version="^1.3.3">For filter toggle UI</package>
+        <package name="@radix-ui/react-toast" version="^1.2.15">For success/error messages (already used)</package>
+        <package name="lucide-react" version="^0.546.0">Icon library (Info, ArrowUpDown, CheckCircle, FileSpreadsheet, etc.)</package>
+        <package name="tailwindcss" version="^3.4.0">Utility-first CSS for styling and responsive design</package>
+        <package name="clsx" version="^2.1.1">Conditional className utility</package>
+        <package name="zod" version="^4.1.12">Schema validation (if needed for sorting/filtering logic)</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">
+      Implement results table directly in app/process/page.tsx results step (no separate component file initially to minimize complexity)
+    </constraint>
+    <constraint type="data-structure">
+      ExtractedRow.fields is Record&lt;string, any&gt; - dynamic columns based on template. Build column headers from template.fields array fetched via selectedTemplateId.
+    </constraint>
+    <constraint type="visual-flagging">
+      Low-confidence threshold: 0.7 (from technical-decisions.md TD001). Apply bg-yellow-50 or bg-orange-50 Tailwind classes for confidence &lt; 0.7.
+    </constraint>
+    <constraint type="sorting-filtering">
+      Client-side only - no backend API calls. Use JavaScript array sort and filter operations. Maintain original order option by storing index.
+    </constraint>
+    <constraint type="responsive-design">
+      Desktop (>1024px): Full table with all columns. Tablet (768px-1024px): Horizontal scroll for wide tables, compact spacing. Blue accent theme consistent with production processing (Story 2.1, 2.2).
+    </constraint>
+    <constraint type="performance">
+      Table must handle 100+ rows efficiently. Use scrollable container (max-height with overflow-y: auto). Sticky header (position: sticky) for header row.
+    </constraint>
+    <constraint type="integration">
+      Story 2.3 provides extractedData state (ExtractedRow[]). Story 2.2 provides selectedTemplateId. Fetch template via getTemplateById to get field definitions for columns. Do not recreate existing state or API patterns.
+    </constraint>
+    <constraint type="future-integration">
+      Add placeholder buttons for "Export to Excel" (Story 2.7) and "Adjust Prompts & Re-extract" (Story 2.6) with TODO comments and temporary toast notifications.
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="ExtractedRow Data Structure" kind="TypeScript Interface">
+      <signature>
+        interface ExtractedRow {
+          rowId: string;
+          confidence: number; // 0.0 - 1.0
+          fields: Record&lt;string, any&gt;; // Header + detail fields (flat/denormalized)
+          sourceMetadata: {
+            filename: string;
+            pageNumber?: number;
+            extractedAt: string;
+          };
+        }
+      </signature>
+      <path>types/extraction.ts</path>
+      <usage>Primary data structure for table rows. extractedData state is ExtractedRow[] | null.</usage>
+    </interface>
+
+    <interface name="Template Fetching" kind="Function Signature">
+      <signature>
+        async function getTemplateById(id: string): Promise&lt;Template | null&gt;
+
+        interface Template {
+          id: string;
+          name: string;
+          template_type: string;
+          fields: TemplateField[]; // Use this for column headers
+          prompts: TemplatePrompt[];
+          // ...other fields
+        }
+      </signature>
+      <path>lib/db/templates.ts</path>
+      <usage>Fetch template by selectedTemplateId to get field definitions (field_name, field_type, is_header) for building table columns.</usage>
+    </interface>
+
+    <interface name="ShadCN Table Components" kind="React Components">
+      <signature>
+        import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table"
+
+        Usage pattern:
+        &lt;Table&gt;
+          &lt;TableHeader&gt;
+            &lt;TableRow&gt;
+              &lt;TableHead&gt;Column Name&lt;/TableHead&gt;
+            &lt;/TableRow&gt;
+          &lt;/TableHeader&gt;
+          &lt;TableBody&gt;
+            &lt;TableRow&gt;
+              &lt;TableCell&gt;Value&lt;/TableCell&gt;
+            &lt;/TableRow&gt;
+          &lt;/TableBody&gt;
+        &lt;/Table&gt;
+      </signature>
+      <path>components/ui/table.tsx</path>
+      <usage>Use for consistent table styling and accessibility. Already proven in Story 1.4.</usage>
+    </interface>
+
+    <interface name="State Management" kind="React Hooks">
+      <signature>
+        Existing state in ProcessDocumentsPage:
+        - const [extractedData, setExtractedData] = useState&lt;ExtractedRow[] | null&gt;(null);
+        - const [selectedTemplateId, setSelectedTemplateId] = useState&lt;string | null&gt;(null);
+        - const [uploadedFile, setUploadedFile] = useState&lt;File | null&gt;(null);
+
+        New state needed for table:
+        - const [sortColumn, setSortColumn] = useState&lt;string | null&gt;(null);
+        - const [sortDirection, setSortDirection] = useState&lt;'asc' | 'desc'&gt;('asc');
+        - const [showLowConfidenceOnly, setShowLowConfidenceOnly] = useState(false);
+      </signature>
+      <path>app/process/page.tsx</path>
+      <usage>Manage sorting and filtering state locally within results step.</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Use Jest + React Testing Library for unit tests. Manual testing for UI/UX validation. Build with `npm run build` must pass with zero errors. Lint with `npm run lint` must pass with zero warnings. Test on Chrome, Firefox, Safari, Edge browsers. Test responsive layout at desktop (>1024px) and tablet (768px-1024px) viewports.
+    </standards>
+
+    <locations>
+      __tests__/ directory (if created)
+      Inline testing via manual workflow validation
+      Build/lint verification as standard practice
+    </locations>
+
+    <ideas>
+      <test id="AC1" name="Table format matches Excel output">
+        Manual: Verify table displays flat/denormalized structure with header fields repeated per row
+      </test>
+      <test id="AC2-AC3" name="All fields displayed">
+        Unit: Mock extractedData with 5 fields, verify 5 columns + confidence + source metadata rendered
+      </test>
+      <test id="AC4" name="Confidence score display">
+        Unit: Test confidence formatting (0.85 → "85%"), column alignment (right), fixed width
+      </test>
+      <test id="AC5" name="Low-confidence flagging">
+        UI: Mock rows with confidence 0.5, 0.69, 0.7, 0.95. Verify &lt;0.7 have yellow/orange background, ≥0.7 normal
+      </test>
+      <test id="AC6" name="Source metadata columns">
+        Unit: Verify filename displayed, page number displayed (or "—" if missing), tooltip shows full filename if truncated
+      </test>
+      <test id="AC7" name="Column sorting">
+        Unit: Test sort text fields (alphabetical), number fields (numerical), confidence (numerical), dates (chronological). Test toggle asc/desc.
+      </test>
+      <test id="AC8" name="Low-confidence filter">
+        Unit: Filter extractedData where confidence &lt; 0.7. Verify filtered row count. Test empty result (all high-confidence).
+      </test>
+      <test id="AC9" name="Row count summary">
+        Unit: Calculate total, high-confidence (≥0.7), low-confidence (&lt;0.7) counts. Verify summary text format.
+      </test>
+      <test id="AC10" name="Scrollable table">
+        Manual: Load 100+ row result set, verify vertical scrolling works, header remains sticky, no horizontal scroll unless many columns
+      </test>
+      <test id="AC11" name="Responsive tablet layout">
+        Manual: Test at 768px, 1024px viewports. Verify horizontal scroll for wide tables, touch-friendly controls, readability
+      </test>
+      <test name="Integration with Story 2.3">
+        Integration: Complete workflow upload → extract → view results. Verify extractedData populates table correctly.
+      </test>
+      <test name="Build and lint validation">
+        Standard: `npm run build` (0 errors), `npm run lint` (0 warnings), TypeScript type checking passes
+      </test>
+    </ideas>
+  </tests>
+</story-context>
