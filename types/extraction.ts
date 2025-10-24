@@ -52,3 +52,41 @@ export interface ProductionExtractionErrorResponse {
 export type ProductionExtractionResponse =
   | ProductionExtractionSuccessResponse
   | ProductionExtractionErrorResponse;
+
+/**
+ * Test extraction API request schema (for template builder)
+ * Receives template fields directly instead of templateId
+ */
+export const TestExtractionRequestSchema = z.object({
+  documentBase64: z.string().min(1, 'Document content is required'),
+  templateFields: z.array(z.object({
+    field_name: z.string(),
+    field_type: z.enum(['text', 'number', 'date', 'currency']),
+    is_header: z.boolean(),
+  })).min(1, 'At least one field is required'),
+  customPrompt: z.string().optional(),
+});
+
+export type TestExtractionRequest = z.infer<typeof TestExtractionRequestSchema>;
+
+/**
+ * Test extraction API success response
+ */
+export interface TestExtractionSuccessResponse {
+  success: true;
+  data: ExtractedRow[];
+  rowCount: number;
+}
+
+/**
+ * Test extraction API error response
+ */
+export interface TestExtractionErrorResponse {
+  success: false;
+  error: string;
+  retryable: boolean;
+}
+
+export type TestExtractionResponse =
+  | TestExtractionSuccessResponse
+  | TestExtractionErrorResponse;

@@ -21,8 +21,18 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ArrowLeft, Plus, Trash2, ArrowUp, ArrowDown, Upload, X, FileText, Sparkles, Loader2, ChevronDown } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ArrowUp, ArrowDown, Upload, X, FileText, Sparkles, Loader2, ChevronDown, CheckCircle, AlertCircle } from "lucide-react";
 import { TemplateType, FieldType } from "@/types/template";
+import { ExtractedRow } from "@/types/extraction";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 /**
  * Template Builder Page - Manual Field Definition
@@ -93,6 +103,11 @@ export default function NewTemplatePage() {
   // Custom prompt state (Story 1.8)
   const [customPrompt, setCustomPrompt] = useState("");
   const [promptTipsOpen, setPromptTipsOpen] = useState(false);
+
+  // Test extraction state (Story 1.9)
+  const [testResults, setTestResults] = useState<ExtractedRow[] | null>(null);
+  const [isTestingExtraction, setIsTestingExtraction] = useState(false);
+  const [testExtractionError, setTestExtractionError] = useState<string | null>(null);
 
   // File validation constants
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -277,6 +292,84 @@ export default function NewTemplatePage() {
     setSuggestedFields([]);
     setSelectedSuggestions(new Set());
     setAnalysisGuidance("");
+  };
+
+  // Test extraction handler (Story 1.9)
+  const handleTestExtraction = async () => {
+    if (!sampleDocument || fields.length === 0) return;
+
+    setIsTestingExtraction(true);
+    setTestExtractionError(null);
+
+    try {
+      // Convert File to base64
+      const base64Document = await fileToBase64(sampleDocument);
+
+      // Prepare template fields in API format
+      const templateFields = fields.map((f) => ({
+        field_name: f.name,
+        field_type: f.type,
+        is_header: f.category === "header",
+      }));
+
+      // Call test extraction API
+      const response = await fetch("/api/extract/test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          documentBase64: base64Document,
+          templateFields,
+          customPrompt: customPrompt.trim() || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Extraction failed");
+      }
+
+      // Store results
+      setTestResults(data.data);
+
+      // Smooth scroll to results
+      setTimeout(() => {
+        const resultsElement = document.getElementById("test-results");
+        if (resultsElement) {
+          resultsElement.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+    } catch (error) {
+      setTestExtractionError(
+        error instanceof Error
+          ? error.message
+          : "Unable to extract data. Please try again."
+      );
+    } finally {
+      setIsTestingExtraction(false);
+    }
+  };
+
+  // Format cell value by data type
+  const formatCellValue = (value: any, fieldType: string): string => {
+    if (value === null || value === undefined || value === "") {
+      return "-";
+    }
+
+    switch (fieldType) {
+      case "currency":
+        const numValue = typeof value === "number" ? value : parseFloat(value);
+        return isNaN(numValue) ? value : `$${numValue.toFixed(2)}`;
+      case "date":
+        return value; // Already formatted by API or keep as-is
+      case "number":
+        return value.toString();
+      case "text":
+      default:
+        return value.toString();
+    }
   };
 
   // Add new field to array
@@ -1011,7 +1104,155 @@ export default function NewTemplatePage() {
             </div>
           </CollapsibleContent>
         </Collapsible>
+
+        {/* Test Extraction Button (Story 1.9) */}
+        <div className="mt-6 pt-6 border-t">
+          <Button
+            onClick={handleTestExtraction}
+            disabled={!sampleDocument || fields.length === 0 || isTestingExtraction}
+            variant="outline"
+            className="w-full sm:w-auto"
+          >
+            {isTestingExtraction ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Testing extraction...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Test Extraction
+              </>
+            )}
+          </Button>
+          {!sampleDocument && fields.length > 0 && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Upload a sample document to test extraction
+            </p>
+          )}
+          {sampleDocument && fields.length === 0 && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Define at least one field to test extraction
+            </p>
+          )}
+        </div>
       </div>
+
+      {/* Test Extraction Error (Story 1.9) */}
+      {testExtractionError && (
+        <div className="mb-6">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="ml-2">
+              {testExtractionError}
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-4"
+                onClick={handleTestExtraction}
+                disabled={isTestingExtraction}
+              >
+                Try Again
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
+      {/* Test Results Preview (Story 1.9) */}
+      {testResults !== null && (
+        <div id="test-results" className="mb-8 border rounded-lg p-6 bg-card">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                Test Results
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {testResults.length} {testResults.length === 1 ? "row" : "rows"} extracted
+                {testResults.length > 0 && (
+                  <>
+                    {" · "}
+                    {testResults.filter((r) => r.confidence >= 0.7).length} high confidence,{" "}
+                    {testResults.filter((r) => r.confidence < 0.7).length} low confidence
+                  </>
+                )}
+              </p>
+            </div>
+            <Button
+              onClick={handleTestExtraction}
+              disabled={isTestingExtraction}
+              variant="outline"
+              size="sm"
+            >
+              {isTestingExtraction ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Re-testing...
+                </>
+              ) : (
+                "Re-test"
+              )}
+            </Button>
+          </div>
+
+          {testResults.length === 0 ? (
+            <Alert>
+              <AlertDescription>
+                No data extracted. Try adjusting your custom prompt or check the sample document content.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="border rounded-lg overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {fields.map((field) => (
+                      <TableHead key={field.id}>{field.name}</TableHead>
+                    ))}
+                    <TableHead className="text-right">Confidence</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {testResults.map((row) => (
+                    <TableRow
+                      key={row.rowId}
+                      className={row.confidence < 0.7 ? "bg-yellow-50" : ""}
+                    >
+                      {fields.map((field) => (
+                        <TableCell key={field.id}>
+                          {formatCellValue(row.fields[field.name], field.type)}
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-right">
+                        <span
+                          className={
+                            row.confidence < 0.7
+                              ? "text-orange-600 font-medium"
+                              : "text-green-600"
+                          }
+                          title={
+                            row.confidence < 0.7
+                              ? "Low confidence - may require manual review"
+                              : "High confidence"
+                          }
+                        >
+                          {(row.confidence * 100).toFixed(0)}%
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          <p className="text-sm text-muted-foreground mt-4">
+            <strong>What do confidence scores mean?</strong> Scores reflect how complete and accurate the extracted data is.
+            Low confidence rows (below 70%) are highlighted in yellow and may need manual review.
+          </p>
+        </div>
+      )}
 
       {/* Submit Error */}
       {errors.submit && (
