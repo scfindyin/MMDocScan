@@ -1,6 +1,6 @@
 # Story 2.9: Extraction Session Management
 
-Status: Ready for Review
+Status: Done
 
 ## Story
 
@@ -230,7 +230,10 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 N/A - All tasks completed successfully without major blockers.
 
-### Completion Notes List
+### Completion Notes
+
+**Completed:** 2025-10-24
+**Definition of Done:** All acceptance criteria met, code reviewed, tests passing, deployed
 
 **Implementation Complete - 2025-10-24**
 
