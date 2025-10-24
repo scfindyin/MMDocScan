@@ -22,6 +22,16 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ArrowLeft, Plus, Trash2, ArrowUp, ArrowDown, Upload, X, FileText, Sparkles, Loader2, ChevronDown, CheckCircle, AlertCircle } from "lucide-react";
 import { TemplateType, FieldType } from "@/types/template";
 import { ExtractedRow } from "@/types/extraction";
@@ -114,6 +124,10 @@ export default function EditTemplatePage() {
   const [testResults, setTestResults] = useState<ExtractedRow[] | null>(null);
   const [isTestingExtraction, setIsTestingExtraction] = useState(false);
   const [testExtractionError, setTestExtractionError] = useState<string | null>(null);
+
+  // Delete confirmation state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // File validation constants
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -600,6 +614,39 @@ export default function EditTemplatePage() {
   // Handle cancel - return to template list
   const handleCancel = () => {
     router.push("/templates");
+  };
+
+  // Handle delete template
+  const handleDelete = async () => {
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch(`/api/templates/${templateId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete template");
+      }
+
+      // Success - show toast notification
+      toast({
+        title: "Success",
+        description: `Template '${templateName}' deleted successfully`,
+      });
+
+      // Redirect to template list
+      router.push("/templates");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete template",
+        variant: "destructive",
+      });
+      setShowDeleteDialog(false);
+      setIsDeleting(false);
+    }
   };
 
   // Show loading state while template loads
@@ -1375,21 +1422,64 @@ export default function EditTemplatePage() {
       )}
 
       {/* Action Buttons (AC#7: Save enabled immediately in edit mode, no test required) */}
-      <div className="flex gap-4 justify-end">
+      <div className="flex gap-4 justify-between">
+        {/* Delete Button - Left Side */}
         <Button
-          variant="outline"
-          onClick={handleCancel}
-          disabled={isLoading}
+          variant="destructive"
+          onClick={() => setShowDeleteDialog(true)}
+          disabled={isLoading || isDeleting}
         >
-          Cancel
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete Template
         </Button>
-        <Button
-          onClick={handleSave}
-          disabled={isLoading}
-        >
-          {isLoading ? "Saving..." : "Save Template"}
-        </Button>
+
+        {/* Save/Cancel Buttons - Right Side */}
+        <div className="flex gap-4">
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isLoading || isDeleting}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={isLoading || isDeleting}
+          >
+            {isLoading ? "Saving..." : "Save Template"}
+          </Button>
+        </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Template</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{templateName}&quot;? This action cannot be undone.
+              All associated fields and prompts will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Template"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
