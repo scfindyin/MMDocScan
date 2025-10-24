@@ -1,11 +1,15 @@
 'use client';
 
-import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
+import { useRef, useEffect } from 'react';
+import { PanelGroup, Panel, PanelResizeHandle, ImperativePanelHandle } from 'react-resizable-panels';
 import { useExtractionStore } from '@/stores/extractionStore';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
 export default function ExtractPageClient() {
+  const leftPanelRef = useRef<ImperativePanelHandle>(null);
+  const rightPanelRef = useRef<ImperativePanelHandle>(null);
+
   const {
     leftPanelSize,
     rightPanelSize,
@@ -24,10 +28,49 @@ export default function ExtractPageClient() {
     }
   };
 
+  const handleMaximizeLeft = () => {
+    maximizeLeft();
+    leftPanelRef.current?.resize(95);
+    rightPanelRef.current?.resize(5);
+  };
+
+  const handleMaximizeRight = () => {
+    maximizeRight();
+    leftPanelRef.current?.resize(5);
+    rightPanelRef.current?.resize(95);
+  };
+
+  const handleRestoreLeft = () => {
+    restoreLeft();
+    leftPanelRef.current?.resize(30);
+    rightPanelRef.current?.resize(70);
+  };
+
+  const handleRestoreRight = () => {
+    restoreRight();
+    leftPanelRef.current?.resize(30);
+    rightPanelRef.current?.resize(70);
+  };
+
+  // Restore panel sizes on mount from localStorage
+  useEffect(() => {
+    if (isLeftMaximized) {
+      leftPanelRef.current?.resize(95);
+      rightPanelRef.current?.resize(5);
+    } else if (isRightMaximized) {
+      leftPanelRef.current?.resize(5);
+      rightPanelRef.current?.resize(95);
+    } else {
+      leftPanelRef.current?.resize(leftPanelSize);
+      rightPanelRef.current?.resize(rightPanelSize);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount to restore from localStorage
+
   return (
     <div className="h-screen flex flex-col">
       {/* Page Header */}
-      <div className="border-b bg-white px-6 py-4">
+      <div className="border-b bg-white px-6 py-4 flex-shrink-0">
         <h1 className="text-2xl font-bold">Batch Extraction</h1>
         <p className="text-sm text-gray-600 mt-1">
           Configure templates and extract data from multiple documents
@@ -35,7 +78,7 @@ export default function ExtractPageClient() {
       </div>
 
       {/* Resizable Panel Layout */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0">
         <PanelGroup
           direction="horizontal"
           onLayout={handleResize}
@@ -43,64 +86,48 @@ export default function ExtractPageClient() {
         >
           {/* Left Panel - Configuration */}
           <Panel
+            ref={leftPanelRef}
             defaultSize={leftPanelSize}
-            minSize={25} // 250px at 1000px viewport
+            minSize={25}
             maxSize={95}
-            className="relative transition-all duration-300 ease-in-out"
             collapsible={true}
           >
-            {isLeftMaximized ? (
-              <div className="h-full bg-white border-r p-6">
-                <Card className="p-6 h-full flex flex-col">
-                  <h2 className="text-lg font-semibold mb-4">
-                    Template Configuration
-                  </h2>
-                  <div className="flex-1 flex items-center justify-center text-gray-500">
-                    <p>Coming in Story 3.2: Tag-Based Template Builder UI</p>
-                  </div>
-                  <div className="mt-4 flex justify-end">
-                    <Button
-                      onClick={restoreLeft}
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                    >
-                      Restore ▶
-                    </Button>
-                  </div>
-                </Card>
-              </div>
-            ) : isRightMaximized ? (
+            {isRightMaximized ? (
               // Thin bar when right is maximized
               <div
-                className="h-full bg-gray-100 border-r flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
-                onClick={restoreRight}
-                title="Click to restore left panel"
+                className="h-full bg-gray-100 border-r flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-all duration-300"
+                onClick={handleRestoreRight}
+                title="Click to restore panels"
               >
                 <div className="writing-mode-vertical text-xs text-gray-600 py-4">
                   Configuration
                 </div>
               </div>
             ) : (
-              <div className="h-full bg-white border-r p-6">
-                <Card className="p-6 h-full flex flex-col">
-                  <h2 className="text-lg font-semibold mb-4">
+              <div className="h-full bg-white border-r flex flex-col relative">
+                {/* Maximize Button - Top Right */}
+                <div className="absolute top-4 right-4 z-10">
+                  <Button
+                    onClick={handleMaximizeLeft}
+                    variant="outline"
+                    size="sm"
+                    title="Maximize configuration panel"
+                  >
+                    ▶
+                  </Button>
+                </div>
+
+                {/* Panel Content */}
+                <div className="flex-1 flex flex-col p-6 overflow-auto">
+                  <h2 className="text-lg font-semibold mb-4 pr-12">
                     Template Configuration
                   </h2>
-                  <div className="flex-1 flex items-center justify-center text-gray-500">
-                    <p>Coming in Story 3.2: Tag-Based Template Builder UI</p>
-                  </div>
-                  <div className="mt-4 flex justify-end">
-                    <Button
-                      onClick={maximizeLeft}
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                    >
-                      ◀ Maximize
-                    </Button>
-                  </div>
-                </Card>
+                  <Card className="flex-1 p-6 flex items-center justify-center">
+                    <p className="text-gray-500 text-center">
+                      Coming in Story 3.2: Tag-Based Template Builder UI
+                    </p>
+                  </Card>
+                </div>
               </div>
             )}
           </Panel>
@@ -110,64 +137,48 @@ export default function ExtractPageClient() {
 
           {/* Right Panel - Results */}
           <Panel
+            ref={rightPanelRef}
             defaultSize={rightPanelSize}
-            minSize={60} // 600px at 1000px viewport
+            minSize={60}
             maxSize={95}
-            className="relative transition-all duration-300 ease-in-out"
             collapsible={true}
           >
-            {isRightMaximized ? (
-              <div className="h-full bg-white p-6">
-                <Card className="p-6 h-full flex flex-col">
-                  <h2 className="text-lg font-semibold mb-4">
-                    Extraction Results
-                  </h2>
-                  <div className="flex-1 flex items-center justify-center text-gray-500">
-                    <p>Coming in Story 3.7: Basic Extraction with Results Table</p>
-                  </div>
-                  <div className="mt-4 flex justify-start">
-                    <Button
-                      onClick={restoreRight}
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                    >
-                      ◀ Restore
-                    </Button>
-                  </div>
-                </Card>
-              </div>
-            ) : isLeftMaximized ? (
+            {isLeftMaximized ? (
               // Thin bar when left is maximized
               <div
-                className="h-full bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
-                onClick={restoreLeft}
-                title="Click to restore right panel"
+                className="h-full bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-all duration-300"
+                onClick={handleRestoreLeft}
+                title="Click to restore panels"
               >
                 <div className="writing-mode-vertical text-xs text-gray-600 py-4">
                   Results
                 </div>
               </div>
             ) : (
-              <div className="h-full bg-white p-6">
-                <Card className="p-6 h-full flex flex-col">
-                  <h2 className="text-lg font-semibold mb-4">
+              <div className="h-full bg-white flex flex-col relative">
+                {/* Maximize Button - Top Right */}
+                <div className="absolute top-4 right-4 z-10">
+                  <Button
+                    onClick={handleMaximizeRight}
+                    variant="outline"
+                    size="sm"
+                    title="Maximize results panel"
+                  >
+                    ◀
+                  </Button>
+                </div>
+
+                {/* Panel Content */}
+                <div className="flex-1 flex flex-col p-6 overflow-auto">
+                  <h2 className="text-lg font-semibold mb-4 pr-12">
                     Extraction Results
                   </h2>
-                  <div className="flex-1 flex items-center justify-center text-gray-500">
-                    <p>Coming in Story 3.7: Basic Extraction with Results Table</p>
-                  </div>
-                  <div className="mt-4 flex justify-start">
-                    <Button
-                      onClick={maximizeRight}
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                    >
-                      Maximize ▶
-                    </Button>
-                  </div>
-                </Card>
+                  <Card className="flex-1 p-6 flex items-center justify-center">
+                    <p className="text-gray-500 text-center">
+                      Coming in Story 3.7: Basic Extraction with Results Table
+                    </p>
+                  </Card>
+                </div>
               </div>
             )}
           </Panel>

@@ -307,6 +307,14 @@ claude-sonnet-4-5-20250929
 
 ## Change Log
 
+### 2025-10-24 - Bug Fixes: Panel Resizing, Layout Height, Button Position
+- Fixed panel resizing by implementing imperative API with refs (`ImperativePanelHandle`)
+- Fixed page height overflow issue by using `min-h-0` and proper flex layout
+- Repositioned maximize buttons to top-right with absolute positioning
+- Fixed button icon directions: Left panel "▶" (expand right), Right panel "◀" (expand left)
+- Added useEffect to restore panel sizes from localStorage on mount
+- Build: 0 errors, Lint: 0 warnings (added ESLint disable comment for intentional mount-only effect)
+
 ### 2025-10-24 - Story 3.1 Implementation Complete
 - Installed react-resizable-panels ^2.0.0 and zustand ^4.5.0
 - Created Zustand store with persist middleware for panel state management
