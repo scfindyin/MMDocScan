@@ -21,18 +21,18 @@ PHASE_4_COMPLETE: false
 
 ## Development Queue
 
-STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: None
-TODO_TITLE: None
-IN_PROGRESS_STORY: None
-IN_PROGRESS_TITLE: None
+STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "3.16", "3.17", "3.18", "3.19", "3.20", "3.21", "3.22", "3.23", "3.24", "3.25", "3.26", "3.27", "3.28", "3.29", "3.30"]
+TODO_STORY: 3.2
+TODO_TITLE: Tag-Based Template Builder UI
+IN_PROGRESS_STORY: 3.1
+IN_PROGRESS_TITLE: Unified Page Layout with Resizable Panels
 STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
 
 ## Next Action
 
-NEXT_ACTION: All 19 stories complete! Epic 1 and Epic 2 both 100% complete. Project implementation phase finished. Ready for retrospective and project closeout.
-NEXT_COMMAND: Run retrospective workflow with PM agent to review the project
-NEXT_AGENT: product-manager
+NEXT_ACTION: Story 3.1 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
+NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
+NEXT_AGENT: developer
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) ✅ COMPLETE (10 of 10 complete)
@@ -57,6 +57,52 @@ NEXT_AGENT: product-manager
 - Story 2.7: Excel File Generation ✓
 - Story 2.8: Excel Export and Download ✓
 - Story 2.9: Extraction Session Management ✓
+
+### Epic 3: Unified Batch Extraction Workflow (30 stories) 🚀 IN PROGRESS (0 of 30 complete)
+
+#### Phase 1: Foundation (Weeks 1-2) - Stories 3.1-3.7
+- Story 3.1: Unified Page Layout with Resizable Panels 🚧 IN PROGRESS
+- Story 3.2: Tag-Based Template Builder UI
+- Story 3.3: Drag-and-Drop Field Reordering
+- Story 3.4: Template CRUD APIs
+- Story 3.5: Save Template Flow
+- Story 3.6: Basic File Upload (Single File)
+- Story 3.7: Basic Extraction with Results Table
+
+#### Phase 2: Batch Processing (Weeks 3-4) - Stories 3.8-3.14
+- Story 3.8: Multi-File Upload UI
+- Story 3.9: PDF Parsing Service
+- Story 3.10: Auto-Detection Algorithm
+- Story 3.11: Batch Extraction API
+- Story 3.12: Extraction Queue with Concurrency
+- Story 3.13: Progress Tracking UI
+- Story 3.14: Results Table with Source Tracking
+
+#### Phase 3: Custom Columns (Week 5) - Stories 3.15-3.17
+- Story 3.15: Custom Columns UI (Static Values)
+- Story 3.16: Custom Columns in Results Table
+- Story 3.17: Custom Columns in Excel Export
+
+#### Phase 4: AI Features (Week 6) - Stories 3.18-3.20
+- Story 3.18: AI Inspect API
+- Story 3.19: AI Suggestions Modal
+- Story 3.20: Prompt Merge Logic
+
+#### Phase 5: Excel Export Options (Week 6) - Stories 3.21-3.22
+- Story 3.21: Export Dialog with Options
+- Story 3.22: Excel Generation Service (Separate/Combined Sheets)
+
+#### Phase 6: Results Table UI Polish (Week 6) - Stories 3.23-3.25
+- Story 3.23: Table Virtualization with react-window
+- Story 3.24: Frozen Header and Always-Visible Scrollbar
+- Story 3.25: Panel Maximize/Minimize Controls
+
+#### Phase 7: Polish & Production Ready (Weeks 7-8) - Stories 3.26-3.30
+- Story 3.26: Header Navigation Links
+- Story 3.27: Error Handling & Edge Cases
+- Story 3.28: Session Persistence & Retention Settings
+- Story 3.29: Accessibility Audit & Fixes
+- Story 3.30: Performance Optimization & Final QA
 
 ## Completed Stories
 
@@ -316,8 +362,8 @@ NEXT_AGENT: product-manager
 
 ---
 
-_Last Updated: 2025-10-24 (Story 2.9 approved and marked done - ALL STORIES COMPLETE!)_
-_Status Version: 25.0_
+_Last Updated: 2025-10-24 (Story 3.1 implementation complete - ready for review)_
+_Status Version: 27.0_
 _Story 2.9 Approved: 2025-10-24_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
@@ -337,15 +383,19 @@ _Story 1.9 Approved: 2025-10-23_
 _Story 1.10 Approved: 2025-10-23_
 _Epic 1 Status: ✅ COMPLETE - 10 of 10 stories done (100%)_
 _Epic 2 Status: ✅ COMPLETE - 9 of 9 stories done (100%)_
-_Progress: ✅ ALL 19 STORIES COMPLETE (100%)_
-_Phase 4 Implementation: COMPLETE_
-_Next: Run retrospective workflow with PM agent_
+_Epic 3 Status: 🚀 IN PROGRESS - 0 of 30 stories done (0%)_
+_Progress: 19 of 49 total stories complete (38.8%)_
+_Phase 4 Implementation: IN PROGRESS (Epic 3)_
+_Next: create-story workflow for Story 3.1_
 _Story 2.5 Approved: 2025-10-24_
 _Story 2.6 Approved: 2025-10-24_
 _Story 2.7 Approved: 2025-10-24_
 _Story 2.8 Approved: 2025-10-24_
 _Story 2.9 Approved: 2025-10-24_
-_🎉 PROJECT COMPLETE: All stories implemented and approved_
-_Milestone Achieved: Epic 1 deliverable - Users can create, test, save, and edit validated extraction templates_
-_Milestone Achieved: Epic 2 deliverable - Users can process documents, extract data, review results, refine prompts, export to Excel, and manage extraction history_
-_🎊 FINAL MILESTONE: MMDocScan MVP complete with full template creation and document processing capabilities_
+_Epic 3 Tech Spec Created: 2025-10-24_
+_Epic 3 Tech Spec Validated: 2025-10-24 (11/11 criteria PASS)_
+_Epic 3 Queued: 2025-10-24 (30 stories loaded into development queue)_
+_✅ Milestone Achieved: Epic 1 deliverable - Users can create, test, save, and edit validated extraction templates_
+_✅ Milestone Achieved: Epic 2 deliverable - Users can process documents, extract data, review results, refine prompts, export to Excel, and manage extraction history_
+_🚀 Epic 3 Status: IN PROGRESS - 0 of 30 stories complete (0%)_
+_📋 Next: Run create-story workflow for Story 3.1 (Unified Page Layout with Resizable Panels)_

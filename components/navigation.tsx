@@ -22,6 +22,12 @@ export function Navigation() {
             Recent Extractions
           </Link>
           <Link
+            href="/extract"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Batch Extract
+          </Link>
+          <Link
             href="/process"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
