@@ -108,6 +108,10 @@
     <action>Search {output_folder}/ for files matching pattern: bmm-workflow-status.md</action>
     <action>Find the most recent file (by date in filename)</action>
 
+    <critical>DO NOT ADVANCE TODO_STORY POINTER - This workflow only drafts the story</critical>
+    <critical>The TODO_STORY should remain unchanged - story-ready workflow will advance it later</critical>
+    <critical>Only update CURRENT_WORKFLOW field via workflow-status invoke below</critical>
+
     <check if="status file exists">
       <invoke-workflow path="{project-root}/bmad/bmm/workflows/workflow-status">
         <param>mode: update</param>
@@ -119,6 +123,10 @@
         <output>✅ Status updated: Story {{story_id}} drafted</output>
       </check>
 
+      <action>Update NEXT_ACTION in status file to indicate story-ready should be run next</action>
+      <action>Set NEXT_ACTION: "Story {{story_id}} drafted successfully. Ready for story-ready workflow to approve for development."</action>
+      <action>Set NEXT_COMMAND: "story-ready (Review and approve Story {{story_id}} for development)"</action>
+
       <output>**✅ Story Created Successfully, {user_name}!**
 
 **Story Details:**
@@ -127,8 +135,8 @@
 - Status: Draft (needs review)
 
 **Status file updated:**
-- Current step: create-story (Story {{story_id}}) ✓
-- Progress: {{new_progress_percentage}}%
+- Current workflow: create-story ✓
+- TODO_STORY: {{story_id}} (remains unchanged - story-ready will move it to IN_PROGRESS)
 
 **Next Steps:**
 1. Review the drafted story in {{story_file}}
