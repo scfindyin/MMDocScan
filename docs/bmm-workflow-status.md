@@ -22,16 +22,16 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: 2.4
-TODO_TITLE: Extraction Results Preview Table
-IN_PROGRESS_STORY: 1.10
-IN_PROGRESS_TITLE: Save Validated Template
-STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9"]
+TODO_STORY: 2.5
+TODO_TITLE: Review Low-Confidence Extractions
+IN_PROGRESS_STORY: 2.4
+IN_PROGRESS_TITLE: Extraction Results Preview Table
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10"]
 
 ## Next Action
 
-NEXT_ACTION: Story 1.10 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
-NEXT_COMMAND: story-approved
+NEXT_ACTION: Story 2.4 marked IN PROGRESS. Implement with DEV agent to add extraction results preview table.
+NEXT_COMMAND: dev-story
 NEXT_AGENT: developer
 ## Story Backlog
 
@@ -45,13 +45,13 @@ NEXT_AGENT: developer
 - Story 1.7: Claude API Integration and AI Field Suggestion ✓
 - Story 1.8: Custom Prompt Definition ✓
 - Story 1.9: Test Extraction on Sample Document ✓
-- Story 1.10: Save Validated Template ✓ Ready for Review
+- Story 1.10: Save Validated Template ✓
 
-### Epic 2: Production Document Processing & Excel Export (9 stories) 🔄 PAUSED (at Story 2.3 until Epic 1 complete)
+### Epic 2: Production Document Processing & Excel Export (9 stories) 🔄 IN PROGRESS (3 of 9 complete)
 - Story 2.1: Production Document Upload Interface ✓
 - Story 2.2: Template Selection for Production Processing ✓
 - Story 2.3: Production Document Extraction ✓
-- Story 2.4: Extraction Results Preview Table
+- Story 2.4: Extraction Results Preview Table 🔄 IN PROGRESS
 - Story 2.5: Review Low-Confidence Extractions
 - Story 2.6: Iterative Prompt Refinement
 - Story 2.7: Excel File Generation
@@ -218,8 +218,9 @@ NEXT_AGENT: developer
 - **DoD Complete:** All 100+ subtasks complete across 10 task groups, all acceptance criteria verified, build/lint passing, code reviewed, deployed
 
 ### Story 1.10: Save Validated Template ✓
-- **Status:** Ready for Review
+- **Status:** Done
 - **Completed:** 2025-10-23
+- **Approved:** 2025-10-23
 - **Summary:** Save and edit functionality for templates with toast notifications, test extraction requirement (new mode), and full edit workflow
 - **All ACs Verified:** 7/7 passing (AC1-AC7: save button logic, template persistence, success messages, navigation, edit workflow)
 - **Files Created:** 4 files (app/templates/[id]/edit/page.tsx, components/ui/toast.tsx, components/ui/toaster.tsx, hooks/use-toast.ts)
@@ -227,12 +228,12 @@ NEXT_AGENT: developer
 - **Key Features:** Toast notifications for success messages, save button enabled only after test (new) or immediately (edit), edit page at /templates/[id]/edit with full workflow support, Edit button in template list (table and card views), PUT /api/templates/:id for updates
 - **Testing:** Build PASSED (0 errors, 13 routes), Lint PASSED (0 warnings), bundle size +48 kB for edit page
 - **Epic 1 Complete:** Final story in Epic 1 - users can now create, test, save, and edit templates
-- **DoD Complete:** All acceptance criteria met, code reviewed, build/lint passing, ready for approval
+- **DoD Complete:** All acceptance criteria met, code reviewed, build/lint passing, deployed
 
 ---
 
-_Last Updated: 2025-10-23 (Story 1.10 complete - Epic 1: COMPLETE - 10 of 10 stories done)_
-_Status Version: 11.0_
+_Last Updated: 2025-10-23 (Story 1.10 approved - Epic 1: COMPLETE - Story 2.4 IN PROGRESS)_
+_Status Version: 12.0_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
@@ -248,9 +249,9 @@ _Story 2.1 Approved: 2025-10-23_
 _Story 2.2 Approved: 2025-10-23_
 _Story 2.3 Approved: 2025-10-23_
 _Story 1.9 Approved: 2025-10-23_
-_Story 1.10 Completed: 2025-10-23_
+_Story 1.10 Approved: 2025-10-23_
 _Epic 1 Status: ✅ COMPLETE - 10 of 10 stories done (100%)_
-_Epic 2 Status: 3 of 9 stories done (33%) - Ready to resume with Story 2.4_
-_Progress: 13 of 19 stories complete (68.4%), Story 1.10 Ready for Review_
-_Next: Run story-approved workflow to mark Story 1.10 done and advance to Story 2.4_
-_Milestone: Epic 1 deliverable achieved - Users can create, test, save, and edit validated extraction templates_
+_Epic 2 Status: 3 of 9 stories done (33%) - Story 2.4 IN PROGRESS_
+_Progress: 13 of 19 stories complete (68.4%), Story 2.4 IN PROGRESS_
+_Next: Implement Story 2.4 (Extraction Results Preview Table) with DEV agent_
+_Milestone Achieved: Epic 1 deliverable - Users can create, test, save, and edit validated extraction templates_
