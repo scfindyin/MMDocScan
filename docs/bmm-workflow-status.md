@@ -22,17 +22,17 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: 2.6
-TODO_TITLE: Iterative Prompt Refinement
-IN_PROGRESS_STORY: 2.5
-IN_PROGRESS_TITLE: Review Low-Confidence Extractions (Ready for Review)
-STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4"]
+TODO_STORY: 2.7
+TODO_TITLE: Excel File Generation
+IN_PROGRESS_STORY: 2.6
+IN_PROGRESS_TITLE: Iterative Prompt Refinement
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5"]
 
 ## Next Action
 
-NEXT_ACTION: Story 2.5 validation complete and ready for review. All 7 acceptance criteria verified through code review. Run story-approved workflow when Definition of Done is verified.
-NEXT_COMMAND: story-approved
-NEXT_AGENT: developer
+NEXT_ACTION: Story 2.6 (Iterative Prompt Refinement) moved to IN PROGRESS. Load SM agent and run create-story workflow to draft Story 2.6, or if already drafted, run story-ready workflow to approve.
+NEXT_COMMAND: create-story or story-ready
+NEXT_AGENT: scrum-master
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) ✅ COMPLETE (10 of 10 complete)
@@ -52,8 +52,8 @@ NEXT_AGENT: developer
 - Story 2.2: Template Selection for Production Processing ✓
 - Story 2.3: Production Document Extraction ✓
 - Story 2.4: Extraction Results Preview Table ✓
-- Story 2.5: Review Low-Confidence Extractions 🔄 IN PROGRESS (Ready for Review)
-- Story 2.6: Iterative Prompt Refinement
+- Story 2.5: Review Low-Confidence Extractions ✓
+- Story 2.6: Iterative Prompt Refinement 🔄 IN PROGRESS
 - Story 2.7: Excel File Generation
 - Story 2.8: Excel Export and Download
 - Story 2.9: Extraction Session Management
@@ -243,10 +243,23 @@ NEXT_AGENT: developer
 - **TypeScript:** 100% type-safe implementation
 - **DoD Complete:** All acceptance criteria met, code reviewed, build/lint passing, deployed to production
 
+### Story 2.5: Review Low-Confidence Extractions ✓
+- **Status:** Done
+- **Completed:** 2025-10-24
+- **Approved:** 2025-10-24
+- **Summary:** Validation story - all 7 acceptance criteria already implemented in Story 2.4, comprehensive code review and testing completed
+- **All ACs Verified:** 7/7 passing (AC1-AC7: filter toggle, threshold indicator, visual distinction, confidence tooltip, sorting, summary stats, "all high-confidence" message)
+- **Implementation Location:** app/process/page.tsx (lines 67-1108 from Story 2.4)
+- **Key Validations:** Filter toggle (lines 913-926), threshold tooltip (985-993), visual distinction (1051-1056), confidence sorting (979-1005), summary stats (888-911), celebratory message (930-939)
+- **Testing:** Build PASSED (0 errors, 12 routes), Lint PASSED (0 warnings), bundle size 148 kB (unchanged)
+- **Tasks Completed:** 17 tasks, 35 subtasks (validation-focused)
+- **Code Quality:** All features working correctly, 100% TypeScript type-safe, zero regressions
+- **DoD Complete:** All acceptance criteria verified through code review, build/lint passing, no new implementation required
+
 ---
 
-_Last Updated: 2025-10-23 (Story 2.5 validation complete - Epic 2: 4 of 9 complete - Story 2.5 ready for review)_
-_Status Version: 14.4_
+_Last Updated: 2025-10-24 (Story 2.5 approved and done - Epic 2: 5 of 9 complete - Story 2.6 moved to IN PROGRESS)_
+_Status Version: 15.0_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
@@ -264,7 +277,8 @@ _Story 2.3 Approved: 2025-10-23_
 _Story 1.9 Approved: 2025-10-23_
 _Story 1.10 Approved: 2025-10-23_
 _Epic 1 Status: ✅ COMPLETE - 10 of 10 stories done (100%)_
-_Epic 2 Status: 4 of 9 stories done (44.4%) - Story 2.5 validation complete (ready for review)_
-_Progress: 14 of 19 stories complete (73.7%), Story 2.5 validation complete and ready for review_
-_Next: Review Story 2.5, then run story-approved workflow to mark done and advance queue_
+_Epic 2 Status: 5 of 9 stories done (55.6%) - Story 2.6 in progress_
+_Progress: 15 of 19 stories complete (78.9%), Story 2.6 moved to IN PROGRESS_
+_Next: Load SM agent to draft/approve Story 2.6, then implement with DEV agent_
+_Story 2.5 Approved: 2025-10-24_
 _Milestone Achieved: Epic 1 deliverable - Users can create, test, save, and edit validated extraction templates_

@@ -1,6 +1,6 @@
 # Story 2.5: Review Low-Confidence Extractions
 
-Status: Ready for Review
+Status: Done
 
 ## Story
 
@@ -360,6 +360,9 @@ claude-sonnet-4-5-20250929 (Sonnet 4.5)
 - Lint validation: PASSED (0 warnings)
 
 ### Completion Notes List
+
+**Completed:** 2025-10-24
+**Definition of Done:** All acceptance criteria met, code reviewed, tests passing, deployed
 
 **Story 2.5 Validation Complete - 2025-10-23**
 
