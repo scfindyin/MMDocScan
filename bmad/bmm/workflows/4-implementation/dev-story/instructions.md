@@ -128,10 +128,17 @@
   </step>
 
   <step n="9" goal="Commit all changes in single atomic operation" critical="true">
+    <critical>DEPLOYMENT DEPENDENCY CHECK - ALWAYS VERIFY BEFORE COMMIT:</critical>
+    <check>If any ShadCN components were installed (npx shadcn add), ensure package.json and package-lock.json are modified and staged</check>
+    <check>Run 'git status' to verify no package.json/package-lock.json changes are unstaged</check>
+    <check>If new npm packages were installed, verify they appear in package.json dependencies</check>
+    <action if="package.json or package-lock.json have unstaged changes">STOP and stage these files - Vercel deployment will fail without them</action>
+
     <action>Stage ALL modified files in a single git add command:</action>
     - Implementation code files (new/modified source code)
     - Story file ({{story_path}})
     - Status file (bmm-workflow-status.md) if it exists
+    - **package.json and package-lock.json** (CRITICAL for Vercel deployment if modified)
     - Any other documentation or configuration files modified during implementation
 
     <action>Create ONE comprehensive commit with message format:</action>
