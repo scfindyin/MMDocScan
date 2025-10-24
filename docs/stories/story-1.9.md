@@ -1,6 +1,6 @@
 # Story 1.9: Test Extraction on Sample Document
 
-Status: Ready for Review
+Status: Done
 
 ## Story
 
@@ -260,6 +260,9 @@ claude-sonnet-4-5 (claude-sonnet-4-5-20250929)
 ### Debug Log References
 
 ### Completion Notes List
+
+**Completed:** 2025-10-23
+**Definition of Done:** All acceptance criteria met, code reviewed, tests passing, deployed
 
 **Implementation Summary:**
 - Created test extraction API route (`/api/extract/test`) with confidence scoring and denormalization matching Story 2.3 patterns

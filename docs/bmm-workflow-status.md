@@ -22,20 +22,20 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
-TODO_STORY: 1.10
-TODO_TITLE: Save Validated Template
-IN_PROGRESS_STORY: 1.9
-IN_PROGRESS_TITLE: Test Extraction on Sample Document - Ready for Review
-STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3"]
+TODO_STORY: 2.4
+TODO_TITLE: Extraction Results Preview Table
+IN_PROGRESS_STORY: 1.10
+IN_PROGRESS_TITLE: Save Validated Template
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9"]
 
 ## Next Action
 
-NEXT_ACTION: Story 1.9 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
-NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
+NEXT_ACTION: Story 1.9 approved and marked done. Now implement Story 1.10 to complete Epic 1. Run create-story workflow to generate story context if needed.
+NEXT_COMMAND: dev-story
 NEXT_AGENT: developer
 ## Story Backlog
 
-### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) 🔄 IN PROGRESS (8 of 10 complete)
+### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) 🔄 IN PROGRESS (9 of 10 complete)
 - Story 1.1: Project Infrastructure Setup ✓
 - Story 1.2: Database Setup and Connection ✓
 - Story 1.3: Template Data Model and Storage ✓
@@ -44,8 +44,8 @@ NEXT_AGENT: developer
 - Story 1.6: Sample Document Upload for Template Creation ✓
 - Story 1.7: Claude API Integration and AI Field Suggestion ✓
 - Story 1.8: Custom Prompt Definition ✓
-- Story 1.9: Test Extraction on Sample Document 🔄 IN PROGRESS
-- Story 1.10: Save Validated Template ⏳ TODO
+- Story 1.9: Test Extraction on Sample Document ✓
+- Story 1.10: Save Validated Template 🔄 IN PROGRESS
 
 ### Epic 2: Production Document Processing & Excel Export (9 stories) 🔄 PAUSED (at Story 2.3 until Epic 1 complete)
 - Story 2.1: Production Document Upload Interface ✓
@@ -203,10 +203,24 @@ NEXT_AGENT: developer
 - **Integration:** Reused Claude API pattern from Story 1.7, template data access from Story 1.3, extended Story 2.2 process page, ready for Story 2.4 results table
 - **DoD Complete:** All 100+ subtasks complete across 10 task groups, all acceptance criteria verified, build/lint passing, code reviewed, deployed
 
+### Story 1.9: Test Extraction on Sample Document ✓
+- **Status:** Done
+- **Completed:** 2025-10-23
+- **Approved:** 2025-10-23
+- **Summary:** Test extraction functionality for template builder with confidence scoring, denormalized output, results preview, and iterative refinement workflow
+- **All ACs Verified:** 11/11 passing (AC1-AC11: test button enabled when document+fields present, sends to Claude API, flat/denormalized format, preview table, all fields displayed, confidence scores, low-confidence highlighting, re-test button, iterative workflow, loading states, error handling)
+- **Files Created:** app/api/extract/test/route.ts (461 lines)
+- **Files Modified:** app/templates/new/page.tsx (+163 lines, 1042→1205 lines), types/extraction.ts (+39 lines)
+- **Key Features:** Test extraction API matching production patterns, confidence scoring (field completeness × type validity), denormalization (header fields repeated per row), results preview table with ShadCN Table component, low-confidence rows highlighted yellow (<0.7 threshold), re-test button for prompt refinement, smooth scroll to results, comprehensive error handling
+- **Testing:** Build PASSED (0 errors, 12 routes), Lint PASSED (0 warnings), bundle size +10 kB (templates/new: 20 kB → 30 kB)
+- **Code Quality:** 100% TypeScript type-safe, zero ESLint warnings, algorithms match Story 2.3 production patterns
+- **Integration:** Extends template builder from Stories 1.5-1.8, reuses Claude API from Story 1.7, uses ExtractedRow format from Story 2.3
+- **DoD Complete:** All 100+ subtasks complete across 10 task groups, all acceptance criteria verified, build/lint passing, code reviewed, deployed
+
 ---
 
-_Last Updated: 2025-10-23 (Story 1.9 implementation complete)_
-_Status Version: 9.0_
+_Last Updated: 2025-10-23 (Story 1.9 approved - Epic 1: 9 of 10 complete)_
+_Status Version: 10.0_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
 _Tech Spec Completed: 2025-10-19_
@@ -221,8 +235,9 @@ _Story 1.8 Approved: 2025-10-23_
 _Story 2.1 Approved: 2025-10-23_
 _Story 2.2 Approved: 2025-10-23_
 _Story 2.3 Approved: 2025-10-23_
-_Epic 1 Status: 8 of 10 stories done (80%) - Stories 1.9 and 1.10 in progress_
+_Story 1.9 Approved: 2025-10-23_
+_Epic 1 Status: 9 of 10 stories done (90%) - Story 1.10 in progress (final Epic 1 story)_
 _Epic 2 Status: 3 of 9 stories done (33%) - Paused until Epic 1 complete_
-_Progress: 11 of 19 stories complete (57.9%), Story 1.9 IN PROGRESS_
-_Next: Implement Stories 1.9 and 1.10 to complete Epic 1, then resume Epic 2 with Story 2.4_
+_Progress: 12 of 19 stories complete (63.2%), Story 1.10 IN PROGRESS_
+_Next: Implement Story 1.10 to complete Epic 1, then resume Epic 2 with Story 2.4_
 _Corrective Action: Sprint Change Proposal approved 2025-10-23 - Stories 1.9 and 1.10 added back to sequence per FR005 requirement_
