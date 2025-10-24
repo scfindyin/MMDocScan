@@ -22,17 +22,17 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "3.16", "3.17", "3.18", "3.19", "3.20", "3.21", "3.22", "3.23", "3.24", "3.25", "3.26", "3.27", "3.28", "3.29", "3.30"]
-TODO_STORY: 3.2
-TODO_TITLE: Tag-Based Template Builder UI
-IN_PROGRESS_STORY: 3.1
-IN_PROGRESS_TITLE: Unified Page Layout with Resizable Panels
-STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9"]
+TODO_STORY: 3.3
+TODO_TITLE: Drag-and-Drop Field Reordering
+IN_PROGRESS_STORY: 3.2
+IN_PROGRESS_TITLE: Tag-Based Template Builder UI
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1"]
 
 ## Next Action
 
-NEXT_ACTION: Story 3.1 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
-NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
-NEXT_AGENT: developer
+NEXT_ACTION: Story 3.1 approved and marked done. Story 3.2 moved to IN PROGRESS. Load SM agent and run create-story workflow to draft Story 3.2.
+NEXT_COMMAND: create-story (Draft Story 3.2: Tag-Based Template Builder UI)
+NEXT_AGENT: scrum-master
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) ✅ COMPLETE (10 of 10 complete)
@@ -58,11 +58,11 @@ NEXT_AGENT: developer
 - Story 2.8: Excel Export and Download ✓
 - Story 2.9: Extraction Session Management ✓
 
-### Epic 3: Unified Batch Extraction Workflow (30 stories) 🚀 IN PROGRESS (0 of 30 complete)
+### Epic 3: Unified Batch Extraction Workflow (30 stories) 🚀 IN PROGRESS (1 of 30 complete)
 
 #### Phase 1: Foundation (Weeks 1-2) - Stories 3.1-3.7
-- Story 3.1: Unified Page Layout with Resizable Panels 🚧 IN PROGRESS
-- Story 3.2: Tag-Based Template Builder UI
+- Story 3.1: Unified Page Layout with Resizable Panels ✓
+- Story 3.2: Tag-Based Template Builder UI 🚧 IN PROGRESS
 - Story 3.3: Drag-and-Drop Field Reordering
 - Story 3.4: Template CRUD APIs
 - Story 3.5: Save Template Flow
@@ -360,10 +360,28 @@ NEXT_AGENT: developer
 - **Integration:** Reuses Story 2.4 results table UI patterns, Story 2.8 Excel export function, Story 1.3 database patterns, seamlessly integrated with production extraction workflow
 - **DoD Complete:** All acceptance criteria met, code reviewed, build/lint passing, deployed to production
 
+### Story 3.1: Unified Page Layout with Resizable Panels ✓
+- **Status:** Done
+- **Completed:** 2025-10-24
+- **Approved:** 2025-10-24
+- **Summary:** Single-page interface with resizable left (configuration) and right (results) panels using react-resizable-panels and Zustand state management
+- **All ACs Verified:** 10/10 passing (AC1: /extract route with App Router, AC2: left/right panel layout, AC3: resizable via draggable divider, AC4: default sizes 30%/70%, AC5: min widths 8%/8%, AC6: localStorage persistence, AC7-8: maximize/minimize controls, AC9: clickable thin bar to restore, AC10: smooth animations)
+- **Files Created:** stores/extractionStore.ts (Zustand store with persist middleware), app/extract/page.tsx (server component), app/extract/ExtractPageClient.tsx (client component with resizable panels, 197 lines)
+- **Files Modified:** components/navigation.tsx (added "Batch Extract" link), package.json (added react-resizable-panels ^2.0.0, zustand ^4.5.0), package-lock.json
+- **Dependencies Added:** react-resizable-panels ^2.0.0 (+15KB bundle), zustand ^4.5.0 (+8KB bundle)
+- **Key Features:** Imperative panel API with ImperativePanelHandle refs, 92%/8% maximize ratios for visible thin bars, conditional rendering based on panel size (<15% shows thin bar), absolute positioned maximize buttons (top-right), smooth 300ms CSS transitions, overflow-hidden layout to prevent height issues
+- **Testing:** Build PASSED (0 errors, 15 routes), Lint PASSED (0 warnings), bundle size /extract route 113 kB (under 200 kB target)
+- **Tasks Completed:** 10 task groups, 42 subtasks across installation, store creation, routing, panel layout, persistence, controls, animations, content, responsive design, and testing
+- **Code Quality:** 100% TypeScript type-safe, zero ESLint warnings, follows Next.js 14 App Router patterns
+- **Bug Fixes:** Three rounds of user testing - fixed resize range (8%-92% constraints), height overflow (flex layout), thin bar visibility (conditional rendering), and button positioning (absolute top-right)
+- **Integration:** Establishes foundation for Story 3.2 (left panel) and Story 3.7 (right panel), introduces Zustand pattern for Epic 3 state management
+- **DoD Complete:** All acceptance criteria met, code reviewed, build/lint passing, user tested and approved, deployed to production
+
 ---
 
-_Last Updated: 2025-10-24 (Story 3.1 implementation complete - ready for review)_
-_Status Version: 27.0_
+_Last Updated: 2025-10-24 (Story 3.1 approved and marked done)_
+_Status Version: 28.0_
+_Story 3.1 Approved: 2025-10-24_
 _Story 2.9 Approved: 2025-10-24_
 _Product Brief Completed: 2025-10-18_
 _PRD Completed: 2025-10-18_
@@ -383,10 +401,10 @@ _Story 1.9 Approved: 2025-10-23_
 _Story 1.10 Approved: 2025-10-23_
 _Epic 1 Status: ✅ COMPLETE - 10 of 10 stories done (100%)_
 _Epic 2 Status: ✅ COMPLETE - 9 of 9 stories done (100%)_
-_Epic 3 Status: 🚀 IN PROGRESS - 0 of 30 stories done (0%)_
-_Progress: 19 of 49 total stories complete (38.8%)_
+_Epic 3 Status: 🚀 IN PROGRESS - 1 of 30 stories done (3.3%)_
+_Progress: 20 of 49 total stories complete (40.8%)_
 _Phase 4 Implementation: IN PROGRESS (Epic 3)_
-_Next: create-story workflow for Story 3.1_
+_Next: create-story workflow for Story 3.2_
 _Story 2.5 Approved: 2025-10-24_
 _Story 2.6 Approved: 2025-10-24_
 _Story 2.7 Approved: 2025-10-24_
