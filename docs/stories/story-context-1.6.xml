@@ -1,0 +1,236 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.6</storyId>
+    <title>Sample Document Upload for Template Creation</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.6.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>upload a sample document when creating a template</iWant>
+    <soThat>the AI can suggest fields and I can test my extraction prompts</soThat>
+    <tasks>
+      <task id="1" acs="AC1,AC8">Add sample document upload section to template builder page</task>
+      <task id="2" acs="AC2,AC3">Install and configure file upload dependencies</task>
+      <task id="3" acs="AC2">Implement drag-and-drop file upload component</task>
+      <task id="4" acs="AC3,AC4">Add file type and size validation</task>
+      <task id="5" acs="AC5">Display uploaded file information</task>
+      <task id="6" acs="AC6">Implement file removal functionality</task>
+      <task id="7" acs="AC7">Implement client-side file storage</task>
+      <task id="8" acs="AC1,AC8,AC9">Update form state and workflow</task>
+      <task id="9" acs="AC4">Error handling and user feedback</task>
+      <task id="10" acs="AC1-AC9">Testing and refinement</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="AC1">Template builder includes "Upload Sample Document" section (optional)</ac>
+    <ac id="AC2">Drag-and-drop file upload or file picker</ac>
+    <ac id="AC3">Accepts PDF, Word (.doc, .docx), and text files</ac>
+    <ac id="AC4">File size limit: 10MB (displays error if exceeded)</ac>
+    <ac id="AC5">Uploaded file displayed with filename and file type</ac>
+    <ac id="AC6">Can remove uploaded file and upload different one</ac>
+    <ac id="AC7">Sample document stored temporarily (client-side or temp server storage)</ac>
+    <ac id="AC8">"Skip - Define Fields Manually" option allows bypassing upload</ac>
+    <ac id="AC9">Clear visual indication of optional vs required steps</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - MMDocScan Complete Solution</title>
+        <section>Template Creation Workflow</section>
+        <snippet>Workflow 1 step 2: "Select sample document from file picker (held in memory)". In-memory processing only (no persistence). Client-side file reading, base64 encoding, send to Claude API.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>MMDocScan - Epic Breakdown</title>
+        <section>Story 1.6: Sample Document Upload for Template Creation</section>
+        <snippet>User wants to upload sample document when creating template so AI can suggest fields and test extraction prompts. Template builder includes optional upload section with drag-and-drop, accepts PDF/Word/text files, 10MB limit, temp client-side storage.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>MMDocScan Product Requirements Document</title>
+        <section>Functional Requirements - Template Management</section>
+        <snippet>FR002: System shall allow users to upload a sample document and receive AI-generated field suggestions for template creation. FR008: System shall provide a file upload interface accepting PDF, Word (.doc, .docx), and text file formats.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification</title>
+        <section>Third-Party Library Decisions - In-Memory Storage</section>
+        <snippet>Choice: In-memory processing only (no persistence). Rationale: Simplest architecture, no storage limits, no cleanup needed, fits single-session workflow. Documents processed and discarded.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification</title>
+        <section>Frontend Dependencies</section>
+        <snippet>react-dropzone (Latest): Drag-and-drop file upload for document upload UI.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.5.md</path>
+        <title>Story 1.5: Manual Template Builder - Field Definition</title>
+        <section>Dev Notes - Component Structure</section>
+        <snippet>app/templates/new/page.tsx is client component with React useState for form management. Template name, type, fields array state. ShadCN components for UI consistency.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>app/templates/new/page.tsx</path>
+        <kind>page</kind>
+        <symbol>NewTemplatePage</symbol>
+        <lines>1-475</lines>
+        <reason>Template builder page from Story 1.5 - needs enhancement with file upload section. Client component with form state management.</reason>
+      </file>
+      <file>
+        <path>package.json</path>
+        <kind>config</kind>
+        <symbol>dependencies</symbol>
+        <lines>N/A</lines>
+        <reason>Need to install react-dropzone dependency for file upload functionality.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <package>react-dropzone</package>
+        <version>latest</version>
+        <purpose>Drag-and-drop file upload component</purpose>
+        <install>npm install react-dropzone</install>
+      </node>
+      <node>
+        <package>react</package>
+        <version>^18.2.0</version>
+        <purpose>UI library - already installed</purpose>
+      </node>
+      <node>
+        <package>next</package>
+        <version>^14.0.0</version>
+        <purpose>Framework - already installed</purpose>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="C1">
+      <category>Architecture</category>
+      <rule>Client-side only file storage - File uploaded and stored in browser memory (React state) only, NOT sent to server at upload time</rule>
+      <source>docs/tech-spec-epic-combined.md#Third-Party-Library-Decisions</source>
+    </constraint>
+    <constraint id="C2">
+      <category>File Handling</category>
+      <rule>No server upload - File stays in browser memory until AI features invoked (Story 1.7/1.9)</rule>
+      <source>docs/tech-spec-epic-combined.md#Template-Creation-Workflow</source>
+    </constraint>
+    <constraint id="C3">
+      <category>File Validation</category>
+      <rule>Accept only PDF (.pdf), Word (.doc, .docx), and text (.txt) files. Maximum file size: 10MB (10 * 1024 * 1024 bytes)</rule>
+      <source>docs/epics.md#Story-1.6, docs/PRD.md#FR008</source>
+    </constraint>
+    <constraint id="C4">
+      <category>Persistence</category>
+      <rule>Sample document is NOT saved to database - temp use only during template creation, discarded on page navigation</rule>
+      <source>docs/tech-spec-epic-combined.md#In-Memory-Storage-Decision</source>
+    </constraint>
+    <constraint id="C5">
+      <category>Level 2 Project</category>
+      <rule>Use simple react-dropzone integration, avoid complex upload libraries. Keep implementation straightforward.</rule>
+      <source>docs/tech-spec-epic-combined.md#System-Architecture-Alignment</source>
+    </constraint>
+    <constraint id="C6">
+      <category>Optional Feature</category>
+      <rule>Upload section must be skippable - provide "Skip - Define Fields Manually" option. User can complete template creation without sample upload.</rule>
+      <source>docs/epics.md#Story-1.6 AC8</source>
+    </constraint>
+    <constraint id="C7">
+      <category>Component Pattern</category>
+      <rule>Use "use client" directive (client component required for file upload state management). Extend existing formState from Story 1.5.</rule>
+      <source>docs/stories/story-1.5.md#Dev-Notes</source>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>FormState (Extended)</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface FormState {
+  templateName: string
+  templateType: TemplateType
+  fields: FieldDefinition[]
+  sampleDocument: File | null    // NEW: Browser File object (in-memory)
+  skipSampleUpload: boolean       // NEW: Skip upload flag
+}
+      </signature>
+      <path>app/templates/new/page.tsx</path>
+    </interface>
+    <interface>
+      <name>useDropzone Hook</name>
+      <kind>React Hook (react-dropzone)</kind>
+      <signature>
+const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  accept: {
+    'application/pdf': ['.pdf'],
+    'application/msword': ['.doc'],
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+    'text/plain': ['.txt']
+  },
+  maxSize: 10 * 1024 * 1024, // 10MB
+  multiple: false,
+  onDrop: (acceptedFiles, rejectedFiles) => { /* handler */ }
+})
+      </signature>
+      <path>app/templates/new/page.tsx</path>
+    </interface>
+    <interface>
+      <name>File Validation Function</name>
+      <kind>Utility Function</kind>
+      <signature>
+const validateFile = (file: File): string | null => {
+  // Validates file type and size
+  // Returns error message string or null if valid
+}
+      </signature>
+      <path>app/templates/new/page.tsx</path>
+    </interface>
+    <interface>
+      <name>File Size Formatter</name>
+      <kind>Utility Function</kind>
+      <signature>
+const formatFileSize = (bytes: number): string => {
+  // Returns human-readable file size (B, KB, MB)
+}
+      </signature>
+      <path>app/templates/new/page.tsx</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows patterns established in Story 1.5. Component testing with React Testing Library for upload UI rendering, file selection, file display, remove functionality, and skip option. File validation testing for valid/invalid file types (PDF/DOCX/DOC/TXT vs JPG/PNG/ZIP), file size limits (test 1MB success, 9.9MB success, 10.1MB reject), and empty files. Integration testing for state management (File object in React state), dropzone configuration (accept/maxSize props), error messages, and ensuring file NOT sent to database on template save. Manual testing across Chrome, Firefox, Safari, Edge for drag-and-drop and file picker functionality. Browser compatibility verified for File API support.
+    </standards>
+    <locations>
+      <location>app/templates/new/page.tsx (component to test)</location>
+      <location>No dedicated test files yet - follow Story 1.5 testing patterns</location>
+    </locations>
+    <ideas>
+      <idea ac="AC1">Test that upload section renders with "Upload Sample Document (Optional)" heading and help text</idea>
+      <idea ac="AC2">Test drag-and-drop: drag valid PDF file, verify file accepted and displayed</idea>
+      <idea ac="AC2">Test file picker: click dropzone, select valid DOCX file, verify file uploaded</idea>
+      <idea ac="AC3">Test file type validation: upload PDF (accept), DOCX (accept), TXT (accept), JPG (reject), PNG (reject)</idea>
+      <idea ac="AC4">Test file size validation: upload 1MB file (accept), 9.9MB file (accept), 10.1MB file (reject with error)</idea>
+      <idea ac="AC4">Test file size error message displays: "File size exceeds 10MB limit. File size: X.XMB"</idea>
+      <idea ac="AC5">Test uploaded file info displays: filename, file type (MIME type), file size formatted (e.g., "2.5 MB")</idea>
+      <idea ac="AC6">Test file removal: upload file, click Remove button, verify file cleared, dropzone reset, can upload new file</idea>
+      <idea ac="AC7">Test file stored in React state: use React DevTools to verify File object in sampleDocument state</idea>
+      <idea ac="AC7">Test file NOT sent to server: monitor network tab, verify no file upload POST request on file selection</idea>
+      <idea ac="AC8">Test skip functionality: click "Skip - Define Fields Manually", verify upload section hides, field form shows</idea>
+      <idea ac="AC9">Test visual indicators: verify "Optional" in section heading, verify help text explains purpose, verify skip button clearly visible</idea>
+      <idea ac="all">Test cross-browser compatibility: Chrome, Firefox, Safari, Edge - drag-and-drop and file picker</idea>
+      <idea ac="all">Test edge cases: empty file (0 bytes reject), corrupted file, unsupported MIME type</idea>
+    </ideas>
+  </tests>
+</story-context>

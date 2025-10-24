@@ -1,0 +1,389 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.9</storyId>
+    <title>Test Extraction on Sample Document</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-23</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.9.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to test my template and prompts on the sample document</iWant>
+    <soThat>I can verify the extraction works before saving the template</soThat>
+    <tasks>
+### Task Group 1: Create Test Extraction API Route (AC: #1, #2, #3)
+- Task 1.1: Create API route `/app/api/extract/test/route.ts`
+- Task 1.2: Set up POST handler with Next.js API route pattern
+- Task 1.3: Accept request body: `{documentBase64: string, templateFields: TemplateField[], customPrompt?: string}`
+- Task 1.4: Validate request parameters with Zod schema
+- Task 1.5: Prepare Claude API request payload
+- Task 1.6: Build template schema from templateFields (header vs detail categorization)
+- Task 1.7: Construct extraction prompt combining default instructions + custom prompt
+- Task 1.8: Prepare document content in Claude API format (base64 with media type)
+- Task 1.9: Define tool schema for structured extraction output (matching production format)
+
+### Task Group 2: Claude API Integration for Test Extraction (AC: #2, #3, #6)
+- Task 2.1: Implement Claude API client call using @anthropic-ai/sdk
+- Task 2.2: Configure model: claude-sonnet-4-5 (matching Story 2.3 pattern)
+- Task 2.3: Send document + extraction prompt + tool schema
+- Task 2.4: Set appropriate timeout (30s for typical documents)
+- Task 2.5: Parse Claude API response
+- Task 2.6: Extract tool use response with structured data
+- Task 2.7: Validate extraction output matches expected schema
+- Task 2.8: Handle partial extractions gracefully
+
+### Task Group 3: Denormalization Logic (AC: #3)
+- Task 3.1: Implement denormalization for test extraction results
+- Task 3.2: Identify header fields (is_header=true) from templateFields
+- Task 3.3: Identify detail fields (is_header=false)
+- Task 3.4: For each detail row: repeat header field values on every row
+- Task 3.5: Return flat array of rows (ExtractedRow[] format from Story 2.3)
+- Task 3.6: Handle edge cases (header-only, detail-only, empty results)
+
+### Task Group 4: Confidence Scoring (AC: #6)
+- Task 4.1: Reuse confidence scoring algorithm from Story 2.3
+- Task 4.2: Calculate score for each extracted row (range 0.0-1.0)
+- Task 4.3: Field completeness × type validity algorithm
+- Task 4.4: Include confidence_score field in response
+
+### Task Group 5: Test Results Preview Table UI Component (AC: #4, #5, #7)
+- Task 5.1: Create results preview table in template builder page
+- Task 5.2: Add new UI section for "Test Results" (conditionally displayed after test runs)
+- Task 5.3: Use ShadCN Table component for results display
+- Task 5.4: Display columns for all defined template fields
+- Task 5.5: Add confidence score column
+- Task 5.6: Render each extracted row as table row
+- Task 5.7: Implement confidence score visual indicators (< 0.7 = low confidence)
+- Task 5.8: Apply yellow/orange background to low-confidence rows
+- Task 5.9: Display confidence score as percentage (e.g., "85%")
+- Task 5.10: Add tooltip explaining confidence scoring
+- Task 5.11: Format cell values by data type (currency, date, number, text)
+
+### Task Group 6: Test Extraction Button and State Management (AC: #1, #10)
+- Task 6.1: Add "Test Extraction" button to template builder
+- Task 6.2: Position button in Custom Prompts section (after prompt textarea)
+- Task 6.3: Enable button only when: sample document uploaded AND at least 1 field defined
+- Task 6.4: Disable button during test extraction (loading state)
+- Task 6.5: Use ShadCN Button component with Loader2 icon for loading state
+- Task 6.6: Implement test extraction handler
+- Task 6.7: Prepare request payload (base64 document, template fields, custom prompt)
+- Task 6.8: Call `/api/extract/test` endpoint
+- Task 6.9: Store results in component state (testResults: ExtractedRow[] | null)
+- Task 6.10: Show results preview table after successful extraction
+- Task 6.11: Add loading state during extraction (loading spinner, "Testing extraction..." message)
+
+### Task Group 7: Re-test Functionality (AC: #8, #9)
+- Task 7.1: Add "Re-test" button to results section
+- Task 7.2: Display "Re-test" button in test results header
+- Task 7.3: Button triggers same test extraction handler
+- Task 7.4: Clear previous results before re-test
+- Task 7.5: Allow user to modify custom prompt before re-test
+- Task 7.6: Support iterative refinement workflow (view → adjust → re-test → repeat)
+
+### Task Group 8: Error Handling for Test Extraction (AC: #11)
+- Task 8.1: Handle API-level errors (network issues, timeouts)
+- Task 8.2: Parse API error responses (4xx, 5xx status codes)
+- Task 8.3: Extract error message from response body
+- Task 8.4: Display user-friendly error message in Alert component
+- Task 8.5: Handle Claude API-specific errors (auth, rate limit, timeout, parsing)
+- Task 8.6: Handle extraction validation errors (no fields, no document, empty results)
+- Task 8.7: Add retry functionality with "Try Again" button
+
+### Task Group 9: Type Definitions and API Contracts (AC: #2, #3, #6)
+- Task 9.1: Define TestExtractionRequest interface in types/extraction.ts
+- Task 9.2: Reuse ExtractedRow interface from Story 2.3
+- Task 9.3: Create TestExtractionResponse interface
+- Task 9.4: Add Zod schemas for validation
+- Task 9.5: Ensure type compatibility with production extraction
+
+### Task Group 10: Testing and Validation (AC: All)
+- Task 10.1: Run `npm run build` and verify zero errors
+- Task 10.2: Run `npm run lint` and verify zero warnings
+- Task 10.3: Manual testing: test with sample document, verify extraction works
+- Task 10.4: Test without sample document, verify button disabled
+- Task 10.5: Test without fields defined, verify button disabled
+- Task 10.6: Test with custom prompt, verify prompt used in extraction
+- Task 10.7: Test re-test button, verify new results replace old
+- Task 10.8: Test error scenarios (invalid document, API failure)
+- Task 10.9: Verify confidence scores display correctly
+- Task 10.10: Verify low-confidence rows highlighted
+- Task 10.11: Verify results table matches expected Excel format
+- Task 10.12: Verify denormalization (header fields repeated per detail row)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. "Test Extraction" button available when sample document uploaded and fields defined
+2. Clicking button sends sample document + template definition + prompts to Claude API
+3. AI extraction returns data in flat/denormalized format (header fields repeated per detail row)
+4. Results displayed in preview table matching expected Excel output format
+5. Each row shows extracted values for all defined fields
+6. Row-level confidence score displayed (if available from API)
+7. Low-confidence rows visually flagged (yellow/orange highlight)
+8. "Re-test" button allows running extraction again after prompt changes
+9. Can iterate: adjust prompts → re-test → review results (loop)
+10. Loading state during extraction
+11. Error handling for extraction failures
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>MMDocScan Product Requirements Document</title>
+        <section>FR005: Template Testing</section>
+        <snippet>FR005: System shall allow users to test extraction with current prompts on sample documents during template creation. This enables users to verify templates work correctly before saving for production use.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>MMDocScan Product Requirements Document</title>
+        <section>Epic 1 Deliverables</section>
+        <snippet>Users can validate templates with sample documents before production use. Prompt testing capability during template creation enables confidence in extraction accuracy before saving templates for reuse.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown - Story 1.9</title>
+        <section>Story 1.9: Test Extraction on Sample Document</section>
+        <snippet>As a user, I want to test my template and prompts on the sample document, so that I can verify the extraction works before saving the template. Prerequisites: Story 1.7 (Claude API), Story 1.8 (Custom Prompts). Story includes test extraction button, AI extraction with flat/denormalized output, results preview table with confidence scores, low-confidence visual indicators, re-test functionality for iterative refinement, loading states, and comprehensive error handling.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - APIs and Interfaces</title>
+        <section>/api/extract/test endpoint specification</section>
+        <snippet>POST /api/extract/test - Accept request body: {base64Document, templateId, promptOverride?}, return {extractedData: ExtractedRow[]}. Test extraction during template creation. Key differences from production: receives templateFields directly (not templateId from database), no source metadata needed, used during template creation workflow (in-memory processing).</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - Data Models</title>
+        <section>ExtractedRow Interface</section>
+        <snippet>interface ExtractedRow { rowId: string; confidence: number (0.0-1.0); fields: Record&lt;string, any&gt; (Header + detail fields with header repeated per row); sourceMetadata: { filename: string; pageNumber?: number; extractedAt: string; }; }. Flat/denormalized structure with header information repeated on each detail row per TD002.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - AC1.4 Test Extraction</title>
+        <section>Acceptance Criteria 1.4</section>
+        <snippet>User can test extraction with sample document during template creation. Given user has defined fields and uploaded sample document, when user clicks "Test Extraction", then system performs extraction and displays results with confidence scores. Validates templates before production use.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - Template Creation Workflow</title>
+        <section>Workflow Step 7: Test Extraction</section>
+        <snippet>Test extraction step: User clicks Test Extraction button, API route /api/extract/test receives base64 doc from memory, Claude Skills API called with template schema, results displayed in preview table, user reviews test results and iterates on prompt if needed. In-memory processing, no persistence.</snippet>
+      </doc>
+      <doc>
+        <path>docs/technical-decisions.md</path>
+        <title>Technical Decisions - TD001</title>
+        <section>TD001: Row-level Confidence Scoring</section>
+        <snippet>Decision: Implement row-level confidence scores rather than per-field scores. Row-level scoring provides sufficient quality visibility while maintaining usability. Users can quickly scan for low-confidence rows that need manual review. Data model: Confidence score as row attribute. Excel output: Confidence score column for each data row.</snippet>
+      </doc>
+      <doc>
+        <path>docs/technical-decisions.md</path>
+        <title>Technical Decisions - TD002</title>
+        <section>TD002: Flat/Denormalized Output Structure</section>
+        <snippet>Decision: Implement flat/denormalized output structure where header information is repeated on each detail row. Flat structure is Excel-native and eliminates need for users to perform joins. Header fields (invoice number, date, vendor) appear on every line item row. AI extraction prompt: Instruct Claude to denormalize data during extraction. Example: Invoice with 3 line items produces 3 rows, each containing invoice header fields + line item fields.</snippet>
+      </doc>
+      <doc>
+        <path>docs/technical-decisions.md</path>
+        <title>Technical Decisions - TD003</title>
+        <section>TD003: AI-Assisted Template Creation</section>
+        <snippet>Decision: Add AI field discovery and prompt testing capabilities to template creation workflow. Testing prompts during template creation prevents failed extractions in production. Validates templates before reuse, improving overall quality. Leverages same Claude API needed for production extraction.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>app/api/extract/suggest-fields/route.ts</path>
+        <kind>API route</kind>
+        <symbol>POST handler</symbol>
+        <lines>1-201</lines>
+        <reason>Existing Claude API integration pattern for field suggestions (Story 1.7). Story 1.9 will follow similar structure for test extraction: initialize Anthropic client, prepare document content (base64 with media type), build extraction prompt, call Claude API with tool schema for structured output, parse tool use response, handle API errors (401, 429, timeout). Reuse document type handling (PDF vs text), error handling patterns, and Anthropic SDK client initialization.</reason>
+      </artifact>
+      <artifact>
+        <path>app/templates/new/page.tsx</path>
+        <kind>Next.js page component</kind>
+        <symbol>NewTemplatePage</symbol>
+        <lines>1-1042</lines>
+        <reason>Template builder page (Stories 1.5-1.8). Story 1.9 extends this component to add test extraction functionality. State already includes: sampleDocument (File | null), fields (FieldDefinition[]), customPrompt (string). Will add: testResults (ExtractedRow[] | null), isTestingExtraction (boolean), testExtractionError (string | null). Test extraction button positioned in Custom Prompts section. Results preview table appears below button after successful extraction.</reason>
+      </artifact>
+      <artifact>
+        <path>app/templates/new/page.tsx</path>
+        <kind>Frontend code</kind>
+        <symbol>fileToBase64 helper</symbol>
+        <lines>183-196</lines>
+        <reason>Helper function to convert File object to base64 string. Story 1.9 will reuse this function to prepare sample document for test extraction API call. Pattern: FileReader.readAsDataURL, extract base64 from data URL, return base64 string without prefix.</reason>
+      </artifact>
+      <artifact>
+        <path>app/templates/new/page.tsx</path>
+        <kind>Frontend code</kind>
+        <symbol>Sample document upload state</symbol>
+        <lines>81-85</lines>
+        <reason>Sample document state: sampleDocument (File | null), skipSampleUpload (boolean), uploadError (string | null). Story 1.9 uses sampleDocument to enable/disable test extraction button. Test extraction sends sampleDocument to API via fileToBase64 conversion.</reason>
+      </artifact>
+      <artifact>
+        <path>app/templates/new/page.tsx</path>
+        <kind>Frontend code</kind>
+        <symbol>Fields and custom prompt state</symbol>
+        <lines>76, 94</lines>
+        <reason>Fields state (FieldDefinition[]) and customPrompt state (string) needed for test extraction. Test extraction API receives templateFields (derived from fields state) and customPrompt. Button enabled only when fields.length > 0 and sampleDocument !== null.</reason>
+      </artifact>
+      <artifact>
+        <path>types/extraction.ts</path>
+        <kind>Type definitions</kind>
+        <symbol>ExtractedRow, SourceMetadata</symbol>
+        <lines>1-55</lines>
+        <reason>ExtractedRow interface from Story 2.3 defines test extraction response format. Story 1.9 reuses this interface for test results. Includes: rowId, confidence (0.0-1.0), fields (Record&lt;string, any&gt;), sourceMetadata (filename, pageNumber, extractedAt). TestExtractionRequest/Response types will be added to this file.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/extract/production/route.ts</path>
+        <kind>API route (reference)</kind>
+        <symbol>Production extraction patterns</symbol>
+        <lines>Not yet created (Story 2.3)</lines>
+        <reason>Story 2.3 production extraction API provides reference patterns for confidence scoring and denormalization logic. Story 1.9 test extraction API must use identical algorithms to ensure test results match production behavior. Confidence calculation: field completeness × type validity. Denormalization: header fields repeated per detail row.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/extract/suggest-fields/route.ts</path>
+        <kind>API route</kind>
+        <symbol>Document type handling (PDF vs text)</symbol>
+        <lines>56-90</lines>
+        <reason>Pattern for handling different document types when sending to Claude API. PDF files use document type with base64 source and media_type. Text files decoded and sent as text content. Story 1.9 will reuse this document format handling logic for test extraction with different document types.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/extract/suggest-fields/route.ts</path>
+        <kind>API route</kind>
+        <symbol>Claude API call with tools</symbol>
+        <lines>99-139</lines>
+        <reason>Pattern for calling Claude API with tool schema for structured output. Story 1.9 will define test extraction tool schema based on template fields (header + detail categorization), use tool_choice to force structured response, and parse tool_use block from response for extracted data rows.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/extract/suggest-fields/route.ts</path>
+        <kind>API route</kind>
+        <symbol>Error handling for Anthropic API</symbol>
+        <lines>156-198</lines>
+        <reason>Comprehensive error handling pattern for Claude API errors. Story 1.9 will implement similar error handling: catch Anthropic.APIError, handle 401 (auth), 429 (rate limit), timeout errors, return user-friendly error messages with retryable flag, log detailed errors server-side without exposing sensitive details to client.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@anthropic-ai/sdk" version="^0.67.0">Claude API client for AI extraction (installed in Story 1.7)</package>
+        <package name="zod" version="^4.1.12">Runtime validation for API request/response types</package>
+        <package name="next" version="^14.2.0">Next.js framework for API routes and page components</package>
+        <package name="react" version="^18.2.0">React for frontend state management and UI components</package>
+        <package name="lucide-react" version="^0.546.0">Icons: Loader2 (loading spinner), CheckCircle (success), AlertCircle (error), Sparkles (test extraction)</package>
+        <package name="@radix-ui/react-checkbox" version="^1.3.3">ShadCN Table component dependencies</package>
+        <package name="@radix-ui/react-dialog" version="^1.1.15">Dialog component for potential error displays</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>API Route Architecture: Create /app/api/extract/test/route.ts following Next.js API route pattern. Similar to suggest-fields route but for extraction testing. Key difference from production extraction (/api/extract/production): test route receives templateFields array directly (not templateId), no database lookup needed. Request: {documentBase64, templateFields: TemplateField[], customPrompt?}. Response: {success: boolean, data?: ExtractedRow[], error?: string}. Stateless API - results returned to client immediately.</constraint>
+    <constraint>Claude API Integration: Reuse @anthropic-ai/sdk patterns from Story 1.7. Use model claude-sonnet-4-5 (matching Story 2.3). Tool calling for structured output - define extraction schema based on templateFields (header vs detail categorization). Document format: Send base64-encoded document with media type. Prompt structure: System prompt + template schema + custom prompts. Timeout: 30s (from tech spec performance targets matching production extraction).</constraint>
+    <constraint>Data Denormalization: Header fields (where field.category === 'header') repeat on every row. Detail fields (where field.category === 'detail') vary per row. Output: Single flat array of rows, each with all header + detail fields. MUST match Story 2.3 production extraction format exactly. Example: Template with 2 header fields + 3 detail fields, Claude returns 4 detail rows → output has 4 rows, each containing all 5 fields (2 header repeated + 3 detail unique).</constraint>
+    <constraint>Confidence Scoring: Row-level scoring per TD001. Algorithm MUST match Story 2.3 production extraction exactly. Factors: Field completeness (% fields populated), data type validation (correct format). Formula: confidence = (populated_fields / total_fields) * type_validity_factor. Range: 0.0-1.0. Threshold for low confidence: &lt; 0.7 (will be highlighted in UI).</constraint>
+    <constraint>In-Memory Processing: Sample document already uploaded in Story 1.6 (held in sampleDocument state as File object). Convert to base64 using existing fileToBase64 helper. Send base64 to API. Results returned to browser, stored in testResults state (ExtractedRow[] | null). No server-side or database storage of test results. Results cleared when user leaves page or saves template.</constraint>
+    <constraint>UI Component Location: Extend app/templates/new/page.tsx (existing template builder from Stories 1.5-1.8). Add test extraction section in Custom Prompts area (after prompt textarea). Test Extraction button enabled only when: sampleDocument !== null AND fields.length &gt; 0. Results preview table appears below button (conditionally rendered when testResults !== null). Multi-section pattern similar to Stories 1.6, 1.7, 1.8.</constraint>
+    <constraint>Testing Standards: Build must pass with zero TypeScript errors (npm run build). Lint must pass with zero ESLint warnings (npm run lint). Manual testing required with Claude API key. Test with actual sample documents (PDF, TXT formats from Story 1.6). Verify output matches Excel format expectation from PRD. Test error scenarios: no document, no fields, API failures. Verify confidence scoring displays correctly. Verify low-confidence rows highlighted (&lt; 0.7 threshold).</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>/api/extract/test</name>
+      <kind>REST API endpoint (POST)</kind>
+      <signature>POST /api/extract/test
+Request: {
+  documentBase64: string,
+  templateFields: TemplateField[], // Array of {field_name, field_type, is_header}
+  customPrompt?: string
+}
+Response: {
+  success: true,
+  data: ExtractedRow[], // Same format as production extraction
+  rowCount: number
+} | {
+  success: false,
+  error: string,
+  retryable: boolean
+}</signature>
+      <path>app/api/extract/test/route.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>TestExtractionRequest</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface TestExtractionRequest {
+  documentBase64: string;
+  templateFields: TemplateField[]; // Not templateId - in-memory fields
+  customPrompt?: string;
+}
+// Zod schema for validation
+const TestExtractionRequestSchema = z.object({
+  documentBase64: z.string().min(1),
+  templateFields: z.array(TemplateFieldSchema).min(1),
+  customPrompt: z.string().optional()
+});</signature>
+      <path>types/extraction.ts (to be extended)</path>
+    </interface>
+    <interface>
+      <name>ExtractedRow (reused from Story 2.3)</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface ExtractedRow {
+  rowId: string;
+  confidence: number; // 0.0 - 1.0
+  fields: Record&lt;string, any&gt;; // Header + detail fields (header repeated per row)
+  sourceMetadata: {
+    filename: string;
+    pageNumber?: number;
+    extractedAt: string; // ISO 8601
+  };
+}</signature>
+      <path>types/extraction.ts (existing from Story 2.3)</path>
+    </interface>
+    <interface>
+      <name>TemplateField (existing)</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface TemplateField {
+  field_name: string;
+  field_type: 'text' | 'number' | 'date' | 'currency';
+  is_header: boolean; // true = header field (repeat per row), false = detail field
+  display_order?: number;
+}</signature>
+      <path>types/template.ts (existing)</path>
+    </interface>
+    <interface>
+      <name>Anthropic SDK - messages.create (reused)</name>
+      <kind>External API call</kind>
+      <signature>anthropic.messages.create({
+  model: "claude-sonnet-4-5",
+  max_tokens: number,
+  messages: [{ role: "user", content: [...] }],
+  tools: [{ name: "extract_data", input_schema: {...} }],
+  tool_choice: { type: "tool", name: "extract_data" }
+})
+// Tool schema based on templateFields with header/detail categorization
+// Parse tool_use response for extracted rows</signature>
+      <path>@anthropic-ai/sdk</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing approach follows Next.js best practices and project Level 2 complexity. Unit tests for confidence scoring and denormalization logic (must match Story 2.3 algorithms). Integration tests for API routes with Claude API calls (use test API key). Manual end-to-end testing for user workflows. No formal test framework configured yet - focus on manual validation and build verification (npm run build, npm run lint with zero errors).
+    </standards>
+    <locations>
+      Tests would be located in __tests__ directories adjacent to source files (not yet created). API route tests: app/api/extract/__tests__/test.test.ts. Component tests: app/templates/__tests__/new.test.tsx. Type tests: types/__tests__/extraction.test.ts.
+    </locations>
+    <ideas>
+      <idea ac="1,2,3">Test extraction API route: Create test document (PDF base64), define templateFields array (2 header + 3 detail fields), call /api/extract/test endpoint. Verify request format includes documentBase64 and templateFields. Verify tool schema sent to Claude includes all fields with header/detail categorization. Verify response structure matches ExtractedRow[] interface. Test with and without customPrompt.</idea>
+      <idea ac="3,6">Test denormalization logic: Template with 2 header fields and 3 detail fields, Claude returns 4 detail rows. Verify output has 4 rows, each containing all 5 fields (2 header repeated + 3 detail unique). Test header-only template (1 output row with only header fields). Test detail-only template (N rows with only detail fields). Verify algorithm matches Story 2.3 production extraction exactly.</idea>
+      <idea ac="6">Test confidence scoring: All fields present should return high score (0.9-1.0). Missing fields should lower score proportionally. Invalid data types should reduce score. Verify score range 0.0-1.0. Test edge cases: empty row (low score), all fields invalid (very low score), partial completeness (medium score). Algorithm must match Story 2.3 exactly.</idea>
+      <idea ac="4,5,7">Test results preview table UI: Upload sample document, define fields, enter custom prompt, click "Test Extraction" button. Verify loading state displays (Loader2 spinner, "Testing extraction..." message). After success: verify preview table renders with columns for all fields + confidence column. Verify low-confidence rows (&lt; 0.7) highlighted yellow/orange. Verify confidence displayed as percentage. Verify data types formatted correctly (currency with $, dates as YYYY-MM-DD).</idea>
+      <idea ac="1,10">Test button enable/disable logic: No sample document → button disabled with tooltip. No fields defined → button disabled. Sample document uploaded + fields defined → button enabled. During extraction → button disabled with loading spinner. After extraction completes → button re-enabled. Test extraction error → button re-enabled for retry.</idea>
+      <idea ac="8,9">Test re-test functionality: Complete initial test extraction, verify results display. Modify custom prompt text, click "Re-test" button. Verify previous results cleared, new extraction triggered with updated prompt. Verify new results replace old results in preview table. Test iterative loop: test → view results → adjust prompt → re-test → view new results → repeat.</idea>
+      <idea ac="11">Test error handling: Mock Claude API timeout (30s), verify user-friendly error message displays in Alert component. Mock 429 rate limit, verify "Too many requests" message with retry option. Mock 401 auth error, verify "API configuration error" message. No sample document uploaded, verify "Please upload a sample document" validation message. No fields defined, verify "Please define at least one field" validation message. Empty extraction (0 rows), verify "No data extracted" message with suggestions.</idea>
+      <idea ac="2,11">Test Claude API error scenarios: Invalid document (corrupted PDF), verify error message "Unable to parse document, try different format". Document parsing timeout, verify "Extraction timed out, try simpler document" message. Network error (fetch fails), verify "Network error, please check connection" message. All errors should display "Try Again" button for immediate retry without losing form state.</idea>
+      <idea ac="4,7">Test confidence visual indicators: Create test data with mix of high (≥0.7) and low (&lt;0.7) confidence rows. Verify high-confidence rows have normal background. Verify low-confidence rows have yellow/orange background. Verify threshold 0.7 is the cutoff. Test edge case: confidence exactly 0.7 should NOT be highlighted (≥0.7 = high confidence). Verify tooltip on confidence column explains scoring.</idea>
+      <idea ac="10,11">Test loading and error states: During extraction, verify form inputs disabled (prevent changes mid-extraction). Loading spinner displays on button. "Testing extraction..." message visible. After success: form re-enabled, results table displays. After error: form re-enabled, error Alert displays, "Try Again" button available. Verify smooth scroll to results section after test completes.</idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,186 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>8</storyId>
+    <title>Custom Prompt Definition</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-23</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.8.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to add custom AI prompts to my template</iWant>
+    <soThat>I can guide the extraction with specific instructions and examples</soThat>
+    <tasks>
+      - Task 1: Add Custom Prompts UI Section (7 subtasks)
+      - Task 2: Implement Character Count Display (5 subtasks)
+      - Task 3: Create Prompt Tips Expandable Section (7 subtasks)
+      - Task 4: Integrate Prompt with Form State (6 subtasks)
+      - Task 5: Test Prompt Editing and Persistence (7 subtasks)
+      - Task 6: Build, Lint, and Integration Verification (7 subtasks)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Custom Prompts Section - Template builder includes "Custom AI Prompts" section integrated into the template creation form</criterion>
+    <criterion id="AC2">Prompt Text Area - Multi-line text area for entering prompt instructions with appropriate sizing for readability</criterion>
+    <criterion id="AC3">Example Placeholder - Placeholder text provides helpful example: "Extract all line items as separate rows. Format dates as YYYY-MM-DD."</criterion>
+    <criterion id="AC4">Character Count Display - Character count shown below text area with real-time update (no hard limit enforced)</criterion>
+    <criterion id="AC5">Prompt Tips Section - Optional "Prompt Tips" expandable section with guidance on writing effective extraction prompts</criterion>
+    <criterion id="AC6">Prompt Persistence - Custom prompt saved with template to database (templates.custom_prompt field)</criterion>
+    <criterion id="AC7">Edit Before Save - User can edit prompt text at any time before testing or saving template</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 1.8: Custom Prompt Definition</section>
+        <snippet>Template builder includes "Custom AI Prompts" section with text area for entering prompt instructions, placeholder text with example, character count display, optional "Prompt Tips" expandable section with guidance, prompt saved with template, and ability to edit prompt text before testing or saving.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR004: Custom AI Prompts</section>
+        <snippet>System shall allow users to save custom AI prompts and instructions with templates. Prompts guide AI extraction with specific instructions and examples for different document types.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification</title>
+        <section>Templates Table Schema</section>
+        <snippet>templates table includes custom_prompt TEXT field (nullable). API endpoint /api/templates supports POST/PUT with custom_prompt field (optional). TypeScript type Template includes custom_prompt?: string | null.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification</title>
+        <section>Template Management APIs</section>
+        <snippet>POST /api/templates accepts {name, type, fields, prompt}. API validation via Zod schema supports optional prompt. Prompts used during Claude API extraction calls.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>app/templates/new/page.tsx</path>
+        <kind>page component</kind>
+        <symbol>NewTemplatePage</symbol>
+        <lines>1-800</lines>
+        <reason>Template builder form - integration point for custom prompt section. Already includes state management, form validation, and API integration from Stories 1.5-1.7.</reason>
+      </artifact>
+      <artifact>
+        <path>types/template.ts</path>
+        <kind>type definitions</kind>
+        <symbol>Template, CreateTemplateRequest, TemplatePrompt</symbol>
+        <lines>38-90</lines>
+        <reason>TypeScript interfaces for template data. CreateTemplateRequest includes prompts array for API calls. Story 1.8 uses simplified inline prompt storage (not separate prompts table).</reason>
+      </artifact>
+      <artifact>
+        <path>lib/db/templates.ts</path>
+        <kind>data access layer</kind>
+        <symbol>createTemplate, updateTemplate</symbol>
+        <lines>24-91, 206-298</lines>
+        <reason>Database CRUD functions already support prompts via template_prompts table. Story 1.8 will use these existing functions to persist custom prompt data.</reason>
+      </artifact>
+      <artifact>
+        <path>components/ui/textarea.tsx</path>
+        <kind>UI component</kind>
+        <symbol>Textarea</symbol>
+        <lines>all</lines>
+        <reason>ShadCN Textarea component already installed from Story 1.7. Will be reused for custom prompt input field.</reason>
+      </artifact>
+      <artifact>
+        <path>components/ui/checkbox.tsx</path>
+        <kind>UI component</kind>
+        <symbol>Checkbox</symbol>
+        <lines>all</lines>
+        <reason>ShadCN Checkbox component available from Story 1.7. May be useful for prompt tips UI.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="next" version="^14.2.0">React framework with SSR and API routes</package>
+        <package name="react" version="^18.2.0">UI library</package>
+        <package name="@radix-ui/react-label" version="^2.1.7">ShadCN label primitive</package>
+        <package name="@radix-ui/react-slot" version="^1.2.3">ShadCN slot primitive</package>
+        <package name="lucide-react" version="^0.546.0">Icon library (ChevronDown for collapsible tips section)</package>
+        <package name="clsx" version="^2.1.1">Conditional className utility</package>
+        <package name="tailwind-merge" version="^3.3.1">Tailwind class merging</package>
+        <package name="zod" version="^4.1.12">Schema validation for API requests</package>
+      </node>
+      <shadcn>
+        <component name="textarea">Multi-line text input (already installed)</component>
+        <component name="collapsible">Expandable/collapsible section (may need installation for prompt tips)</component>
+      </shadcn>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Prompt field is OPTIONAL - template can be saved without custom prompt
+    - Character count display shows count but does NOT enforce hard limit
+    - Prompt tips section defaults to COLLAPSED state to avoid clutter
+    - Textarea must integrate visually with existing ShadCN form components (Story 1.5 style)
+    - Custom prompt stored in template_prompts table with prompt_type='custom' (reuse existing schema from Story 1.3)
+    - No database migrations required - schema already supports prompts
+    - Prompt accessible for Story 1.9 (test extraction) and Story 1.10 (save validated template)
+    - Use existing createTemplate/updateTemplate functions from lib/db/templates.ts
+    - Integration point: Add prompt section AFTER field definition, BEFORE sample document upload section
+    - TypeScript strict mode - all form state must be properly typed
+    - Zero ESLint warnings required for build to pass
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>POST /api/templates</name>
+      <kind>REST API endpoint</kind>
+      <signature>POST /api/templates - Request body: {name: string, template_type: string, fields?: FieldDefinition[], prompts?: {prompt_text: string, prompt_type: string}[]} - Response: {template: Template}</signature>
+      <path>app/api/templates/route.ts</path>
+    </interface>
+    <interface>
+      <name>PUT /api/templates/:id</name>
+      <kind>REST API endpoint</kind>
+      <signature>PUT /api/templates/:id - Request body: {name?: string, template_type?: string, fields?: FieldDefinition[], prompts?: {prompt_text: string, prompt_type: string}[]} - Response: {template: Template}</signature>
+      <path>app/api/templates/[id]/route.ts</path>
+    </interface>
+    <interface>
+      <name>createTemplate</name>
+      <kind>Database function</kind>
+      <signature>async function createTemplate(data: CreateTemplateRequest): Promise&lt;Template&gt;</signature>
+      <path>lib/db/templates.ts</path>
+    </interface>
+    <interface>
+      <name>updateTemplate</name>
+      <kind>Database function</kind>
+      <signature>async function updateTemplate(id: string, data: UpdateTemplateRequest): Promise&lt;Template&gt;</signature>
+      <path>lib/db/templates.ts</path>
+    </interface>
+    <interface>
+      <name>Textarea</name>
+      <kind>React component</kind>
+      <signature>&lt;Textarea placeholder={string} value={string} onChange={(e) =&gt; void} rows={number} className={string} /&gt;</signature>
+      <path>components/ui/textarea.tsx</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Next.js testing with Jest and React Testing Library. Unit tests for form state management and character count logic. Integration tests for template creation with custom prompt. UI tests for textarea rendering, character count display, and tips section expand/collapse. Build verification with `npm run build` and `npm run lint` to ensure zero TypeScript errors and ESLint warnings. Manual testing of complete workflow: enter prompt, save template, verify database persistence.</standards>
+    <locations>
+      - Unit tests would go in __tests__/ directory (not yet established in project)
+      - Integration tests would test full template creation flow with API calls
+      - Current project uses build/lint as primary verification (no test suite yet)
+    </locations>
+    <ideas>
+      <test ac="AC1">Verify "Custom AI Prompts" section renders in template builder form</test>
+      <test ac="AC2">Verify Textarea component renders with correct props (rows, placeholder)</test>
+      <test ac="AC3">Verify placeholder text matches specified example format</test>
+      <test ac="AC4">Verify character count calculates correctly and updates on input change</test>
+      <test ac="AC4">Verify character count displays below textarea in expected format</test>
+      <test ac="AC5">Verify prompt tips section exists and defaults to collapsed state</test>
+      <test ac="AC5">Verify prompt tips section expands/collapses on click</test>
+      <test ac="AC6">Create template with custom prompt, verify database stores prompt in template_prompts table</test>
+      <test ac="AC6">Create template without custom prompt, verify template saves successfully</test>
+      <test ac="AC7">Verify prompt text can be edited multiple times before save</test>
+      <test ac="AC7">Verify prompt persists through save and retrieves correctly on edit</test>
+    </ideas>
+  </tests>
+</story-context>

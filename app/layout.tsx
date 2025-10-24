@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Navigation } from "@/components/navigation";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "MMDocScan",
@@ -17,6 +18,7 @@ export default function RootLayout({
       <body>
         <Navigation />
         {children}
+        <Toaster />
       </body>
     </html>
   );

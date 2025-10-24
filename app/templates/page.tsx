@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TemplateListItem } from "@/types/template";
-import { AlertCircle, Plus } from "lucide-react";
+import { AlertCircle, Plus, Edit, Eye } from "lucide-react";
 
 // Template type display labels
 const TEMPLATE_TYPE_LABELS: Record<string, string> = {
@@ -79,6 +79,11 @@ export default function TemplatesPage() {
 
   function handleTemplateClick(templateId: string) {
     router.push(`/templates/${templateId}`);
+  }
+
+  function handleEdit(e: React.MouseEvent, templateId: string) {
+    e.stopPropagation(); // Prevent row click
+    router.push(`/templates/${templateId}/edit`);
   }
 
   // Loading state
@@ -152,6 +157,7 @@ export default function TemplatesPage() {
                 <TableHead>Type</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Fields</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -170,6 +176,18 @@ export default function TemplatesPage() {
                   <TableCell className="text-right">
                     {template.field_count ?? 0}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => handleEdit(e, template.id)}
+                        title="Edit template"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -186,11 +204,23 @@ export default function TemplatesPage() {
             className="cursor-pointer hover:bg-muted/50 transition-colors"
           >
             <CardHeader>
-              <CardTitle className="text-xl">{template.name}</CardTitle>
-              <CardDescription>
-                {TEMPLATE_TYPE_LABELS[template.template_type] ||
-                  template.template_type}
-              </CardDescription>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-xl">{template.name}</CardTitle>
+                  <CardDescription>
+                    {TEMPLATE_TYPE_LABELS[template.template_type] ||
+                      template.template_type}
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => handleEdit(e, template.id)}
+                  title="Edit template"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="flex justify-between text-sm">

@@ -1,0 +1,140 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.3</storyId>
+    <title>Template Data Model and Storage</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>a database schema for storing extraction templates</iWant>
+    <soThat>templates can be persisted and retrieved</soThat>
+    <tasks>
+      <task id="1" ac="1,2,3">Design database schema</task>
+      <task id="2" ac="4">Create database migration files</task>
+      <task id="3" ac="4">Apply migrations to Supabase database</task>
+      <task id="4" ac="5">Implement template CRUD API routes</task>
+      <task id="5" ac="5">Implement database utility functions</task>
+      <task id="6" ac="1,2,3">Create TypeScript types and interfaces</task>
+      <task id="7" ac="5">Test CRUD operations</task>
+      <task id="8" ac="4">Document schema and update README</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">templates table created with fields: id (UUID, primary key), name (text), template_type (text), created_at, updated_at (timestamps)</criterion>
+    <criterion id="AC2">template_fields table created with fields: id (UUID, primary key), template_id (foreign key), field_name (text), field_type (text), is_header (boolean), display_order (integer)</criterion>
+    <criterion id="AC3">template_prompts table created with fields: id (UUID, primary key), template_id (foreign key), prompt_text (text), prompt_type (text)</criterion>
+    <criterion id="AC4">Database migrations created and applied successfully</criterion>
+    <criterion id="AC5">Basic CRUD functions implemented for templates (Create, Read, Update, Delete)</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification" section="Data Models and Contracts">
+        Complete database schema specification for templates table with JSONB fields structure, template_fields, and template_prompts tables. Specifies UUID primary keys, foreign key relationships, and cascade delete behavior.
+      </doc>
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification" section="APIs and Interfaces">
+        Template Management API specifications: GET /api/templates (list all), POST /api/templates (create), GET /api/templates/:id (get one), PUT /api/templates/:id (update), DELETE /api/templates/:id (delete). Request/response schemas defined.
+      </doc>
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification" section="Backend Dependencies">
+        Zod validation library (^3.22.0) required for API request/response validation at API boundary.
+      </doc>
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Story 1.3">
+        User story and acceptance criteria defining template data model with three-table structure for templates, fields, and prompts.
+      </doc>
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="Template Management">
+        FR006: System shall support storage and retrieval of templates for reuse. FR007: System shall support 6 template types (invoice, estimate, equipment_log, timesheet, consumable_log, generic).
+      </doc>
+      <doc path="docs/stories/story-1.2.md" title="Story 1.2 - Database Setup" section="Dev Agent Record">
+        Lessons learned: Environment variables pattern successful, singleton Supabase client works well, error handling approach (log server-side, user-friendly messages) should be replicated.
+      </doc>
+    </docs>
+    <code>
+      <artifact path="lib/supabase.ts" kind="utility" symbol="supabase" lines="1-18" reason="Existing Supabase client singleton to be reused for all database operations in this story">
+        Supabase client already configured with environment variables (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY). No modifications needed.
+      </artifact>
+      <artifact path="app/api/db-test/route.ts" kind="api-route" symbol="GET" lines="N/A" reason="Example API route pattern from Story 1.2 showing error handling and response structure">
+        Demonstrates Next.js 14 App Router API route pattern, error handling with try-catch, appropriate HTTP status codes, and user-friendly error messages.
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@supabase/supabase-js" version="^2.75.1" />
+        <package name="next" version="^14.2.0" />
+        <package name="react" version="^18.2.0" />
+        <package name="typescript" version="^5.3.0" />
+        <package name="zod" version="^3.22.0" note="Required for API validation - needs to be added" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Three-table normalized structure: templates, template_fields, template_prompts with one-to-many relationships and cascade deletes</constraint>
+    <constraint type="architecture">Use Supabase SQL Editor for manual migration execution (Level 2 simplicity - no complex migration tooling)</constraint>
+    <constraint type="architecture">Implement data access layer in lib/db/templates.ts for separation of concerns</constraint>
+    <constraint type="architecture">API routes follow Next.js 14 App Router conventions (app/api directory structure)</constraint>
+    <constraint type="validation">Use Zod for request validation at API boundary</constraint>
+    <constraint type="typing">TypeScript interfaces ensure type safety across application layers</constraint>
+    <constraint type="database">UUID Primary Keys using Supabase uuid_generate_v4() for globally unique identifiers</constraint>
+    <constraint type="database">Automatic timestamps (created_at, updated_at) using PostgreSQL DEFAULT NOW()</constraint>
+    <constraint type="database">Template types must be one of 6 valid values: invoice, estimate, equipment_log, timesheet, consumable_log, generic</constraint>
+    <constraint type="infrastructure">Supabase Free Tier: 500MB database storage (sufficient for templates - minimal data footprint)</constraint>
+    <constraint type="complexity">Level 2 Project: Simple schema, no complex normalization beyond basic foreign keys, no ORM</constraint>
+    <constraint type="pattern">Singleton pattern for Supabase client (already established in Story 1.2)</constraint>
+    <constraint type="error-handling">Log errors server-side, return user-friendly messages to clients (pattern from Story 1.2)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="/api/templates" kind="REST-GET" signature="GET /api/templates → { templates: Template[] }" path="app/api/templates/route.ts">
+      Returns array of all templates with basic fields (id, name, template_type, created_at, updated_at)
+    </interface>
+    <interface name="/api/templates" kind="REST-POST" signature="POST /api/templates → { template: Template }" path="app/api/templates/route.ts">
+      Creates new template. Request body: { name, template_type, fields?, prompts? }. Returns created template with generated id.
+    </interface>
+    <interface name="/api/templates/:id" kind="REST-GET" signature="GET /api/templates/:id → { template: Template, fields: TemplateField[], prompts: TemplatePrompt[] }" path="app/api/templates/[id]/route.ts">
+      Returns single template by ID with all related fields and prompts
+    </interface>
+    <interface name="/api/templates/:id" kind="REST-PUT" signature="PUT /api/templates/:id → { template: Template }" path="app/api/templates/[id]/route.ts">
+      Updates existing template. Request body: { name?, fields?, prompts? }. Returns updated template.
+    </interface>
+    <interface name="/api/templates/:id" kind="REST-DELETE" signature="DELETE /api/templates/:id → { success: boolean }" path="app/api/templates/[id]/route.ts">
+      Deletes template and cascades to delete all associated fields and prompts
+    </interface>
+    <interface name="Template" kind="TypeScript-Interface" signature="interface Template { id: string; name: string; template_type: string; created_at: string; updated_at: string; }" path="types/template.ts">
+      Main template interface matching database schema
+    </interface>
+    <interface name="TemplateField" kind="TypeScript-Interface" signature="interface TemplateField { id: string; template_id: string; field_name: string; field_type: string; is_header: boolean; display_order: number; }" path="types/template.ts">
+      Template field interface for field definitions
+    </interface>
+    <interface name="TemplatePrompt" kind="TypeScript-Interface" signature="interface TemplatePrompt { id: string; template_id: string; prompt_text: string; prompt_type: string; }" path="types/template.ts">
+      Template prompt interface for custom AI prompts
+    </interface>
+    <interface name="supabase" kind="Client-SDK" signature="import { supabase } from '@/lib/supabase'" path="lib/supabase.ts">
+      Existing Supabase client singleton to be reused for all database operations
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Manual verification using Supabase Table Editor for database schema validation. API testing via endpoint calls for CRUD operations. Request validation testing with invalid payloads to verify Zod schemas. Error handling testing for database failures. Integration testing for end-to-end CRUD workflows from API to database. Test in both local development and Vercel production environments.
+    </standards>
+    <locations>
+      - Supabase Table Editor (manual schema verification)
+      - Supabase SQL Editor (migration execution and testing)
+      - API endpoints: /api/templates, /api/templates/:id (manual testing via browser/curl)
+      - Future: Unit tests in __tests__ directory (deferred to later stories)
+    </locations>
+    <ideas>
+      <idea ac="AC1">Create templates table in Supabase SQL Editor, verify structure in Table Editor, test INSERT with valid template_type values, verify UUID generation and timestamps</idea>
+      <idea ac="AC2">Create template_fields table, verify foreign key constraint to templates.id, test INSERT/DELETE to verify relationship and display_order</idea>
+      <idea ac="AC3">Create template_prompts table, verify foreign key to templates.id, test prompt storage and retrieval</idea>
+      <idea ac="AC4">Execute all migrations, verify tables exist, test cascade delete by deleting parent template and confirming child records deleted</idea>
+      <idea ac="AC5">Test POST /api/templates with valid data, verify template created in database. Test GET /api/templates and verify returned array. Test GET /api/templates/:id with fields and prompts. Test PUT /api/templates/:id and verify changes. Test DELETE /api/templates/:id and verify cascade. Test with invalid template_type and verify validation error.</idea>
+    </ideas>
+  </tests>
+</story-context>

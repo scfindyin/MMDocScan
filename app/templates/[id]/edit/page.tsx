@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { useDropzone } from "react-dropzone";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -36,11 +36,10 @@ import {
 } from "@/components/ui/table";
 
 /**
- * Template Builder Page - Manual Field Definition
- * Story 1.5: Manual Template Builder - Field Definition
+ * Edit Template Page
+ * Story 1.10: Save Validated Template - Edit Mode
  *
- * Allows users to create templates by manually defining fields
- * without AI assistance.
+ * Allows users to edit existing templates with same workflow as creation
  */
 
 // Local interface for field definition in form state
@@ -76,9 +75,15 @@ const DATA_TYPES = [
   { value: FieldType.CURRENCY, label: "Currency" },
 ];
 
-export default function NewTemplatePage() {
+export default function EditTemplatePage() {
   const router = useRouter();
+  const params = useParams();
   const { toast } = useToast();
+  const templateId = params?.id as string;
+
+  // Loading state
+  const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Form state
   const [templateName, setTemplateName] = useState("");
@@ -118,6 +123,74 @@ export default function NewTemplatePage() {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "text/plain",
   ];
+
+  // Load template data on mount (AC#6)
+  useEffect(() => {
+    const loadTemplate = async () => {
+      if (!templateId) {
+        setLoadError("Template ID not provided");
+        setIsLoadingTemplate(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/templates/${templateId}`);
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Template not found. It may have been deleted.");
+          }
+          throw new Error("Failed to load template");
+        }
+
+        const data = await response.json();
+
+        // Populate form with template data
+        setTemplateName(data.template.name);
+        setTemplateType(data.template.template_type as TemplateType);
+
+        // Transform fields from database format to UI format
+        const transformedFields: FieldDefinition[] = data.fields.map((f: any) => ({
+          id: crypto.randomUUID(),
+          name: f.field_name,
+          type: f.field_type as FieldType,
+          category: f.is_header ? "header" : "detail",
+        }));
+        setFields(transformedFields);
+
+        // Load custom prompt if exists
+        const customPromptData = data.prompts?.find((p: any) => p.prompt_type === "custom");
+        if (customPromptData) {
+          setCustomPrompt(customPromptData.prompt_text);
+        }
+
+      } catch (error) {
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : "Failed to load template"
+        );
+      } finally {
+        setIsLoadingTemplate(false);
+      }
+    };
+
+    loadTemplate();
+  }, [templateId]);
+
+  // Redirect if template not found
+  useEffect(() => {
+    if (loadError && loadError.includes("not found")) {
+      toast({
+        title: "Error",
+        description: loadError,
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        router.push("/templates");
+      }, 2000);
+    }
+  }, [loadError, router, toast]);
 
   // Validate uploaded file
   const validateFile = (file: File): string | null => {
@@ -449,7 +522,7 @@ export default function NewTemplatePage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle save template
+  // Handle save template (AC#7: PUT instead of POST, different success message)
   const handleSave = async () => {
     // Clear previous errors
     setErrors({});
@@ -488,9 +561,9 @@ export default function NewTemplatePage() {
         ...(prompts && { prompts }),
       };
 
-      // Call API
-      const response = await fetch("/api/templates", {
-        method: "POST",
+      // Call API with PUT method (AC#7)
+      const response = await fetch(`/api/templates/${templateId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -499,13 +572,13 @@ export default function NewTemplatePage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save template");
+        throw new Error(errorData.error || "Failed to update template");
       }
 
-      // Success - show toast notification (AC#4)
+      // Success - show toast notification with "updated" message (AC#7)
       toast({
         title: "Success",
-        description: `Template '${templateName}' saved successfully`,
+        description: `Template '${templateName}' updated successfully`,
       });
 
       // Redirect to template list after 1 second delay (AC#5)
@@ -517,7 +590,7 @@ export default function NewTemplatePage() {
         submit:
           error instanceof Error
             ? error.message
-            : "An error occurred while saving the template",
+            : "An error occurred while updating the template",
       });
     } finally {
       setIsLoading(false);
@@ -529,6 +602,47 @@ export default function NewTemplatePage() {
     router.push("/templates");
   };
 
+  // Show loading state while template loads
+  if (isLoadingTemplate) {
+    return (
+      <div className="container mx-auto py-10 px-4 max-w-4xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+            <p className="text-muted-foreground">Loading template...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if template failed to load
+  if (loadError && !loadError.includes("not found")) {
+    return (
+      <div className="container mx-auto py-10 px-4 max-w-4xl">
+        <Button variant="ghost" onClick={() => router.push("/templates")} className="mb-6">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Templates
+        </Button>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="ml-2">
+            {loadError}
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-4"
+              onClick={() => router.push("/templates")}
+            >
+              Return to Templates
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  // Main edit form (same as new template but with pre-populated data)
   return (
     <div className="container mx-auto py-10 px-4 max-w-4xl">
       {/* Header with Back Button */}
@@ -542,11 +656,11 @@ export default function NewTemplatePage() {
         Back to Templates
       </Button>
 
-      {/* Page Title */}
+      {/* Page Title (AC#7: Shows "Edit Template") */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Create New Template</h1>
+        <h1 className="text-3xl font-bold mb-2">Edit Template</h1>
         <p className="text-muted-foreground">
-          Define your template fields manually
+          Modify template fields and settings
         </p>
       </div>
 
@@ -605,7 +719,7 @@ export default function NewTemplatePage() {
               </span>
             </h2>
             <p className="text-sm text-muted-foreground">
-              Upload a sample document to enable AI field suggestions (Story 1.7) and test extraction (Story 1.9)
+              Upload a sample document to enable AI field suggestions and test extraction
             </p>
           </div>
 
@@ -658,7 +772,7 @@ export default function NewTemplatePage() {
                   disabled={isLoading}
                   type="button"
                 >
-                  Skip - Define Fields Manually
+                  Skip - Edit Fields Manually
                 </Button>
               </div>
             </>
@@ -728,7 +842,7 @@ export default function NewTemplatePage() {
               </span>
             </Label>
             <p className="text-sm text-muted-foreground">
-              Provide context to help AI better understand your document structure (e.g., &quot;Line items are in a table on page 2&quot;)
+              Provide context to help AI better understand your document structure
             </p>
             <Textarea
               id="analysisGuidance"
@@ -1260,33 +1374,21 @@ export default function NewTemplatePage() {
         </div>
       )}
 
-      {/* Action Buttons */}
-      <div className="flex flex-col gap-4">
-        {/* Save button disabled message (AC#1) */}
-        {testResults === null && templateName && fields.length > 0 && (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Run a successful test extraction before saving the template. This ensures your template extracts data correctly.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <div className="flex gap-4 justify-end">
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isLoading || testResults === null}
-          >
-            {isLoading ? "Saving..." : "Save Template"}
-          </Button>
-        </div>
+      {/* Action Buttons (AC#7: Save enabled immediately in edit mode, no test required) */}
+      <div className="flex gap-4 justify-end">
+        <Button
+          variant="outline"
+          onClick={handleCancel}
+          disabled={isLoading}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSave}
+          disabled={isLoading}
+        >
+          {isLoading ? "Saving..." : "Save Template"}
+        </Button>
       </div>
     </div>
   );

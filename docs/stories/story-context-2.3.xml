@@ -1,0 +1,286 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.3</storyId>
+    <title>Production Document Extraction</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-23</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to run AI extraction on my production document using the selected template</iWant>
+    <soThat>I can extract structured data from my billing document</soThat>
+    <tasks>
+### Task Group 1: Create Production Extraction API Route (AC: #1, #2, #4)
+- Task 1.1: Create API route `/app/api/extract/production/route.ts`
+- Task 1.2: Fetch template from database
+- Task 1.3: Prepare Claude API request payload
+
+### Task Group 2: Claude API Integration for Production Extraction (AC: #2, #4, #6)
+- Task 2.1: Implement Claude API client call
+- Task 2.2: Parse Claude API response
+- Task 2.3: Implement confidence score calculation
+- Task 2.4: Denormalize data to flat structure
+
+### Task Group 3: Source Metadata Capture (AC: #7)
+- Task 3.1: Extract source metadata from document
+- Task 3.2: Return API response
+
+### Task Group 4: Error Handling for API Failures (AC: #8)
+- Task 4.1: Implement Claude API error handling
+- Task 4.2: Return user-friendly error messages
+- Task 4.3: Handle document parsing failures
+
+### Task Group 5: Frontend State Management for Extraction (AC: #1, #3, #5)
+- Task 5.1: Extend process page state machine
+- Task 5.2: Implement "Apply Template &amp; Extract" button handler
+- Task 5.3: Call extraction API
+
+### Task Group 6: Loading State and Progress Indicator (AC: #3)
+- Task 6.1: Design extracting step UI
+- Task 6.2: Implement progress animation
+
+### Task Group 7: Success Message and Transition (AC: #9, #10)
+- Task 7.1: Display success message
+- Task 7.2: Transition to results preview (placeholder for Story 2.4)
+
+### Task Group 8: Error Display and Retry (AC: #8)
+- Task 8.1: Display error message on extraction failure
+- Task 8.2: Implement retry functionality
+- Task 8.3: Handle specific error scenarios
+
+### Task Group 9: TypeScript Types and Data Models (AC: #4, #5, #6, #7)
+- Task 9.1: Define ExtractedRow interface
+- Task 9.2: Define API request/response types
+- Task 9.3: Update Template types if needed
+
+### Task Group 10: Testing, Build, and Validation (Standard)
+- Task 10.1: Unit test confidence scoring algorithm
+- Task 10.2: Unit test denormalization logic
+- Task 10.3: Integration test with Claude API
+- Task 10.4: Manual end-to-end testing
+- Task 10.5: Run build and lint
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. "Apply Template &amp; Extract" button triggers extraction
+2. System sends production document + selected template + prompts to Claude API
+3. Loading state with progress indicator during extraction
+4. API returns extracted data in flat/denormalized format (header fields repeated per detail row)
+5. Extraction results stored temporarily for preview
+6. Row-level confidence scores calculated
+7. Source metadata captured (filename, page numbers, extraction timestamp)
+8. Error handling for API failures with actionable error messages
+9. Success message: "Extraction complete - X rows extracted"
+10. Automatic transition to results preview
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>MMDocScan Product Requirements Document</title>
+        <section>AI Extraction - FR012, FR013, FR014, FR016</section>
+        <snippet>FR012: System shall integrate with Claude Skills API for AI-powered data extraction. FR013: System shall extract data in flat/denormalized format with header fields repeated on each detail row. FR014: System shall generate confidence scores for extracted data rows. FR016: System shall capture source document metadata (filename, page numbers, extraction timestamp) for each extracted data point.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>MMDocScan Product Requirements Document</title>
+        <section>User Journey Step 3: Run Extraction</section>
+        <snippet>User clicks "Extract Data" to begin AI processing. System sends document and template to Claude Skills API. System displays processing status. System presents extracted data in preview table with header fields appearing on each row.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification: MMDocScan Complete Solution</title>
+        <section>Document Processing APIs - /api/extract/production</section>
+        <snippet>POST endpoint accepting {base64Document, templateId, promptOverride?} and returning {extractedData: ExtractedRow[]}. Files read from user's file picker, converted to base64 in browser, sent to API. No file persistence - documents held in memory only during active session.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification: MMDocScan Complete Solution</title>
+        <section>Data Models - ExtractedRow Interface</section>
+        <snippet>interface ExtractedRow { rowId: string; confidence: number; // 0.0 - 1.0; fields: Record&lt;string, any&gt;; // Header + detail fields (header repeated per row); sourceMetadata: { filename: string; pageNumber?: number; extractedAt: string; }; }</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification: MMDocScan Complete Solution</title>
+        <section>Claude Skills API Integration</section>
+        <snippet>Request format uses model: "claude-3-5-sonnet-20241022", messages with document type (base64 with media_type), and tools for structured output. Tool calling defines extraction schema based on template fields.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification: MMDocScan Complete Solution</title>
+        <section>AI Extraction Flow (Workflow Sequence)</section>
+        <snippet>Frontend sends base64 document from React state. API route receives base64 + templateId, builds Claude Skills API request with template schema, calls Claude API with structured output, parses response, calculates confidence scores, denormalizes data (repeat header fields per detail row), returns ExtractedRow[] with confidence + metadata. Results held in React state for preview.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification: MMDocScan Complete Solution</title>
+        <section>Performance - Non-Functional Requirements</section>
+        <snippet>Production extraction: &lt; 30s for typical 1-5 page documents (Claude Skills API dependent). Timeout: 30s from tech spec performance targets. Implement file size limits: 10MB max per document upload.</snippet>
+      </doc>
+      <doc>
+        <path>docs/technical-decisions.md</path>
+        <title>Technical Decisions - MMDocScan</title>
+        <section>TD001: Confidence Scoring Granularity</section>
+        <snippet>Decision: Implement row-level confidence scores rather than per-field scores. Row-level scoring provides sufficient quality visibility while maintaining usability. Users can quickly scan for low-confidence rows that need manual review. Data model: Confidence score as row attribute. Excel output: Confidence score column for each data row.</snippet>
+      </doc>
+      <doc>
+        <path>docs/technical-decisions.md</path>
+        <title>Technical Decisions - MMDocScan</title>
+        <section>TD002: Output Data Structure - Flat vs Relational</section>
+        <snippet>Decision: Implement flat/denormalized output structure where header information is repeated on each detail row. Flat structure is Excel-native and eliminates need for users to perform joins. Header fields (invoice number, date, vendor) appear on every line item row. AI extraction prompt: Instruct Claude to denormalize data during extraction. Example: Invoice with 3 line items produces 3 rows, each containing invoice header fields + line item fields.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epics - MMDocScan</title>
+        <section>Story 2.3 Acceptance Criteria</section>
+        <snippet>Story 2.3 defines 10 acceptance criteria covering: extraction button triggering, Claude API integration with document + template + prompts, loading state with progress indicator, flat/denormalized output format, temporary results storage, row-level confidence scores, source metadata capture, error handling with actionable messages, success message with row count, and automatic transition to results preview.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>app/api/extract/suggest-fields/route.ts</path>
+        <kind>API route</kind>
+        <symbol>POST handler</symbol>
+        <lines>1-201</lines>
+        <reason>Existing Claude API integration pattern for field suggestions. Story 2.3 will follow similar structure for production extraction: initialize Anthropic client, prepare document content (base64 with media type), build extraction prompt, call Claude API with tool schema for structured output, parse tool use response, handle API errors (401, 429, timeout).</reason>
+      </artifact>
+      <artifact>
+        <path>lib/db/templates.ts</path>
+        <kind>data access layer</kind>
+        <symbol>getTemplateById</symbol>
+        <lines>148-201</lines>
+        <reason>Story 2.3 production extraction API will call getTemplateById to fetch template with fields and prompts. Returns TemplateWithRelations including fields array (with is_header categorization) and prompts array needed to build Claude API request.</reason>
+      </artifact>
+      <artifact>
+        <path>types/template.ts</path>
+        <kind>type definitions</kind>
+        <symbol>TemplateField, TemplatePrompt, TemplateWithRelations</symbol>
+        <lines>50-79</lines>
+        <reason>Template types needed for production extraction API. TemplateField includes is_header boolean for denormalization logic (header vs detail categorization). Story 2.3 will use these types when fetching template and building extraction schema.</reason>
+      </artifact>
+      <artifact>
+        <path>app/process/page.tsx</path>
+        <kind>Next.js page component</kind>
+        <symbol>ProcessDocumentsPage</symbol>
+        <lines>1-100</lines>
+        <reason>Production document processing UI. Story 2.3 will extend this component to add 'extracting' and 'results' steps to the multi-step workflow state machine, implement extraction button handler from Story 2.2 TODO, add extractedData state for results storage, and implement loading/error states for extraction flow.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/extract/suggest-fields/route.ts</path>
+        <kind>API route</kind>
+        <symbol>Anthropic client initialization</symbol>
+        <lines>40-42</lines>
+        <reason>Pattern for initializing Anthropic SDK client with API key from environment variables. Story 2.3 production extraction will reuse this pattern: check ANTHROPIC_API_KEY, initialize client with API key, handle missing API key error (500 status).</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/extract/suggest-fields/route.ts</path>
+        <kind>API route</kind>
+        <symbol>Document type handling (PDF vs text)</symbol>
+        <lines>56-90</lines>
+        <reason>Pattern for handling different document types when sending to Claude API. PDF files use document type with base64 source, text files decoded and sent as text content. Story 2.3 will reuse this document format handling logic for production extraction.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/extract/suggest-fields/route.ts</path>
+        <kind>API route</kind>
+        <symbol>Claude API call with tools</symbol>
+        <lines>99-139</lines>
+        <reason>Pattern for calling Claude API with tool schema for structured output. Story 2.3 will define extraction tool schema based on template fields (header + detail), use tool_choice to force structured response, and parse tool_use block from response for extracted data.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/extract/suggest-fields/route.ts</path>
+        <kind>API route</kind>
+        <symbol>Error handling for Anthropic API</symbol>
+        <lines>156-198</lines>
+        <reason>Comprehensive error handling pattern for Claude API errors. Story 2.3 will implement similar error handling: catch Anthropic.APIError, handle 401 (auth), 429 (rate limit), timeout errors, return user-friendly error messages, log detailed errors server-side without exposing sensitive details to client.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@anthropic-ai/sdk" version="^0.67.0">Claude API client for AI extraction (installed in Story 1.7)</package>
+        <package name="@supabase/supabase-js" version="^2.75.1">Database client for template retrieval</package>
+        <package name="zod" version="^4.1.12">Runtime validation for API request/response types</package>
+        <package name="next" version="^14.2.0">Next.js framework for API routes</package>
+        <package name="react" version="^18.2.0">React for frontend state management</package>
+        <package name="lucide-react" version="^0.546.0">Icons: Loader2 (loading spinner), CheckCircle (success), AlertCircle (error)</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>API Route Architecture: Create /app/api/extract/production/route.ts following Next.js API route pattern. Reuse Claude Skills API integration from Story 1.7 (@anthropic-ai/sdk already installed). Use existing Supabase client and template data access layer from Story 1.3. Stateless API - no server-side session storage (extraction results returned to client).</constraint>
+    <constraint>Claude API Integration: Use model claude-3-5-sonnet-20241022 (from tech spec). Tool calling for structured output (define extraction schema based on template fields). Document format: Send base64-encoded document with media type. Prompt structure: System prompt + template schema + custom prompts. Timeout: 30s (from tech spec performance targets).</constraint>
+    <constraint>Data Denormalization: Header fields (is_header=true in template_fields) repeat on every row. Detail fields (is_header=false) vary per row. Output: Single flat array of rows, each with all header + detail fields. Example: Invoice with 3 line items produces 3 rows, each containing invoice number, date, vendor, plus line item data.</constraint>
+    <constraint>Confidence Scoring: Row-level scoring per TD001 in technical-decisions.md. Factors: Field completeness (% fields populated), data type validation (correct format). Algorithm: confidence = (populated_fields / total_fields) * type_validity_factor. Threshold: &lt; 0.7 = low confidence (will be flagged in Story 2.4).</constraint>
+    <constraint>In-Memory Processing: Document uploaded in Story 2.1 held in browser memory (base64). Send base64 to API, process, return results to browser. Results held in React state (extractedData) until user exports or closes page. No server-side or database storage of documents or extraction results.</constraint>
+    <constraint>Testing Standards: Unit test confidence scoring algorithm and denormalization logic. Integration test Claude API with real API calls. Manual end-to-end testing: upload → select template → extract → view results. Test with different document types (PDF, Word, text) and templates. Verify confidence scores are reasonable and source metadata is correct. Run npm run build and npm run lint with zero errors.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>/api/extract/production</name>
+      <kind>REST API endpoint (POST)</kind>
+      <signature>POST /api/extract/production
+Request: { documentBase64: string, templateId: string, customPrompt?: string }
+Response: { success: true, data: ExtractedRow[], rowCount: number } | { success: false, error: string, retryable: boolean }</signature>
+      <path>app/api/extract/production/route.ts</path>
+    </interface>
+    <interface>
+      <name>ExtractedRow</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface ExtractedRow {
+  rowId: string;
+  confidence: number; // 0.0 - 1.0
+  fields: Record&lt;string, any&gt;; // Header + detail fields (header repeated per row)
+  sourceMetadata: {
+    filename: string;
+    pageNumber?: number;
+    extractedAt: string;
+  };
+}</signature>
+      <path>types/extraction.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>getTemplateById</name>
+      <kind>Data access function</kind>
+      <signature>async function getTemplateById(id: string): Promise&lt;TemplateWithRelations | null&gt;
+Returns template with fields array (including is_header categorization) and prompts array</signature>
+      <path>lib/db/templates.ts</path>
+    </interface>
+    <interface>
+      <name>Anthropic SDK - messages.create</name>
+      <kind>External API call</kind>
+      <signature>anthropic.messages.create({
+  model: "claude-sonnet-4-5",
+  max_tokens: number,
+  messages: [{ role: "user", content: [...] }],
+  tools: [{ name: string, input_schema: {...} }],
+  tool_choice: { type: "tool", name: string }
+})</signature>
+      <path>@anthropic-ai/sdk</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing approach follows Next.js best practices and project Level 2 complexity. Unit tests for pure functions (confidence scoring, denormalization). Integration tests for API routes with Claude API calls (use test API key). Manual end-to-end testing for user workflows. No formal test framework configured yet - focus on manual validation and build verification (npm run build, npm run lint).
+    </standards>
+    <locations>
+      Tests would be located in __tests__ directories adjacent to source files (not yet created). Integration tests: app/api/extract/__tests__/. Unit tests: lib/__tests__/. Component tests: app/process/__tests__/.
+    </locations>
+    <ideas>
+      <idea ac="1,2,4">Test extraction API route: Mock Claude API response, verify request format (base64 document + template schema in messages), verify tool schema includes template fields with header/detail categorization, verify response structure matches ExtractedRow interface.</idea>
+      <idea ac="6">Test confidence scoring algorithm: All fields present should return high score (0.9-1.0). Missing fields should lower score proportionally. Invalid data types should reduce score. Verify score range 0.0-1.0. Test edge cases: empty row, all fields invalid, partial completeness.</idea>
+      <idea ac="4,6">Test denormalization logic: Template with 2 header fields and 3 detail fields, Claude returns 4 detail rows. Verify output has 4 rows, each containing all 5 fields (2 header repeated + 3 detail unique). Test header-only template (no detail fields). Test detail-only template (no header fields).</idea>
+      <idea ac="7">Test source metadata capture: Verify filename extracted from request. Verify extractedAt timestamp in ISO 8601 format. Verify page numbers if available from Claude response. Metadata should be present on every ExtractedRow.</idea>
+      <idea ac="8">Test error handling: Mock Claude API timeout (30s), verify retryable error returned. Mock 429 rate limit, verify appropriate error message. Mock 401 auth error, verify user-friendly message without exposing API key details. Mock empty extraction (0 rows), verify success response with empty array.</idea>
+      <idea ac="3,9,10">Test frontend extraction flow: Upload document (Story 2.1), select template (Story 2.2), click "Apply Template &amp; Extract" button. Verify step transitions to 'extracting', loading spinner displays, extractedData state populated on success, step transitions to 'results', success message shows row count.</idea>
+      <idea ac="8">Test error display and retry: Mock extraction failure, verify error Alert component displays with AlertCircle icon, verify "Retry Extraction" button present, click retry and verify API called again with same document/template, verify "Cancel" button returns to template selection.</idea>
+    </ideas>
+  </tests>
+</story-context>

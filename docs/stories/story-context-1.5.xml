@@ -1,0 +1,260 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.5</storyId>
+    <title>Manual Template Builder - Field Definition</title>
+    <status>ContextReadyDraft</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to manually define fields for my template without AI assistance</iWant>
+    <soThat>I can create templates when I know exactly what fields I need</soThat>
+    <tasks>
+      <task id="1" ac="1">Create template builder page route and basic layout</task>
+      <task id="2" ac="2,3,5">Implement dynamic field management state</task>
+      <task id="3" ac="3">Build field definition form components</task>
+      <task id="4" ac="4">Implement field reordering functionality</task>
+      <task id="5" ac="1,3,7">Install required ShadCN components</task>
+      <task id="6" ac="7">Implement form validation</task>
+      <task id="7" ac="6,8">Implement save template functionality</task>
+      <task id="8" ac="9">Implement cancel functionality</task>
+      <task id="9" ac="1-9">Testing and refinement</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1">Template builder page with form for template name and type selection</ac>
+    <ac id="2">"Add Field" button to add new field definitions</ac>
+    <ac id="3">For each field, user can specify: Field name, Data type (text, number, date, currency), Header vs. Detail categorization (radio buttons)</ac>
+    <ac id="4">Fields can be reordered (drag-and-drop or up/down buttons)</ac>
+    <ac id="5">Fields can be removed</ac>
+    <ac id="6">"Save Template" saves template to database</ac>
+    <ac id="7">Validation: Template name required, at least 1 field required</ac>
+    <ac id="8">Success message and redirect to template list on save</ac>
+    <ac id="9">Can cancel and return to template list without saving</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - MMDocScan Complete Solution</title>
+        <section>Template Management UI Module</section>
+        <snippet>Template CRUD, field definition, sample upload, AI field suggestions using Next.js pages/components and ShadCN UI. Part of monolithic Next.js application with serverless API routes.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification</title>
+        <section>Data Models - Templates Table</section>
+        <snippet>Templates stored with name, template_type (6 types: invoice, estimate, equipment_log, timesheet, consumable_log, generic), fields JSONB array with {name, type, category: 'header'|'detail'}, custom_prompt, and timestamps.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification</title>
+        <section>Workflows - Template Creation</section>
+        <snippet>User enters template name and type, defines fields with name/type/category, optionally uploads sample for AI suggestions, tests prompts, and saves template to database.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Template Management Requirements</section>
+        <snippet>FR001: UI-based template builder. FR003: Define field names, data types, and field categorization (header vs. detail) within templates. Wizard-style flow for first-time template creation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>UX Design Principles</section>
+        <snippet>Clarity over complexity, forgiving workflow. Browser compatibility: Chrome, Firefox, Safari, Edge latest versions (NFR001).</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.3.md</path>
+        <title>Story 1.3 - Template Data Model and Storage</title>
+        <section>Dev Notes</section>
+        <snippet>Three-table database schema with templates, template_fields, template_prompts. POST /api/templates endpoint with Zod validation. TypeScript types in types/template.ts with TemplateType, FieldType, PromptType enums.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.4.md</path>
+        <title>Story 1.4 - Template List and Management UI</title>
+        <section>Dev Notes</section>
+        <snippet>Template list page with responsive table/card layout, navigation to /templates/new for template creation, ShadCN components (Table, Card, Alert), useRouter for programmatic navigation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.1.md</path>
+        <title>Story 1.1 - Project Infrastructure Setup</title>
+        <section>Dev Notes</section>
+        <snippet>Next.js 14.2 with App Router, TypeScript, Tailwind CSS, ShadCN UI library. Component installation via npx shadcn@latest add. Level 2 project: simple architecture, minimal abstraction.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>app/templates/new/page.tsx</path>
+        <kind>component</kind>
+        <symbol>NewTemplatePage</symbol>
+        <lines>1-36</lines>
+        <reason>Placeholder page that needs full implementation for template builder with form state management</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/templates/route.ts</path>
+        <kind>api</kind>
+        <symbol>POST</symbol>
+        <lines>72-111</lines>
+        <reason>Existing POST endpoint to save templates - reuse for form submission, accepts name, template_type, fields array, prompts array</reason>
+      </artifact>
+      <artifact>
+        <path>types/template.ts</path>
+        <kind>types</kind>
+        <symbol>TemplateType, FieldType, CreateTemplateRequest</symbol>
+        <lines>8-90</lines>
+        <reason>Shared TypeScript interfaces and enums for template data model - use for form state typing and API request</reason>
+      </artifact>
+      <artifact>
+        <path>app/templates/page.tsx</path>
+        <kind>component</kind>
+        <symbol>TemplatesPage</symbol>
+        <lines>1-210</lines>
+        <reason>Template list page that new templates will appear in after save - navigation pattern and ShadCN component usage reference</reason>
+      </artifact>
+      <artifact>
+        <path>lib/db/templates.ts</path>
+        <kind>service</kind>
+        <symbol>createTemplate</symbol>
+        <lines>all</lines>
+        <reason>Database access layer for template creation - called by API route, handles transaction for template + fields insertion</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="react" version="^18.2.0">UI library for component state management</package>
+        <package name="next" version="^14.2.0">App Router framework for routing and API routes</package>
+        <package name="@radix-ui/react-slot" version="^1.2.3">Headless UI primitives for ShadCN components</package>
+        <package name="lucide-react" version="^0.546.0">Icon library for UI elements (Plus, ArrowLeft, etc.)</package>
+        <package name="tailwindcss" version="^3.4.0">Utility-first CSS framework for styling</package>
+        <package name="class-variance-authority" version="^0.7.1">Component variant management for ShadCN</package>
+        <package name="clsx" version="^2.1.1">Conditional className utility</package>
+        <package name="tailwind-merge" version="^3.3.1">Tailwind class merging utility</package>
+        <package name="zod" version="^4.1.12">Schema validation (API-side validation reference)</package>
+        <package name="typescript" version="^5.3.0">Type safety and interfaces</package>
+      </node>
+      <shadcn>
+        <component name="form">Required - form component with validation support</component>
+        <component name="input">Required - input fields for template name and field names</component>
+        <component name="select">Required - dropdown for template type and data type selection</component>
+        <component name="radio-group">Required - radio buttons for header/detail categorization</component>
+        <component name="label">Required - labels for form fields</component>
+        <component name="button">Already installed - for Add Field, Save, Cancel actions</component>
+        <component name="card">Already installed - optional for field grouping</component>
+        <component name="toast">Optional - success/error notifications</component>
+      </shadcn>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Client Component Required: Must use "use client" directive for dynamic form state management with React hooks</constraint>
+    <constraint>Level 2 Project: Simple form implementation, avoid over-engineering, prioritize speed to production</constraint>
+    <constraint>No AI Features Yet: Manual field definition only - AI features deferred to Story 1.6-1.7</constraint>
+    <constraint>No Prompt Definition: Custom prompts added in Story 1.8 - omit from this story</constraint>
+    <constraint>No Sample Upload: Sample document upload deferred to Story 1.6</constraint>
+    <constraint>API Reuse: Must use existing POST /api/templates endpoint from Story 1.3 - no new API routes</constraint>
+    <constraint>Navigation Pattern: Use Next.js useRouter().push() for programmatic navigation (consistent with Story 1.4)</constraint>
+    <constraint>TypeScript Types: Reuse existing types from types/template.ts - no duplicate type definitions</constraint>
+    <constraint>Validation: Client-side validation required before API submission (template name, at least 1 field, field names)</constraint>
+    <constraint>Field Array Management: Each field needs unique ID for React keys (use crypto.randomUUID())</constraint>
+    <constraint>ShadCN Installation: Use npx shadcn@latest add for each required component</constraint>
+    <constraint>Responsive Design: Primary focus on desktop/tablet - form-based layout less critical than Story 1.4 list view</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>POST /api/templates</name>
+      <kind>REST endpoint</kind>
+      <signature>POST /api/templates
+Request Body: {
+  name: string (required, max 255 chars),
+  template_type: "invoice" | "estimate" | "equipment_log" | "timesheet" | "consumable_log" | "generic",
+  fields?: Array&lt;{
+    field_name: string (required),
+    field_type: string,
+    is_header: boolean,
+    display_order: number (int, min 0)
+  }&gt;,
+  prompts?: Array&lt;{
+    prompt_text: string,
+    prompt_type: string
+  }&gt;
+}
+Response 201: { template: Template }
+Response 400: { error: string, details: ValidationIssue[] }
+Response 500: { error: string, details: string }</signature>
+      <path>app/api/templates/route.ts</path>
+    </interface>
+    <interface>
+      <name>FieldDefinition</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface FieldDefinition {
+  id: string; // For React keys (crypto.randomUUID())
+  name: string; // Field name
+  type: "text" | "number" | "date" | "currency"; // Data type
+  category: "header" | "detail"; // Field categorization
+}</signature>
+      <path>app/templates/new/page.tsx (local definition)</path>
+    </interface>
+    <interface>
+      <name>TemplateType enum</name>
+      <kind>TypeScript enum</kind>
+      <signature>enum TemplateType {
+  INVOICE = 'invoice',
+  ESTIMATE = 'estimate',
+  EQUIPMENT_LOG = 'equipment_log',
+  TIMESHEET = 'timesheet',
+  CONSUMABLE_LOG = 'consumable_log',
+  GENERIC = 'generic'
+}</signature>
+      <path>types/template.ts</path>
+    </interface>
+    <interface>
+      <name>FieldType enum</name>
+      <kind>TypeScript enum</kind>
+      <signature>enum FieldType {
+  TEXT = 'text',
+  NUMBER = 'number',
+  DATE = 'date',
+  CURRENCY = 'currency'
+}</signature>
+      <path>types/template.ts</path>
+    </interface>
+    <interface>
+      <name>useRouter navigation</name>
+      <kind>Next.js hook</kind>
+      <signature>const router = useRouter();
+router.push('/templates'); // Navigate to template list
+router.push('/templates/new'); // Navigate to template builder</signature>
+      <path>next/navigation (Next.js 14 App Router)</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Component testing with React Testing Library for UI interactions. Integration testing for API calls. Manual testing for form workflows and validation. E2E testing with Playwright for user journeys. Level 2 project: prioritize manual testing scenarios over complex automated test infrastructure. Build and lint must pass before completion.</standards>
+    <locations>
+      <location>__tests__/ (if automated tests added)</location>
+      <location>Manual testing via npm run dev with browser testing</location>
+      <location>Build validation: npm run build</location>
+      <location>Lint validation: npm run lint</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Test template name input, type selector dropdown rendering and selection of all 6 template types</idea>
+      <idea ac="2">Test Add Field button creates new empty field in list with unique ID</idea>
+      <idea ac="3">Test field inputs (name, type selector with 4 types, header/detail radio buttons) for multiple fields</idea>
+      <idea ac="4">Test field reordering: move up/down buttons, boundary conditions (first/last field), correct state updates</idea>
+      <idea ac="5">Test field removal: delete button removes correct field from list, updates array state</idea>
+      <idea ac="6">Test save functionality: API call with correct payload structure, successful save, error handling</idea>
+      <idea ac="7">Test validation: empty template name shows error, zero fields shows error, empty field names prevent save</idea>
+      <idea ac="8">Test success flow: save triggers redirect to /templates, success message/toast displayed</idea>
+      <idea ac="9">Test cancel: returns to /templates without saving, optional unsaved changes confirmation</idea>
+      <idea ac="1-9">Cross-browser testing: Chrome, Firefox, Safari, Edge latest versions</idea>
+      <idea ac="1-9">Test large field count: create template with 20+ fields, verify performance and scrolling</idea>
+      <idea ac="6,8">Integration test: verify saved template appears in list page (Story 1.4) with correct field count</idea>
+    </ideas>
+  </tests>
+</story-context>

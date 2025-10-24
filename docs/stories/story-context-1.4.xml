@@ -1,0 +1,126 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>4</storyId>
+    <title>Template List and Management UI</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to view a list of my saved templates and navigate to create new ones</iWant>
+    <soThat>I can manage my extraction templates</soThat>
+    <tasks>
+- Create template list page and route (AC: #1, #2, #3, #4, #5)
+- Implement template data fetching (AC: #1, #2)
+- Build template list table/card layout UI (AC: #1, #2, #6, #7)
+- Implement "Create New Template" button (AC: #3, #7)
+- Implement empty state display (AC: #4, #7)
+- Implement template selection/navigation (AC: #5)
+- Test responsive layout (AC: #6)
+- Integration testing and refinement (AC: #1-#7)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+1. AC1 - Template list page displays all saved templates in a table/card layout
+2. AC2 - Each template shows: name, type, created date, field count
+3. AC3 - "Create New Template" button navigates to template builder
+4. AC4 - Empty state message shown when no templates exist
+5. AC5 - Templates can be selected to view/edit (navigation only - editing in later story)
+6. AC6 - Basic responsive layout works on desktop and tablet
+7. AC7 - Uses ShadCN components for consistent UI
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Story 1.4: Template List and Management UI" snippet="User wants to view saved templates, navigate to create new ones, manage extraction templates. 7 ACs covering table/card layout, data display, navigation, empty state, responsive design, and ShadCN components." />
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="User Interface Design Goals" snippet="Platform: Web application (desktop and tablet browsers). ShadCN component library for consistent, accessible UI. Tailwind CSS for responsive layouts. Standard browser accessibility." />
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="UX Design Principles" snippet="Clarity Over Complexity - Interface should be immediately understandable without training. Progressive Disclosure - Show essential information first. Trust Through Transparency." />
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification" section="Template Management UI Module" snippet="Frontend: Next.js 14 with React Server Components, ShadCN UI library, Tailwind CSS. Responsibilities: Template CRUD, field definition, sample upload. Technology: Next.js pages/components, ShadCN UI." />
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification" section="Template Management APIs" snippet="GET /api/templates - List all templates. Returns Template[] with id, name, template_type, created_at, updated_at. Implemented in Story 1.3." />
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification" section="Frontend Dependencies" snippet="next ^14.0.0, react ^18.2.0, @radix-ui/react-* (ShadCN primitives), tailwindcss ^3.4.0, class-variance-authority, clsx, tailwind-merge, lucide-react for icons." />
+      <doc path="docs/technical-decisions.md" title="Technical Decisions" section="TD003: AI-Assisted Template Creation" snippet="Template management workflow includes template builder UI, field definition, and storage/retrieval. Users manage templates for reuse in production extraction." />
+      <doc path="docs/stories/story-1.3.md" title="Story 1.3: Template Data Model and Storage" section="Dev Notes" snippet="Three-table schema: templates, template_fields, template_prompts. CRUD API implemented: GET /api/templates, POST /api/templates, GET/PUT/DELETE /api/templates/:id. TypeScript interfaces in types/template.ts." />
+      <doc path="docs/stories/story-1.1.md" title="Story 1.1: Project Infrastructure Setup" section="Dev Notes" snippet="Next.js 14 with TypeScript, Tailwind CSS configured, ShadCN Button component installed. Navigation structure in components/navigation.tsx. App Router pattern: app/page.tsx for routes." />
+    </docs>
+
+    <code>
+      <artifact path="types/template.ts" kind="interface" symbol="Template, TemplateType, TemplateListResponse" lines="1-154" reason="TypeScript definitions for Template entities. Template interface matches database schema with id, name, template_type, created_at, updated_at. TemplateType enum provides type labels. TemplateListResponse defines API GET response structure." />
+      <artifact path="app/api/templates/route.ts" kind="api-route" symbol="GET handler" lines="N/A" reason="Existing GET /api/templates endpoint implemented in Story 1.3. Returns all templates from database. Frontend will fetch from this endpoint." />
+      <artifact path="components/navigation.tsx" kind="component" symbol="Navigation" lines="1-29" reason="Main navigation component with existing /templates and /process links. Story extends this to ensure /templates link is active. Demonstrates Link component usage and Tailwind styling pattern." />
+      <artifact path="app/layout.tsx" kind="layout" symbol="RootLayout" lines="1-24" reason="Root layout component that wraps all pages with Navigation. Shows how navigation is globally applied. New /templates page will automatically include navigation." />
+      <artifact path="components/ui/button.tsx" kind="ui-component" symbol="Button" lines="N/A" reason="ShadCN Button component already installed in Story 1.1. Used for 'Create New Template' button per AC3 and AC7." />
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="next" version="^14.2.0" />
+        <package name="react" version="^18.2.0" />
+        <package name="react-dom" version="^18.2.0" />
+        <package name="@radix-ui/react-slot" version="^1.2.3" note="ShadCN dependency" />
+        <package name="class-variance-authority" version="^0.7.1" note="ShadCN dependency" />
+        <package name="clsx" version="^2.1.1" note="Utility for conditional classNames" />
+        <package name="tailwind-merge" version="^3.3.1" note="Merge Tailwind classes" />
+        <package name="lucide-react" version="^0.546.0" note="Icon library for ShadCN" />
+        <package name="@supabase/supabase-js" version="^2.75.1" note="Database client (not used directly in frontend)" />
+        <package name="zod" version="^4.1.12" note="Schema validation (server-side)" />
+        <package name="tailwindcss" version="^3.4.0" devDependency="true" />
+        <package name="typescript" version="^5.3.0" devDependency="true" />
+        <package name="eslint" version="^8.0.0" devDependency="true" />
+        <package name="prettier" version="^3.1.0" devDependency="true" />
+      </node>
+      <shadcn-components>
+        <installed>button (Story 1.1)</installed>
+        <to-install>table, card, alert (for template list, responsive layout, empty state per Story 1.4 tasks)</to-install>
+      </shadcn-components>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="C1" source="Story 1.4 Dev Notes">Frontend Architecture: Use Next.js 14 App Router with app/ directory structure. Template list requires client-side state (use "use client" directive). Client-side fetch from /api/templates (established in Story 1.3).</constraint>
+    <constraint id="C2" source="Story 1.4 Dev Notes">Component Structure: Use useState for template data, loading, and error states. Render: Loading → Error → Empty State → Template List. Simple component structure, avoid over-engineering (Level 2 project).</constraint>
+    <constraint id="C3" source="Story 1.4 Dev Notes">Data Display: Template name (from templates.name), Template type (map enum to human-readable: "invoice" → "Invoice"), Created date (format ISO timestamp to readable date), Field count (count of associated template_fields records).</constraint>
+    <constraint id="C4" source="Story 1.4 Dev Notes">Responsive Breakpoints: Tablet 640px-1024px (use card layout or simplified table), Desktop >1024px (full table layout). Use Tailwind breakpoints (md:, lg:).</constraint>
+    <constraint id="C5" source="Story 1.4 Dev Notes">Navigation Routes: /templates (template list - this story), /templates/new (create new template - Story 1.5+), /templates/[id] (view/edit template - Story 1.5+). Create placeholder routes for future stories.</constraint>
+    <constraint id="C6" source="Story 1.4 Dev Notes">ShadCN Components: Copy-paste components (not npm packages), customize as needed. Use Table, Card, Button, Alert components for consistent design per AC7.</constraint>
+    <constraint id="C7" source="Story 1.4 Dev Notes">API Reuse: Leverage existing GET /api/templates from Story 1.3. No direct database access from frontend.</constraint>
+    <constraint id="C8" source="Story 1.3 Dev Notes">TypeScript Types: Reuse Template interface from types/template.ts (no duplication). Import TemplateType enum for type labels mapping.</constraint>
+    <constraint id="C9" source="Story 1.3 Dev Notes">Error Handling: Follow Story 1.3 pattern - user-friendly messages, server-side logging. Display error message on API failure.</constraint>
+    <constraint id="C10" source="Story 1.1 Dev Notes">Tailwind Configuration: Already configured, use existing utility classes. Follow established responsive design patterns.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="GET /api/templates" kind="REST endpoint" signature="GET /api/templates → { templates: Template[] }" path="app/api/templates/route.ts" note="Implemented in Story 1.3. Returns all templates with id, name, template_type, created_at, updated_at. Frontend fetches from this endpoint on page load." />
+    <interface name="Template" kind="TypeScript interface" signature="interface Template { id: string; name: string; template_type: TemplateType | string; created_at: string; updated_at: string; }" path="types/template.ts" note="Database schema interface. Use for type safety in component state and API responses." />
+    <interface name="TemplateType" kind="TypeScript enum" signature="enum TemplateType { INVOICE, ESTIMATE, EQUIPMENT_LOG, TIMESHEET, CONSUMABLE_LOG, GENERIC }" path="types/template.ts" note="Enum for template types. Map to human-readable labels: INVOICE → 'Invoice', EQUIPMENT_LOG → 'Equipment Log', etc." />
+    <interface name="TemplateListResponse" kind="TypeScript interface" signature="interface TemplateListResponse { templates: Template[]; }" path="types/template.ts" note="API response type for GET /api/templates. Use for type-safe fetch response parsing." />
+    <interface name="Navigation" kind="React component" signature="function Navigation(): JSX.Element" path="components/navigation.tsx" note="Main navigation component. Already includes /templates link. Verify link styling and active state behavior." />
+    <interface name="Button" kind="ShadCN component" signature="<Button variant='default' | 'outline' | 'ghost' | ... >children</Button>" path="components/ui/button.tsx" note="ShadCN Button component (installed Story 1.1). Use for 'Create New Template' button with appropriate variant." />
+  </interfaces>
+
+  <tests>
+    <standards>Testing approach for this story follows Story 1.3 patterns: Component Testing (loading state, error state, empty state, template list rendering, responsive layout), Integration Testing (API integration, data transformation, date formatting, navigation), Manual Testing (browser testing in Chrome/Firefox/Safari/Edge, responsive viewport testing). Test data: Use templates created in Story 1.3 testing, create additional test templates with varying field counts (1, 5, 10 fields), test all 6 template types.</standards>
+
+    <locations>
+      <location>Component tests: Create tests adjacent to components (e.g., app/templates/__tests__/page.test.tsx)</location>
+      <location>Integration tests: tests/ directory (if established) or app/templates/__tests__/integration.test.tsx</location>
+      <location>Manual testing: Browser DevTools for responsive testing (768px, 1024px, 1920px viewports)</location>
+    </locations>
+
+    <ideas>
+      <idea ac="AC1">Test template list renders correctly with mock data (0 templates, 1 template, 10 templates). Verify table/card layout displays.</idea>
+      <idea ac="AC2">Test template data display: verify name, type label (not enum), formatted date, field count calculation. Mock API response with template and fields.</idea>
+      <idea ac="AC3">Test 'Create New Template' button click navigates to /templates/new route. Verify button renders with ShadCN Button component.</idea>
+      <idea ac="AC4">Test empty state: when templates.length === 0, verify empty state message displays. Check for 'Create New Template' button in empty state.</idea>
+      <idea ac="AC5">Test template row/card click navigates to /templates/[id]. Verify hover state styling. Mock router.push calls.</idea>
+      <idea ac="AC6">Test responsive layout: at 768px viewport, verify layout adapts (table → cards or simplified table). Test at 1024px and 1920px.</idea>
+      <idea ac="AC7">Verify ShadCN components used: Table, Card, Button, Alert. Check component imports from @/components/ui/.</idea>
+      <idea ac="ALL">Integration test: Fetch from real /api/templates endpoint (localhost). Verify data transformation, loading states, error handling.</idea>
+      <idea ac="ALL">Manual test: Create templates in database via API, refresh /templates page, verify all display correctly. Test with very long template names (truncation).</idea>
+    </ideas>
+  </tests>
+</story-context>

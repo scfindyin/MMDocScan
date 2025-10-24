@@ -1,0 +1,137 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2</storyId>
+    <title>Template Selection for Production Processing</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-23</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to select which saved template to apply to my production document</iWant>
+    <soThat>the extraction uses the correct field definitions and prompts</soThat>
+    <tasks>
+      - Task Group 1: Page State Management and Navigation (AC: #1, #8)
+      - Task Group 2: Fetch Templates from API (AC: #2)
+      - Task Group 3: Template Display List (AC: #2, #3)
+      - Task Group 4: Template Selection Interaction (AC: #4, #6)
+      - Task Group 5: Template Preview Feature (AC: #5)
+      - Task Group 6: Apply Template Button (AC: #7)
+      - Task Group 7: Empty State Handling (AC: #2)
+      - Task Group 8: Loading and Error States (AC: #2)
+      - Task Group 9: Responsive Design and Browser Testing
+      - Task Group 10: Build, Lint, and Verify
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">After document upload, template selection interface appears</criterion>
+    <criterion id="AC2">Displays list of all saved templates (from template management)</criterion>
+    <criterion id="AC3">Each template shows: name, type, field count, last used date</criterion>
+    <criterion id="AC4">User can select one template (radio selection or cards)</criterion>
+    <criterion id="AC5">"Preview Template" option shows template fields and prompts before applying</criterion>
+    <criterion id="AC6">Selected template highlighted/indicated clearly</criterion>
+    <criterion id="AC7">"Apply Template & Extract" button enabled after template selection</criterion>
+    <criterion id="AC8">Can go back to change uploaded document if needed</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="FR010 - Template Selection">
+        System shall allow users to select and apply a saved template to uploaded documents. User Journey Step 2 describes template selection workflow.
+      </doc>
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Story 2.2 - Lines 296-310">
+        Complete acceptance criteria for template selection workflow including template list display, selection interaction, preview feature, and navigation.
+      </doc>
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification" section="Document Processing UI">
+        Architecture for production document processing workflow. Workflow 2 Step 1 (lines 216-217) describes template selection. AC2.2 (lines 522-525) defines technical requirements.
+      </doc>
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification" section="APIs and Interfaces - Lines 136-145">
+        GET /api/templates endpoint specification for retrieving template list. Returns array of Template objects with metadata.
+      </doc>
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification" section="Data Models - Lines 86-105">
+        Templates table structure with fields JSONB (name, type, category), custom_prompt TEXT, created_at/updated_at timestamps.
+      </doc>
+      <doc path="docs/tech-spec-epic-combined.md" title="Technical Specification" section="Workflows - Lines 214-235">
+        Production document extraction workflow: Upload → Select Template → Extract → Export. Multi-step flow with state preservation.
+      </doc>
+    </docs>
+    <code>
+      <artifact path="app/process/page.tsx" kind="page-component" symbol="ProcessDocumentsPage" lines="1-230" reason="Story 2.1 created this file - extends to add template selection step. Currently implements document upload (step 1), needs template selection (step 2)." />
+      <artifact path="app/api/templates/route.ts" kind="api-route" symbol="GET handler" lines="1-50" reason="Story 1.3 created GET /api/templates endpoint - reuse for fetching template list in this story." />
+      <artifact path="app/api/templates/[id]/route.ts" kind="api-route" symbol="GET handler" lines="1-50" reason="Story 1.3 created GET /api/templates/:id endpoint - reuse for template preview feature." />
+      <artifact path="types/template.ts" kind="type-definition" symbol="Template, TemplateField" lines="1-50" reason="Type definitions for template objects returned by API - use for TypeScript type safety." />
+      <artifact path="lib/db/templates.ts" kind="data-access" symbol="getTemplates, getTemplateById" lines="1-100" reason="Data access layer for template operations - backend implementation already exists." />
+      <artifact path="app/templates/page.tsx" kind="page-component" symbol="TemplatesPage" lines="1-200" reason="Story 1.4 implemented template list UI - reference for display patterns, field counts, type labels." />
+      <artifact path="components/ui/card.tsx" kind="ui-component" symbol="Card" reason="ShadCN Card component - already installed, use for template cards." />
+      <artifact path="components/ui/button.tsx" kind="ui-component" symbol="Button" reason="ShadCN Button component - already installed, use for actions." />
+      <artifact path="components/ui/alert.tsx" kind="ui-component" symbol="Alert" reason="ShadCN Alert component - already installed, use for empty/error states." />
+    </code>
+    <dependencies>
+      <node>
+        <package name="react" version="^18.2.0" />
+        <package name="next" version="^14.0.0" />
+        <package name="react-dropzone" version="^14.3.5" />
+        <package name="@radix-ui/react-dialog" note="May need installation for preview dialog" />
+        <package name="@radix-ui/react-skeleton" note="May need installation for loading states" />
+        <package name="@radix-ui/react-badge" note="May need installation for template type badges" />
+        <package name="lucide-react" version="latest" note="Icons: Eye, PlayCircle, ArrowRight, CheckCircle" />
+        <package name="tailwindcss" version="^3.4.0" />
+        <package name="class-variance-authority" version="latest" />
+        <package name="clsx" version="latest" />
+        <package name="tailwind-merge" version="latest" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Multi-step workflow within single page component (no new routes). Use React state to manage step: 'upload' → 'select-template' → 'extract'.</constraint>
+    <constraint type="state-management">Preserve uploadedFile state across steps (in-memory, not persisted). File object must survive navigation between upload and template selection.</constraint>
+    <constraint type="data-fetching">Reuse existing GET /api/templates endpoint from Story 1.3. No caching for MVP - fetch fresh data on each navigation to template selection.</constraint>
+    <constraint type="ui-pattern">Radio-style selection (single template only). Full card clickable for better UX. Visual feedback: blue border, background tint, checkmark.</constraint>
+    <constraint type="navigation">Blue accent color establishes consistent "processing" theme (distinct from template creation green theme).</constraint>
+    <constraint type="testing">Manual testing deferred for MVP. Focus on build/lint passing and visual verification in browser.</constraint>
+    <constraint type="responsive">Desktop and tablet support required. Mobile phone UI not required per PRD.</constraint>
+    <constraint type="integration">Story 2.1 integration: receive uploadedFile state. Story 1.3 integration: use existing template API. Story 2.3 integration: pass selectedTemplateId and uploadedFile.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="GET /api/templates" kind="REST-endpoint" signature="GET /api/templates → Template[]" path="app/api/templates/route.ts">
+      Returns array of Template objects with: { id, name, template_type, fields (JSONB), custom_prompt, created_at, updated_at }. Story 1.3 implementation verified working.
+    </interface>
+    <interface name="GET /api/templates/:id" kind="REST-endpoint" signature="GET /api/templates/:id → Template with relations" path="app/api/templates/[id]/route.ts">
+      Returns single Template object with full field definitions and prompts for preview feature. Story 1.3 implementation verified working.
+    </interface>
+    <interface name="Template" kind="TypeScript-type" signature="interface Template { id: string; name: string; template_type: TemplateType; fields: TemplateField[]; custom_prompt?: string; created_at: Date; updated_at: Date; }" path="types/template.ts">
+      Core Template type definition. Story 1.3 created this interface.
+    </interface>
+    <interface name="ProcessDocumentsPage" kind="React-component" signature="export default function ProcessDocumentsPage()" path="app/process/page.tsx">
+      Existing page component from Story 2.1. Extend with multi-step state management and template selection UI.
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing approach: Build/lint verification + manual browser testing. Unit and integration tests deferred per project level 2 constraints. Jest + React Testing Library available if needed. Focus on visual verification of multi-step workflow, template fetching, selection interaction, and error/empty/loading states.
+    </standards>
+    <locations>
+      No test files required for this story (manual testing only). If tests added later: __tests__/app/process/, __tests__/integration/template-selection.test.tsx
+    </locations>
+    <ideas>
+      <idea ac="AC1">Manual test: Navigate from upload step to template selection step by clicking "Next: Select Template" button.</idea>
+      <idea ac="AC2">Manual test: Verify template list fetches from /api/templates and displays all templates with correct data.</idea>
+      <idea ac="AC3">Manual test: Verify each template card shows name, type badge, field count (X fields, Y header, Z detail), and last used date placeholder.</idea>
+      <idea ac="AC4">Manual test: Click different template cards and verify only one can be selected at a time (radio pattern).</idea>
+      <idea ac="AC5">Manual test: Click "Preview" button and verify dialog shows template fields and custom prompts from /api/templates/:id.</idea>
+      <idea ac="AC6">Manual test: Verify selected template has blue border, background tint, and checkmark indicator.</idea>
+      <idea ac="AC7">Manual test: Verify "Apply Template & Extract" button is disabled when no selection, enabled when template selected.</idea>
+      <idea ac="AC8">Manual test: Click back button and verify returns to upload step with file preserved.</idea>
+      <idea ac="Empty State">Manual test: Clear all templates from database and verify empty state message with "Create Template" link.</idea>
+      <idea ac="Error Handling">Manual test: Simulate API failure (disconnect network) and verify error message with retry button.</idea>
+      <idea ac="Loading State">Manual test: Verify skeleton loaders or spinner displays during template fetch.</idea>
+    </ideas>
+  </tests>
+</story-context>

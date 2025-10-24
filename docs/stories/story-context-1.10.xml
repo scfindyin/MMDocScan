@@ -1,0 +1,328 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.10</storyId>
+    <title>Save Validated Template</title>
+    <status>Draft</status>
+    <generatedAt>2025-10-23</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.10.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to save my template after successful testing</iWant>
+    <soThat>I can reuse it for production document processing</soThat>
+    <tasks>
+      <taskGroup id="1" name="Save Template Button and State Management">
+        <task id="1.1">Add "Save Template" button to template builder</task>
+        <task id="1.2">Implement save template handler</task>
+      </taskGroup>
+      <taskGroup id="2" name="Template Save API Integration">
+        <task id="2.1">Verify POST /api/templates endpoint (created in Story 1.3)</task>
+        <task id="2.2">Map template builder state to API payload</task>
+        <task id="2.3">Handle template save response</task>
+      </taskGroup>
+      <taskGroup id="3" name="Success Feedback and Navigation">
+        <task id="3.1">Display success message after save</task>
+        <task id="3.2">Redirect to template list page</task>
+      </taskGroup>
+      <taskGroup id="4" name="Edit Existing Template Workflow">
+        <task id="4.1">Create template edit page route</task>
+        <task id="4.2">Load existing template data</task>
+        <task id="4.3">Handle edit mode differences</task>
+        <task id="4.4">Support re-testing in edit mode</task>
+      </taskGroup>
+      <taskGroup id="5" name="Template List Navigation Integration">
+        <task id="5.1">Add edit link to template list page</task>
+        <task id="5.2">Verify template list refresh after save</task>
+      </taskGroup>
+      <taskGroup id="6" name="Validation and Error Handling">
+        <task id="6.1">Pre-save validation</task>
+        <task id="6.2">Handle API save errors</task>
+        <task id="6.3">Handle edit-specific errors</task>
+      </taskGroup>
+      <taskGroup id="7" name="UI/UX Polish">
+        <task id="7.1">Loading states</task>
+        <task id="7.2">Visual feedback</task>
+        <task id="7.3">Cancel and discard changes</task>
+      </taskGroup>
+      <taskGroup id="8" name="Type Definitions and API Contracts">
+        <task id="8.1">Define template save types</task>
+        <task id="8.2">Ensure type compatibility across workflow</task>
+      </taskGroup>
+      <taskGroup id="9" name="Integration with Previous Stories">
+        <task id="9.1">Integrate with template field definition (Story 1.5)</task>
+        <task id="9.2">Integrate with sample document upload (Story 1.6)</task>
+        <task id="9.3">Integrate with custom prompt definition (Story 1.8)</task>
+        <task id="9.4">Integrate with test extraction (Story 1.9)</task>
+      </taskGroup>
+      <taskGroup id="10" name="Testing and Validation">
+        <task id="10.1">Build and lint validation</task>
+        <task id="10.2">Manual testing scenarios - New template creation</task>
+        <task id="10.3">Manual testing scenarios - Edit template</task>
+        <task id="10.4">Manual testing scenarios - Validation and errors</task>
+        <task id="10.5">Integration testing</task>
+      </taskGroup>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">"Save Template" button enabled after successful test extraction</criterion>
+    <criterion id="AC2">Saves template with: Template name and type, Field definitions (name, type, header/detail), Custom prompts, Metadata (created date)</criterion>
+    <criterion id="AC3">Template appears in template list after save</criterion>
+    <criterion id="AC4">Success message: "Template '[name]' saved successfully"</criterion>
+    <criterion id="AC5">Redirect to template list after save</criterion>
+    <criterion id="AC6">Saved template can be selected and edited later (view/edit mode)</criterion>
+    <criterion id="AC7">Editing existing template follows same workflow (load data, allow changes, re-test, save)</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>MMDocScan Product Requirements Document</title>
+        <section>Template Management</section>
+        <snippet>FR006: System shall support storage and retrieval of templates for reuse. FR005: System shall allow users to test extraction with current prompts on sample documents during template creation. FR003: System shall allow users to define field names, data types, and field categorization (header vs. detail) within templates.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 1 - Story 1.10</title>
+        <section>Story 1.10: Save Validated Template</section>
+        <snippet>As a user, I want to save my template after successful testing, so that I can reuse it for production document processing. Acceptance Criteria: 1) "Save Template" button enabled after successful test extraction 2) Saves template with all metadata 3) Template appears in list after save.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - Epic Combined</title>
+        <section>Templates Table Schema</section>
+        <snippet>CREATE TABLE templates (id UUID PRIMARY KEY, name VARCHAR(255) NOT NULL, template_type VARCHAR(50) NOT NULL, created_at TIMESTAMP, updated_at TIMESTAMP). Template Management APIs: GET/POST /api/templates, GET/PUT/DELETE /api/templates/:id.</snippet>
+      </doc>
+      <doc>
+        <path>docs/bmm-workflow-status.md</path>
+        <title>BMM Workflow Status</title>
+        <section>Story 1.10 Status</section>
+        <snippet>Story 1.10: Save Validated Template - IN_PROGRESS. Final story in Epic 1 (9 of 10 complete). Prerequisites: Story 1.9 (Test Extraction) complete. Next: Implement Story 1.10 to complete Epic 1.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>types/template.ts</path>
+        <kind>type-definitions</kind>
+        <symbol>Template, TemplateField, TemplatePrompt, CreateTemplateRequest, UpdateTemplateRequest</symbol>
+        <lines>1-162</lines>
+        <reason>Core template type definitions from Story 1.3. Defines Template interface, TemplateField interface with is_header boolean, TemplatePrompt interface with prompt_type. CreateTemplateRequest and UpdateTemplateRequest interfaces for API payloads.</reason>
+      </artifact>
+      <artifact>
+        <path>lib/db/templates.ts</path>
+        <kind>data-access-layer</kind>
+        <symbol>createTemplate, getTemplates, getTemplateById, updateTemplate, deleteTemplate</symbol>
+        <lines>1-320</lines>
+        <reason>Database CRUD functions for templates created in Story 1.3. createTemplate() handles transaction-like behavior with rollback. updateTemplate() replaces fields and prompts. Used by API routes for template persistence.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/templates/route.ts</path>
+        <kind>api-route</kind>
+        <symbol>GET, POST</symbol>
+        <lines>1-112</lines>
+        <reason>Template CRUD API routes from Story 1.3. POST /api/templates creates new template with Zod validation. GET /api/templates lists all templates with field counts. Template builder will call POST endpoint to save.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/templates/[id]/route.ts</path>
+        <kind>api-route</kind>
+        <symbol>GET, PUT, DELETE</symbol>
+        <lines>1-150</lines>
+        <reason>Template detail API routes from Story 1.3. GET /api/templates/:id fetches template with fields and prompts for edit mode. PUT /api/templates/:id updates existing template. DELETE /api/templates/:id removes template.</reason>
+      </artifact>
+      <artifact>
+        <path>app/templates/new/page.tsx</path>
+        <kind>component</kind>
+        <symbol>NewTemplatePage</symbol>
+        <lines>1-1205</lines>
+        <reason>Template builder page from Stories 1.5-1.9. Contains state for templateName, templateType, fields, customPrompt, sampleDocument, testResults. Needs save button and handler. Already has field definition, sample upload, AI suggestions, custom prompt, and test extraction features.</reason>
+      </artifact>
+      <artifact>
+        <path>app/templates/page.tsx</path>
+        <kind>component</kind>
+        <symbol>TemplatesPage</symbol>
+        <lines>1-150</lines>
+        <reason>Template list page from Story 1.4. Displays templates with field counts, types, and dates. Needs edit link added. Used as redirect target after template save. Fetches templates from GET /api/templates.</reason>
+      </artifact>
+      <artifact>
+        <path>types/extraction.ts</path>
+        <kind>type-definitions</kind>
+        <symbol>ExtractedRow, TestExtractionRequest, TestExtractionResponse</symbol>
+        <lines>1-93</lines>
+        <reason>Extraction type definitions from Story 2.3 and 1.9. ExtractedRow interface for test results state. TestExtractionRequest for test extraction API. Used in template builder for test results validation.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="next" version="^14.2.0">Next.js framework for routing and API routes</package>
+        <package name="react" version="^18.2.0">React for UI components and state management</package>
+        <package name="@supabase/supabase-js" version="^2.75.1">Supabase client for database operations</package>
+        <package name="zod" version="^4.1.12">Schema validation for API requests</package>
+        <package name="@radix-ui/react-dialog" version="^1.1.15">ShadCN Dialog component for preview/confirmation modals</package>
+        <package name="lucide-react" version="^0.546.0">Icons for UI elements (save, edit, back)</package>
+        <package name="react-hook-form" version="^7.65.0">Form state management (optional for validation)</package>
+        <package name="tailwindcss" version="^3.4.0">CSS styling framework</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Sample documents must NOT be saved to database - they stay in memory only during template creation session (per tech spec)</constraint>
+    <constraint>Test results must NOT be persisted to database - they are preview-only data (per tech spec)</constraint>
+    <constraint>All API endpoints already exist from Story 1.3 - no new endpoints needed</constraint>
+    <constraint>Database schema complete from Story 1.3 - no schema changes needed</constraint>
+    <constraint>Template builder state transformation required: UI state (category: 'header'|'detail') to database format (is_header: boolean)</constraint>
+    <constraint>Save button enable logic: New template requires successful test extraction AND valid fields. Edit template only requires valid fields (test optional).</constraint>
+    <constraint>Edit mode must reuse template builder component from /templates/new - avoid code duplication</constraint>
+    <constraint>Build must pass with zero TypeScript errors (npm run build)</constraint>
+    <constraint>Lint must pass with zero ESLint warnings (npm run lint)</constraint>
+    <constraint>Follow Next.js 14 App Router conventions for page routes (app/templates/[id]/edit/page.tsx)</constraint>
+    <constraint>Use ShadCN UI components for consistency (Button, Input, Alert, Toast)</constraint>
+    <constraint>All file paths in code must be project-relative, not absolute</constraint>
+    <constraint>This is the final story in Epic 1 - must complete all functionality for template creation workflow</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>POST /api/templates</name>
+      <kind>REST endpoint</kind>
+      <signature>POST /api/templates
+Request: {
+  name: string,
+  template_type: 'invoice' | 'estimate' | 'equipment_log' | 'timesheet' | 'consumable_log' | 'generic',
+  fields?: Array&lt;{
+    field_name: string,
+    field_type: 'text' | 'number' | 'date' | 'currency',
+    is_header: boolean,
+    display_order: number
+  }&gt;,
+  prompts?: Array&lt;{
+    prompt_text: string,
+    prompt_type: 'custom' | 'extraction' | 'validation' | 'refinement'
+  }&gt;
+}
+Response 201: { template: Template }
+Response 400: { error: string, details: ZodIssue[] }
+Response 500: { error: string, details: string }</signature>
+      <path>app/api/templates/route.ts</path>
+    </interface>
+    <interface>
+      <name>GET /api/templates/:id</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/templates/:id
+Response 200: {
+  template: Template,
+  fields: TemplateField[],
+  prompts: TemplatePrompt[]
+}
+Response 404: { error: "Template not found" }
+Response 500: { error: string, details: string }</signature>
+      <path>app/api/templates/[id]/route.ts</path>
+    </interface>
+    <interface>
+      <name>PUT /api/templates/:id</name>
+      <kind>REST endpoint</kind>
+      <signature>PUT /api/templates/:id
+Request: {
+  name?: string,
+  template_type?: string,
+  fields?: Array&lt;TemplateField&gt;,
+  prompts?: Array&lt;TemplatePrompt&gt;
+}
+Response 200: { template: Template }
+Response 400: { error: string, details: ZodIssue[] }
+Response 404: { error: "Template not found" }
+Response 500: { error: string, details: string }</signature>
+      <path>app/api/templates/[id]/route.ts</path>
+    </interface>
+    <interface>
+      <name>GET /api/templates</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/templates
+Response 200: {
+  templates: Array&lt;{
+    id: string,
+    name: string,
+    template_type: string,
+    created_at: string,
+    updated_at: string,
+    field_count?: number
+  }&gt;
+}
+Response 500: { error: string, details: string }</signature>
+      <path>app/api/templates/route.ts</path>
+    </interface>
+    <interface>
+      <name>createTemplate</name>
+      <kind>function signature</kind>
+      <signature>async function createTemplate(data: CreateTemplateRequest): Promise&lt;Template&gt;
+Handles transaction-like creation with rollback on field/prompt insertion failure.
+Returns created Template with id, name, template_type, created_at, updated_at.</signature>
+      <path>lib/db/templates.ts</path>
+    </interface>
+    <interface>
+      <name>updateTemplate</name>
+      <kind>function signature</kind>
+      <signature>async function updateTemplate(id: string, data: UpdateTemplateRequest): Promise&lt;Template&gt;
+Updates template and optionally replaces fields and prompts.
+Deletes existing fields/prompts if new ones provided (replace operation).</signature>
+      <path>lib/db/templates.ts</path>
+    </interface>
+    <interface>
+      <name>getTemplateById</name>
+      <kind>function signature</kind>
+      <signature>async function getTemplateById(id: string): Promise&lt;TemplateWithRelations | null&gt;
+Fetches template with all fields (ordered by display_order) and prompts (ordered by created_at).
+Returns null if template not found.</signature>
+      <path>lib/db/templates.ts</path>
+    </interface>
+    <interface>
+      <name>Template Builder State</name>
+      <kind>React component state</kind>
+      <signature>State variables in NewTemplatePage:
+- templateName: string
+- templateType: TemplateType | ""
+- fields: FieldDefinition[] (id, name, type, category)
+- customPrompt: string
+- sampleDocument: File | null
+- testResults: ExtractedRow[] | null
+- suggestedFields: SuggestedField[]
+- isLoadingSuggestions: boolean
+- isTestingExtraction: boolean
+
+Need to add for Story 1.10:
+- isSaving: boolean (loading state during save)
+- saveError: string | null (error message)
+- isEditMode: boolean (false for new, true for edit)
+- templateId: string | null (for edit mode)</signature>
+      <path>app/templates/new/page.tsx</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Project uses Next.js 14 with TypeScript. Testing approach: 1) Build validation with npm run build (zero TypeScript errors required), 2) Lint validation with npm run lint (zero ESLint warnings required), 3) Manual testing for UI workflows and database integration, 4) API endpoint testing via browser DevTools or curl. No unit test framework currently configured. Focus on type safety, error handling, and integration testing.
+    </standards>
+    <locations>
+      - No test directories currently exist
+      - Testing via build/lint commands: npm run build, npm run lint
+      - Manual testing workflows documented in story Dev Notes
+      - Database verification via Supabase Studio
+    </locations>
+    <ideas>
+      <idea ac="AC1">Test save button enable/disable logic: Button disabled when template name empty OR fields empty OR (new mode AND test not run). Button enabled when all validation passes.</idea>
+      <idea ac="AC2">Test template save payload transformation: Verify fields state (category: 'header'|'detail') transforms to database format (is_header: boolean). Verify custom prompt saved to template_prompts table with prompt_type='custom'.</idea>
+      <idea ac="AC3">Test template appears in list after save: Create new template, save, redirect to /templates, verify new template appears with correct field count and metadata.</idea>
+      <idea ac="AC4">Test success message display: Save template, verify toast shows "Template '[name]' saved successfully", verify auto-dismiss after 3 seconds.</idea>
+      <idea ac="AC5">Test redirect to template list: Save template, verify router.push('/templates') called, verify redirect occurs after 1 second delay.</idea>
+      <idea ac="AC6">Test edit mode workflow: Navigate to /templates/[id]/edit, verify template data loads, verify form populated with existing values, verify save updates existing template (PUT not POST).</idea>
+      <idea ac="AC7">Test edit mode re-test workflow: Load existing template in edit mode, modify fields/prompt, upload new sample, run test extraction, verify results display, verify save persists changes.</idea>
+      <idea ac="all">Test error handling: Simulate API connection failure, verify error message displays, verify retry available. Test duplicate template name, verify validation error. Test template not found in edit mode, verify redirect with error.</idea>
+      <idea ac="all">Test build and lint: Run npm run build, verify zero TypeScript errors. Run npm run lint, verify zero ESLint warnings. Verify no console errors during manual testing.</idea>
+      <idea ac="all">Test all template types: Create and save templates for all 6 types (invoice, estimate, equipment_log, timesheet, consumable_log, generic), verify all save successfully.</idea>
+    </ideas>
+  </tests>
+</story-context>

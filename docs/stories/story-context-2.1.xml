@@ -1,0 +1,276 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2.1</storyId>
+    <title>Production Document Upload Interface</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-23</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-2.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to upload production documents for extraction</iWant>
+    <soThat>I can process real billing documents using my saved templates</soThat>
+    <tasks>
+      <taskGroup id="1" name="Page Structure and Navigation">
+        <task id="1.1">Create `/app/process/page.tsx` for production document processing</task>
+        <task id="1.2">Add "Process Documents" navigation link</task>
+        <task id="1.3">Visual distinction from template creation workflow</task>
+      </taskGroup>
+      <taskGroup id="2" name="File Upload Interface - Drag-and-Drop">
+        <task id="2.1">Install and configure react-dropzone</task>
+        <task id="2.2">Implement drag-and-drop UI component</task>
+      </taskGroup>
+      <taskGroup id="3" name="File Picker Alternative">
+        <task id="3.1">Add hidden file input for click-to-browse</task>
+      </taskGroup>
+      <taskGroup id="4" name="File Type and Size Validation">
+        <task id="4.1">Configure accepted file types</task>
+        <task id="4.2">Enforce 10MB file size limit</task>
+        <task id="4.3">Implement validation error handling</task>
+      </taskGroup>
+      <taskGroup id="5" name="File Display After Upload">
+        <task id="5.1">Create file info display component</task>
+        <task id="5.2">Style file info display</task>
+      </taskGroup>
+      <taskGroup id="6" name="Remove and Re-upload Functionality">
+        <task id="6.1">Add remove button to file display</task>
+        <task id="6.2">Implement file removal logic</task>
+        <task id="6.3">Allow re-upload after removal</task>
+      </taskGroup>
+      <taskGroup id="7" name="Next Step Button">
+        <task id="7.1">Add "Next: Select Template" button</task>
+        <task id="7.2">Implement button enabled/disabled logic</task>
+        <task id="7.3">Add button click navigation (placeholder for Story 2.2)</task>
+      </taskGroup>
+      <taskGroup id="8" name="State Management">
+        <task id="8.1">Set up React state for file upload</task>
+      </taskGroup>
+      <taskGroup id="9" name="Responsive Design and Browser Testing">
+        <task id="9.1">Ensure responsive layout</task>
+        <task id="9.2">Cross-browser testing</task>
+      </taskGroup>
+      <taskGroup id="10" name="Build, Lint, and Verify">
+        <task id="10.1">Run build and verify zero errors</task>
+        <task id="10.2">Run lint and fix any warnings</task>
+        <task id="10.3">Manual functional testing</task>
+      </taskGroup>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">"Process Documents" navigation option accessible from main menu</criterion>
+    <criterion id="AC2">Document processing page with file upload interface displays on navigation</criterion>
+    <criterion id="AC3">Drag-and-drop file upload and file picker both functional</criterion>
+    <criterion id="AC4">System accepts PDF, Word (.doc, .docx), and text files</criterion>
+    <criterion id="AC5">File size limit of 10MB enforced with error display if exceeded</criterion>
+    <criterion id="AC6">Uploaded document displays with filename, file type, and file size</criterion>
+    <criterion id="AC7">User can remove uploaded document and upload a different one</criterion>
+    <criterion id="AC8">Clear distinction from template creation workflow (different page/context)</criterion>
+    <criterion id="AC9">"Next: Select Template" button enabled after successful upload</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Document Processing (FR008-FR011)</section>
+        <snippet>FR008: System shall provide a file upload interface accepting PDF, Word (.doc, .docx), and text file formats. FR009: System shall process both clean and scanned documents. FR010: System shall allow users to select and apply a saved template to uploaded documents.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>User Journey: Document Extraction Workflow</section>
+        <snippet>Step 2: Upload Document - User selects the saved template. User uploads vendor invoice PDF (clean or scanned). System accepts the file and prepares for extraction.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Epic 2: Production Document Processing & Excel Export</section>
+        <snippet>Epic Goal: Deliver the complete production workflow that enables users to process real billing documents using their saved templates. Users upload production documents, select templates, run AI extraction, review results with confidence scoring, iteratively refine prompts if needed, and export clean data to Excel with full source traceability.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 2.1: Production Document Upload Interface</section>
+        <snippet>As a user, I want to upload production documents for extraction, So that I can process real billing documents using my saved templates. Acceptance Criteria: Process Documents navigation option from main menu, Document processing page with file upload interface, Drag-and-drop file upload or file picker, Accepts PDF/Word/text files, 10MB file size limit with error display, Clear distinction from template creation workflow.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - Complete Solution</title>
+        <section>Document Processing UI</section>
+        <snippet>Module: Document Processing UI. Responsibility: Production upload, template selection, results preview, refinement. Technology: Next.js pages/components, ShadCN UI. Owner: Frontend.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - Complete Solution</title>
+        <section>In-Memory Session State</section>
+        <snippet>Active extraction state held in React component state during session. interface ActiveExtractionState { uploadedFile: File | null; templateId: string | null; extractedData: ExtractedRow[] | null; customPrompt?: string; }. Note: No document persistence - files held in browser memory only during active session.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - Complete Solution</title>
+        <section>Workflow 2: Production Document Extraction</section>
+        <snippet>User → Document Processing UI: 1. Select template → /api/templates (GET), 2. Select production document from file picker (held in memory), 3. Read file, encode to base64 (held in React state), 4. Optionally add prompt override, 5. Trigger extraction → /api/extract/production (with base64 doc) → Claude Skills API.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - Complete Solution</title>
+        <section>File Handling Strategy</section>
+        <snippet>Note: No file persistence - files read from user's file picker, converted to base64 in browser, sent to API. No file persistence - documents held in memory only during active session. No storage costs (documents processed in-memory only). Memory management: Clear document from state after export to free browser memory.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-combined.md</path>
+        <title>Technical Specification - Complete Solution</title>
+        <section>Acceptance Criteria AC2.1</section>
+        <snippet>AC2.1 - User can upload production documents in supported formats (PDF, Word, text). Given user is on document processing page. When user uploads a file with supported format and less than 10MB size. Then file is loaded into browser memory for processing.</snippet>
+      </doc>
+      <doc>
+        <path>docs/technical-decisions.md</path>
+        <title>Technical Decisions</title>
+        <section>TD003: AI-Assisted Template Creation</section>
+        <snippet>Decision: Add AI field discovery and prompt testing capabilities to template creation workflow. Context: During PRD epic planning, identified opportunity to enhance template creation workflow. Rationale: Leverages same Claude API needed for production extraction. Impact: Epic 1 scope includes Claude Skills API integration (moved from Epic 2).</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>components/navigation.tsx</path>
+        <kind>component</kind>
+        <symbol>Navigation</symbol>
+        <lines>1-28</lines>
+        <reason>Navigation component that needs to include "Process Documents" link. NOTE: Link already exists at line 18-23, pointing to /process route. Verify this matches requirements or if additional changes needed.</reason>
+      </artifact>
+      <artifact>
+        <path>app/templates/new/page.tsx</path>
+        <kind>page</kind>
+        <symbol>NewTemplatePage</symbol>
+        <lines>81-172</lines>
+        <reason>Reference implementation for file upload pattern using react-dropzone. Shows: File state management (sampleDocument, uploadError), File validation (validateFile function lines 107-120), Dropzone configuration (lines 131-172), Error handling, File size formatting. Use as pattern for Story 2.1 implementation.</reason>
+      </artifact>
+      <artifact>
+        <path>app/templates/new/page.tsx</path>
+        <kind>component</kind>
+        <symbol>useDropzone configuration</symbol>
+        <lines>131-172</lines>
+        <reason>Complete dropzone setup showing: accept types (PDF, Word, TXT), maxSize: 10MB, multiple: false, onDrop handler with validation, error handling for rejected files. Copy this pattern for /app/process/page.tsx.</reason>
+      </artifact>
+      <artifact>
+        <path>components/ui/button.tsx</path>
+        <kind>component</kind>
+        <symbol>Button</symbol>
+        <lines>all</lines>
+        <reason>ShadCN Button component for "Next: Select Template" button with disabled state support</reason>
+      </artifact>
+      <artifact>
+        <path>components/ui/card.tsx</path>
+        <kind>component</kind>
+        <symbol>Card</symbol>
+        <lines>all</lines>
+        <reason>ShadCN Card component for displaying uploaded file information</reason>
+      </artifact>
+      <artifact>
+        <path>components/ui/alert.tsx</path>
+        <kind>component</kind>
+        <symbol>Alert</symbol>
+        <lines>all</lines>
+        <reason>ShadCN Alert component for displaying file validation errors (variant: destructive)</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <npm>
+        <package name="react-dropzone" version="^14.3.8">File upload with drag-and-drop functionality (already installed)</package>
+        <package name="lucide-react" version="^0.546.0">Icons: Upload, FileText, File, X, ArrowRight</package>
+        <package name="next" version="^14.2.0">Next.js 14 App Router for page structure</package>
+        <package name="react" version="^18.2.0">React for component state management</package>
+        <package name="tailwindcss" version="^3.4.0">Styling and responsive design</package>
+        <package name="class-variance-authority" version="^0.7.1">ShadCN component variants</package>
+        <package name="clsx" version="^2.1.1">Conditional classNames</package>
+        <package name="tailwind-merge" version="^3.3.1">Tailwind class merging</package>
+      </npm>
+      <shadcn>
+        <component name="button">Already installed</component>
+        <component name="card">Already installed</component>
+        <component name="alert">Already installed</component>
+      </shadcn>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Page Architecture: Next.js 14 App Router pattern at /app/process/page.tsx. Client component required (file upload requires browser APIs). Use "use client" directive.</constraint>
+    <constraint>File Handling: Files stored in React state as native File objects (in-memory only). No immediate base64 conversion (deferred to Story 2.3). No server-side upload or persistence. Files remain in browser memory only.</constraint>
+    <constraint>Validation: Client-side only (file type, size) via react-dropzone. No server-side validation needed in this story.</constraint>
+    <constraint>Navigation: Process Documents page is entry point for production workflow. Distinct from Template Builder (/templates/new). Navigation link already exists in components/navigation.tsx.</constraint>
+    <constraint>State Management: Use React useState for uploadedFile (File | null) and error (string | null). No external state management library needed.</constraint>
+    <constraint>Styling: Use Tailwind CSS and ShadCN components for consistent design. Follow existing pattern from template builder (Story 1.6).</constraint>
+    <constraint>Responsive Design: Desktop and tablet support required (iPad landscape/portrait, desktop 1366x768 and 1920x1080). No mobile phone support needed.</constraint>
+    <constraint>Browser Support: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+ (all latest versions as of 2025).</constraint>
+    <constraint>Performance: File size limit 10MB to stay within Vercel free tier and optimize performance. File validation must be instant (client-side only).</constraint>
+    <constraint>Error Handling: Display user-friendly error messages for: file too large (>10MB), unsupported file type, empty file. Use ShadCN Alert component (variant: destructive).</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>File Upload State</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+        interface UploadState {
+          uploadedFile: File | null;
+          error: string | null;
+        }
+      </signature>
+      <path>app/process/page.tsx</path>
+    </interface>
+    <interface>
+      <name>useDropzone Configuration</name>
+      <kind>React Hook</kind>
+      <signature>
+        const { getRootProps, getInputProps, isDragActive } = useDropzone({
+          accept: {
+            'application/pdf': ['.pdf'],
+            'application/msword': ['.doc'],
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+            'text/plain': ['.txt']
+          },
+          maxSize: 10 * 1024 * 1024, // 10MB
+          multiple: false,
+          onDrop: (acceptedFiles, rejectedFiles) => { ... }
+        });
+      </signature>
+      <path>app/templates/new/page.tsx (reference)</path>
+    </interface>
+    <interface>
+      <name>Navigation Link Route</name>
+      <kind>Next.js Route</kind>
+      <signature>/process - Production document processing page</signature>
+      <path>app/process/page.tsx</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing approach follows Level 2 project standards: manual testing for MVP with automated tests deferred. Integration testing: Full upload workflow (drag-and-drop → display → remove → re-upload), file picker workflow, error handling. Manual testing: Cross-browser functionality (Chrome, Firefox, Safari, Edge), responsive layout (desktop and tablet), drag-and-drop in all browsers, file picker in all browsers. Acceptance criteria validation: Verify all 9 ACs pass through manual testing before marking story complete.
+    </standards>
+
+    <locations>
+      <location>Manual testing only for this story (Story 2.1)</location>
+      <location>Future automated tests: __tests__/app/process/ (if added in later stories)</location>
+    </locations>
+
+    <ideas>
+      <idea ac="AC1">Verify "Process Documents" link appears in navigation and navigates to /process</idea>
+      <idea ac="AC2">Verify /process page loads with file upload interface displayed</idea>
+      <idea ac="AC3">Test drag-and-drop: Drop valid PDF file, verify upload. Test file picker: Click to browse, select file, verify upload.</idea>
+      <idea ac="AC4">Test file types: Upload PDF (accepted), DOCX (accepted), DOC (accepted), TXT (accepted), JPG (rejected with error)</idea>
+      <idea ac="AC5">Test file size: Upload 5MB file (accepted), Upload 11MB file (rejected with "File exceeds 10MB limit" error)</idea>
+      <idea ac="AC6">After successful upload, verify display shows: filename, file type/extension, file size in MB or KB</idea>
+      <idea ac="AC7">Test remove: Click remove button, verify file cleared. Test re-upload: After remove, upload different file, verify new file displays</idea>
+      <idea ac="AC8">Visual comparison: Open /templates/new and /process side-by-side. Verify different page headings, descriptions, color accents. Verify clear distinction between template creation and production processing.</idea>
+      <idea ac="AC9">Test button state: Before upload, verify "Next: Select Template" button is disabled. After upload, verify button is enabled. Click button, verify TODO comment for Story 2.2 navigation.</idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,717 @@
+<story-context id="story-1.7-claude-api-integration-field-suggestion" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>7</storyId>
+    <title>Claude API Integration and AI Field Suggestion</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.7.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>the AI to analyze my sample document and suggest extractable fields</iWant>
+    <soThat>I don't have to guess what data can be extracted</soThat>
+    <tasks>
+      - Configure Claude API environment and dependencies (AC: #1)
+        - Install Anthropic SDK: `npm install @anthropic-ai/sdk`
+        - Add `ANTHROPIC_API_KEY` to .env.local
+        - Add `ANTHROPIC_API_KEY` to .env.example with placeholder
+        - Configure API key in Vercel environment variables for production
+        - Document API key setup in README.md
+
+      - Create API route for field suggestions (AC: #1, #3, #11, #12)
+        - Create /app/api/extract/suggest-fields/route.ts
+        - Implement POST endpoint accepting base64Document, documentType, and optional guidancePrompt
+        - Initialize Anthropic client with API key from environment
+        - Build Claude API request with document and extraction prompt
+        - Include user's guidancePrompt in system instructions if provided
+        - Handle PDF, DOCX, DOC, TXT file formats (base64 encoded)
+        - Parse Claude response to extract suggested fields
+        - Return structured field suggestions: {name, type, category}[]
+
+      - Implement Claude API document analysis (AC: #3, #11, #12, #13)
+        - Convert uploaded File to base64 in client (from Story 1.6 sampleDocument)
+        - Send base64 document to Claude API with media_type detection
+        - Base prompt: "Analyze this document and suggest extractable fields with data types. For each field, specify: field name, data type (text/number/date/currency), and whether it's a header field (document-level) or detail field (repeating line items)."
+        - If user provided guidancePrompt, prepend to analysis prompt: "{guidancePrompt}\n\nBased on this guidance, analyze..."
+        - Request structured output using Claude tool/function calling
+        - Handle Claude API response with suggested fields array
+        - Do NOT save guidancePrompt to database (temporary use only)
+
+      - Add optional analysis guidance prompt UI (AC: #12, #13)
+        - Add "Help AI Understand Your Document (Optional)" text area above "Get AI Field Suggestions" button
+        - Add placeholder text: "e.g., 'This is an invoice. Line items are in a table on page 2.'"
+        - Add help text explaining purpose: "Provide context to help AI better understand your document structure"
+        - Add `analysisGuidance: string` to component state
+        - Style textarea with smaller height than Story 1.8's custom prompt (2-3 rows vs 5 rows)
+        - Make guidance clearly optional (label with "(Optional)", help text emphasizes "if needed")
+
+      - Add "Get AI Field Suggestions" button to template builder (AC: #2, #9, #12)
+        - Show button only when sampleDocument uploaded (conditional rendering)
+        - Position button below analysis guidance textarea
+        - Implement onClick handler to trigger field suggestion API call with optional guidance
+        - Show loading spinner during API call (disable button, show "Analyzing...")
+        - Handle button state: disabled when loading, enabled when document present
+        - Pass analysisGuidance to API if user provided it (empty string if not)
+
+      - Display suggested fields list (AC: #4, #5, #6)
+        - Create suggested fields display component
+        - Show each suggested field with: field name, data type, header/detail category
+        - Add checkbox for each suggested field (user selection)
+        - "Select All" and "Deselect All" options for bulk selection
+        - Style suggested fields with clear visual distinction from manual fields
+        - Show count: "X fields suggested"
+
+      - Populate field definition form from selections (AC: #7, #8)
+        - "Add Selected Fields" button to populate form with checked suggestions
+        - Convert selected suggestions to FieldDefinition[] format
+        - Append selected fields to existing fields array (merge with manual fields)
+        - Preserve manually-added fields (don't overwrite)
+        - User can still add/edit/remove fields after accepting suggestions
+        - Clear suggestions display after fields added to form
+
+      - Error handling and user feedback (AC: #10)
+        - Handle Claude API errors: network failures, auth errors, rate limits
+        - Display user-friendly error messages: "Unable to analyze document. Please try again or define fields manually."
+        - Log errors for debugging (sanitized, no document content)
+        - Provide fallback: user can always define fields manually if AI fails
+        - Handle edge cases: empty documents, corrupted files, unsupported formats
+
+      - File format handling (AC: #11)
+        - Convert PDF files to base64 with media_type: application/pdf
+        - Convert DOCX files to base64 with media_type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+        - Convert DOC files to base64 with media_type: application/msword
+        - Convert TXT files to base64 with media_type: text/plain
+        - Test AI suggestions with each file format
+
+      - Testing and refinement (AC: #1-#13)
+        - Test API key configuration in local and Vercel environments
+        - Test "Get AI Field Suggestions" button appears after file upload
+        - Test analysis guidance textarea appears and accepts input
+        - Test clicking button sends document to API without guidance (empty string)
+        - Test clicking button sends document to API with user-provided guidance
+        - Test suggested fields improve when guidance provided (e.g., "line items on page 2")
+        - Test suggested fields displayed correctly (name, type, category)
+        - Test selecting/deselecting suggested fields with checkboxes
+        - Test "Add Selected Fields" populates field definition form
+        - Test adding manual fields after accepting suggestions
+        - Test loading state during API call
+        - Test error handling: invalid API key, network failure, malformed response
+        - Test with PDF, DOCX, DOC, TXT files
+        - Test that analysis guidance is NOT saved to database (temporary use only)
+        - Cross-browser testing (Chrome, Firefox, Safari, Edge)
+        - Verify lint and build pass with 0 errors
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Claude Skills API configured with API key (environment variable)
+    AC2: When sample document uploaded, "Get AI Field Suggestions" button appears
+    AC3: Clicking button sends document to Claude with analysis prompt (includes optional user guidance if provided)
+    AC4: AI response parsed and displayed as suggested fields list
+    AC5: Each suggested field shows: field name, data type, suggested header/detail categorization
+    AC6: User can select which suggestions to include in template (checkboxes)
+    AC7: Selected suggestions populate the field definition form
+    AC8: User can still add manual fields after accepting suggestions
+    AC9: Loading state shown during API call
+    AC10: Error handling for API failures with user-friendly message
+    AC11: API call works with PDF, Word, and text file formats
+    AC12: Optional "Help AI Understand Your Document" text area for user to provide analysis guidance (e.g., "Line items start on page 2")
+    AC13: Analysis guidance prompt is NOT saved to database (temporary, one-time use for field suggestion only)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- PRD References -->
+      <artifact type="requirement" path="docs/PRD.md">
+        FR002: System shall allow users to upload a sample document and receive AI-generated field suggestions for template creation
+        FR012: System shall integrate with Claude Skills API for AI-powered data extraction
+
+        The PRD establishes that AI-assisted template creation is a core feature, enabling users to upload sample documents and receive intelligent field suggestions rather than manually defining every field. This reduces user effort and improves template quality by leveraging Claude's document understanding capabilities.
+      </artifact>
+
+      <!-- Epic Context -->
+      <artifact type="epic" path="docs/epics.md">
+        Epic 1 Goal: Establish development infrastructure and deliver intelligent template creation/management capabilities with AI field discovery and prompt testing
+
+        Story 1.7 Definition (lines 174-194):
+        As a user, I want the AI to analyze my sample document and suggest extractable fields, so that I don't have to guess what data can be extracted.
+
+        This story is the first integration point with Claude API, establishing the pattern for AI-powered features. It builds directly on Story 1.6 (sample document upload) by using the uploaded file for AI analysis.
+      </artifact>
+
+      <!-- Technical Specification -->
+      <artifact type="spec" path="docs/tech-spec-epic-combined.md">
+        Claude Skills API Integration (lines 160-197):
+        - Model: claude-3-5-sonnet-20241022 (latest Sonnet model)
+        - Request Format: Multipart message with document (base64) + text prompt + optional user guidance
+        - Response Format: Structured output using tool/function calling for field suggestions
+        - Authentication: API key in environment variables (ANTHROPIC_API_KEY)
+
+        Field Suggestion API (lines 137-152):
+        POST /api/extract/suggest-fields
+        Request: {base64Document: string, documentType: string, guidancePrompt?: string}
+        Response: {suggestedFields: Field[]}
+
+        Template Creation Workflow (lines 185-209):
+        Step 4: AI field suggestion → /api/extract/suggest-fields (with base64 doc) → Claude Skills API
+        Step 5: Review suggested fields, add/edit/remove fields
+
+        This story introduces the first Claude API integration, establishing patterns for document analysis and structured output that will be reused in Story 1.9 (test extraction) and Epic 2 (production extraction).
+      </artifact>
+
+      <!-- Technical Decisions -->
+      <artifact type="decision" path="docs/technical-decisions.md">
+        TD003: AI-Assisted Template Creation (lines 40-64)
+        - Decision: Add AI field discovery and prompt testing capabilities to template creation workflow
+        - Rationale: Users may not know what fields can be extracted; testing during creation prevents failed extractions in production
+        - Impact: FR002 (AI field suggestions), Claude Skills API integration moved to Epic 1
+
+        This decision justifies the inclusion of Claude API integration in Epic 1 rather than deferring to Epic 2, recognizing that AI assistance during template creation significantly improves user experience and template quality.
+      </artifact>
+
+      <!-- Previous Story Context -->
+      <artifact type="story" path="docs/stories/story-1.5.md">
+        Story 1.5: Manual Template Builder - Field Definition
+
+        Established patterns for field management:
+        - FieldDefinition interface: {id, name, type, category}
+        - Field array state management with add/remove/reorder
+        - Field types: text, number, date, currency
+        - Field categories: header vs detail
+
+        Story 1.7 extends this by populating the field array from AI suggestions rather than only manual entry.
+      </artifact>
+
+      <artifact type="story" path="docs/stories/story-1.6.md">
+        Story 1.6: Sample Document Upload for Template Creation
+
+        Established file upload pattern:
+        - File stored in React state as browser File object
+        - Client-side validation: type (PDF/DOCX/DOC/TXT) and size (≤10MB)
+        - File held in memory only (not sent to server at upload time)
+        - react-dropzone for drag-and-drop interface
+
+        Story 1.7 uses the sampleDocument from state, converts to base64, and sends to Claude API for analysis.
+      </artifact>
+    </docs>
+
+    <code>
+      <!-- Existing Files to Enhance -->
+      <artifact type="component" path="app/templates/new/page.tsx">
+        Current Implementation (from Story 1.5 and 1.6):
+        - Template builder page with field definition form
+        - Sample document upload section (optional)
+        - State: templateName, templateType, fields[], sampleDocument, skipSampleUpload
+
+        Enhancements Needed for Story 1.7:
+        - Add analysisGuidance state variable
+        - Add "Help AI Understand Your Document (Optional)" textarea
+        - Add "Get AI Field Suggestions" button (conditional on sampleDocument)
+        - Add handleGetFieldSuggestions() async function
+        - Add suggestedFields state and display UI
+        - Add field selection checkboxes
+        - Add "Add Selected Fields" button
+        - Implement field merging logic (append suggestions to existing fields)
+        - Add loading state for API call
+        - Add error handling for API failures
+      </artifact>
+
+      <!-- TypeScript Types -->
+      <artifact type="types" path="types/template.ts">
+        Existing types to use:
+        - TemplateType enum (invoice, estimate, equipment_log, etc.)
+        - FieldType enum (text, number, date, currency)
+        - TemplateField interface
+
+        New types to define in component or separate file:
+        interface SuggestedField {
+          field_name: string
+          field_type: "text" | "number" | "date" | "currency"
+          category: "header" | "detail"
+          description?: string
+        }
+
+        interface FieldSuggestionRequest {
+          base64Document: string
+          documentType: string // MIME type
+          guidancePrompt?: string
+        }
+
+        interface FieldSuggestionResponse {
+          suggestedFields: SuggestedField[]
+        }
+      </artifact>
+
+      <!-- Database Layer (No Changes) -->
+      <artifact type="data-access" path="lib/db/templates.ts">
+        No changes required. Sample document and analysis guidance are NOT persisted to database.
+
+        Existing createTemplate() function will be used to save templates with fields (whether manually added or AI-suggested).
+      </artifact>
+    </code>
+
+    <dependencies>
+      <!-- NPM Dependencies -->
+      <dependency type="npm" package="@anthropic-ai/sdk" version="^0.9.0">
+        Official Anthropic SDK for Claude API integration. Provides TypeScript client for Claude messages API with support for tool calling and structured output.
+      </dependency>
+
+      <dependency type="npm" package="react-dropzone" version="^14.3.5">
+        Already installed in Story 1.6 for sample document upload. Used to access the uploaded File object from state.
+      </dependency>
+
+      <!-- Environment Variables -->
+      <dependency type="env-var" name="ANTHROPIC_API_KEY">
+        Required for Claude API authentication.
+        - Add to .env.local for local development
+        - Add to .env.example with placeholder value
+        - Configure in Vercel environment variables for production
+        - Document setup process in README.md
+      </dependency>
+
+      <!-- API Dependencies -->
+      <dependency type="api" name="Claude API" url="https://api.anthropic.com/v1/messages">
+        External service dependency. Claude 3.5 Sonnet model (claude-3-5-sonnet-20241022) for document analysis and field suggestion.
+        - Pay-per-use pricing
+        - Rate limits apply (monitor usage)
+        - Requires internet connectivity
+      </dependency>
+
+      <!-- Story Dependencies -->
+      <dependency type="story" id="1.5">
+        Story 1.5 provides the field definition form and field array state management that AI suggestions will populate.
+      </dependency>
+
+      <dependency type="story" id="1.6">
+        Story 1.6 provides the sample document upload functionality. The uploaded File object in state is used by Story 1.7 for AI analysis.
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Project-Level Constraints -->
+    <constraint id="C1" type="project-level">
+      Level 2 Project: Simple Claude API integration, avoid complex prompt engineering for MVP. Use straightforward analysis prompt with optional user guidance. No advanced RAG or multi-step reasoning.
+    </constraint>
+
+    <constraint id="C2" type="optional-feature">
+      Field suggestions are optional. Users can skip AI suggestions and define fields manually (from Story 1.5). Graceful degradation if API fails - display error and allow manual field definition.
+    </constraint>
+
+    <constraint id="C3" type="api-integration">
+      Use direct Anthropic SDK (@anthropic-ai/sdk), not Claude Skills wrapper. Follow official SDK patterns for document analysis with tool/function calling for structured output.
+    </constraint>
+
+    <constraint id="C4" type="data-persistence">
+      Analysis guidance prompt is NOT saved to database. It is temporary, one-time use for field suggestion only. This distinguishes it from Story 1.8's custom prompt which IS saved with the template.
+    </constraint>
+
+    <constraint id="C5" type="file-handling">
+      Sample document already in browser memory from Story 1.6. Convert File to base64 client-side before sending to API. No server-side file storage.
+    </constraint>
+
+    <constraint id="C6" type="error-tolerance">
+      API failures must not block template creation. If Claude API fails, user can still define fields manually. Show user-friendly error message and log technical details for debugging.
+    </constraint>
+
+    <constraint id="C7" type="supported-formats">
+      AI field suggestion must work with all formats from Story 1.6: PDF, Word (.doc, .docx), and text files. Claude API handles native parsing - no additional preprocessing needed.
+    </constraint>
+
+    <constraint id="C8" type="field-merging">
+      Selected AI suggestions append to existing field array. Do not overwrite manually-added fields. User can mix AI-suggested and manual fields in same template.
+    </constraint>
+
+    <constraint id="C9" type="security">
+      API key stored in environment variables only. Never expose ANTHROPIC_API_KEY in client-side code. All Claude API calls from Next.js API route (server-side).
+    </constraint>
+
+    <constraint id="C10" type="cost-optimization">
+      Minimize Claude API calls. Field suggestion is single API call per document. No automatic re-analysis - user triggers explicitly with button click. Document sent as base64 (efficient encoding).
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- Claude API Integration -->
+    <interface type="external-api" name="Claude Messages API">
+      Endpoint: POST https://api.anthropic.com/v1/messages
+
+      Request Format:
+      {
+        "model": "claude-3-5-sonnet-20241022",
+        "max_tokens": 1024,
+        "messages": [{
+          "role": "user",
+          "content": [
+            {
+              "type": "document",
+              "source": {
+                "type": "base64",
+                "media_type": "application/pdf" | "application/msword" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document" | "text/plain",
+                "data": "[base64-encoded document]"
+              }
+            },
+            {
+              "type": "text",
+              "text": "[analysis prompt with optional user guidance]"
+            }
+          ]
+        }],
+        "tools": [{
+          "name": "suggest_fields",
+          "description": "Suggest extractable fields from document",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field_name": {"type": "string"},
+                    "field_type": {"type": "string", "enum": ["text", "number", "date", "currency"]},
+                    "category": {"type": "string", "enum": ["header", "detail"]}
+                  }
+                }
+              }
+            }
+          }
+        }]
+      }
+
+      Response Format:
+      {
+        "content": [
+          {
+            "type": "tool_use",
+            "name": "suggest_fields",
+            "input": {
+              "fields": [
+                {
+                  "field_name": "invoice_number",
+                  "field_type": "text",
+                  "category": "header"
+                },
+                {
+                  "field_name": "line_item_description",
+                  "field_type": "text",
+                  "category": "detail"
+                }
+                // ... more fields
+              ]
+            }
+          }
+        ]
+      }
+
+      Authentication: x-api-key header with ANTHROPIC_API_KEY
+      Error Handling: Retry on 5xx errors, fail gracefully on 4xx errors
+    </interface>
+
+    <!-- Internal API Route -->
+    <interface type="internal-api" name="Field Suggestion API">
+      Endpoint: POST /api/extract/suggest-fields
+
+      Request Body:
+      {
+        "base64Document": string,
+        "documentType": string, // MIME type
+        "guidancePrompt"?: string // Optional user guidance
+      }
+
+      Response (Success):
+      {
+        "suggestedFields": [
+          {
+            "field_name": string,
+            "field_type": "text" | "number" | "date" | "currency",
+            "category": "header" | "detail"
+          }
+        ]
+      }
+
+      Response (Error):
+      {
+        "error": string
+      }
+
+      Status Codes:
+      - 200: Success with suggested fields
+      - 400: Bad request (missing required fields, invalid format)
+      - 500: Server error (Claude API failure, parsing error)
+    </interface>
+
+    <!-- Template API (Existing from Story 1.3) -->
+    <interface type="internal-api" name="Template Creation API">
+      Endpoint: POST /api/templates
+
+      Used to save templates with fields (whether manually added or AI-suggested).
+      No changes required - AI suggestions are converted to same field format as manual fields.
+
+      Request Body:
+      {
+        "name": string,
+        "template_type": TemplateType,
+        "fields": Array&lt;{
+          "field_name": string,
+          "field_type": FieldType,
+          "is_header": boolean,
+          "display_order": number
+        }&gt;
+      }
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <!-- API Testing -->
+      <test type="api" level="integration">
+        Test API Key Configuration:
+        - Verify ANTHROPIC_API_KEY loaded from environment in local development
+        - Verify API key configured in Vercel environment variables
+        - Test API route initialization with valid key
+        - Test error handling for missing/invalid API key
+      </test>
+
+      <test type="api" level="integration">
+        Test POST /api/extract/suggest-fields:
+        - Send valid base64 PDF with analysis prompt
+        - Verify Claude API called with correct parameters
+        - Verify structured response parsed correctly
+        - Verify suggested fields returned in expected format
+        - Test with all supported file types (PDF, DOCX, DOC, TXT)
+      </test>
+
+      <test type="api" level="integration">
+        Test Analysis Guidance Prompt:
+        - Send request WITHOUT guidancePrompt (empty string)
+        - Verify base prompt used alone
+        - Send request WITH guidancePrompt
+        - Verify prompt includes user guidance: "{guidance}\n\nBased on this guidance, analyze..."
+        - Verify guidance improves field suggestions (e.g., "line items on page 2" results in detail fields)
+      </test>
+
+      <test type="api" level="error-handling">
+        Test Error Scenarios:
+        - Invalid API key → 500 error with user-friendly message
+        - Network failure → timeout with retry logic
+        - Malformed Claude response → parsing error with fallback
+        - Empty document → validation error
+        - Unsupported file format → 400 error
+      </test>
+
+      <!-- Component Testing -->
+      <test type="component" level="unit">
+        Test Analysis Guidance Textarea:
+        - Verify textarea renders with "(Optional)" label
+        - Verify help text displays explaining purpose
+        - Verify placeholder text matches spec
+        - Verify state updates on text input
+        - Verify textarea height smaller than Story 1.8 custom prompt (2-3 rows)
+      </test>
+
+      <test type="component" level="unit">
+        Test "Get AI Field Suggestions" Button:
+        - Verify button hidden when no sampleDocument uploaded
+        - Verify button appears after file upload
+        - Verify button disabled during API call (loading state)
+        - Verify loading text: "Analyzing Document..."
+        - Verify button enabled when document present and not loading
+      </test>
+
+      <test type="component" level="unit">
+        Test Suggested Fields Display:
+        - Verify suggested fields list renders after API response
+        - Verify each field shows: name, type (text/number/date/currency), category (header/detail)
+        - Verify checkboxes for field selection
+        - Verify "Select All" and "Deselect All" buttons
+        - Verify field count display: "X fields suggested"
+        - Verify visual distinction from manual fields section
+      </test>
+
+      <test type="component" level="integration">
+        Test Field Selection and Population:
+        - Select 3 out of 5 suggested fields with checkboxes
+        - Click "Add Selected Fields"
+        - Verify only selected fields added to field array
+        - Verify fields converted to FieldDefinition format
+        - Verify display_order calculated correctly
+        - Verify suggestions display cleared after adding
+      </test>
+
+      <test type="component" level="integration">
+        Test Field Merging:
+        - Manually add 2 fields
+        - Get AI suggestions (5 fields)
+        - Select 3 AI suggestions
+        - Click "Add Selected Fields"
+        - Verify total 5 fields in form (2 manual + 3 AI)
+        - Verify manual fields preserved (not overwritten)
+        - Verify user can still add/edit/remove fields after accepting suggestions
+      </test>
+
+      <!-- File Format Testing -->
+      <test type="integration" level="end-to-end">
+        Test PDF File Analysis:
+        - Upload sample invoice PDF (from Story 1.6)
+        - Convert File to base64 (client-side)
+        - Click "Get AI Field Suggestions"
+        - Verify API receives base64 with media_type: application/pdf
+        - Verify Claude analyzes PDF and returns field suggestions
+        - Verify suggestions match invoice structure
+      </test>
+
+      <test type="integration" level="end-to-end">
+        Test DOCX File Analysis:
+        - Upload sample DOCX estimate
+        - Click "Get AI Field Suggestions"
+        - Verify media_type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+        - Verify field suggestions appropriate for estimate document
+      </test>
+
+      <test type="integration" level="end-to-end">
+        Test TXT File Analysis:
+        - Upload sample text file with structured data
+        - Click "Get AI Field Suggestions"
+        - Verify media_type: text/plain
+        - Verify field suggestions extracted from text
+      </test>
+
+      <!-- Error Handling Testing -->
+      <test type="manual" level="error-scenario">
+        Test API Failure Graceful Degradation:
+        - Remove or invalidate ANTHROPIC_API_KEY
+        - Upload sample document
+        - Click "Get AI Field Suggestions"
+        - Verify error message: "Unable to analyze document. Please try again or define fields manually."
+        - Verify user can still add fields manually
+        - Verify template save still works with manual fields
+      </test>
+
+      <!-- Cross-Browser Testing -->
+      <test type="manual" level="compatibility">
+        Test in Chrome, Firefox, Safari, Edge:
+        - File upload and base64 conversion
+        - Claude API calls
+        - Analysis guidance textarea
+        - Field suggestion display
+        - Checkbox selection
+        - Field population
+      </test>
+
+      <!-- Build and Lint -->
+      <test type="automated" level="build">
+        Verify TypeScript Compilation:
+        - npm run build
+        - 0 TypeScript errors expected
+        - New API route compiles successfully
+        - Component enhancements type-safe
+      </test>
+
+      <test type="automated" level="lint">
+        Verify ESLint Compliance:
+        - npm run lint
+        - 0 ESLint errors expected
+        - 0 warnings expected
+      </test>
+    </standards>
+
+    <locations>
+      <!-- Test Files to Create -->
+      <location path="app/api/extract/suggest-fields/route.test.ts">
+        Unit tests for field suggestion API route:
+        - Test API key loading from environment
+        - Test request validation (base64Document, documentType required)
+        - Test Claude API call with correct parameters
+        - Test response parsing and field extraction
+        - Test error handling (missing key, API failure, malformed response)
+      </location>
+
+      <location path="app/templates/new/page.test.tsx">
+        Component tests for enhanced template builder:
+        - Test analysis guidance textarea rendering
+        - Test "Get AI Field Suggestions" button conditional rendering
+        - Test handleGetFieldSuggestions() function (mocked API)
+        - Test suggested fields display
+        - Test field selection with checkboxes
+        - Test "Add Selected Fields" functionality
+        - Test field merging (manual + AI suggestions)
+      </location>
+
+      <!-- Manual Testing Scenarios -->
+      <location type="manual-test" scenario="successful-field-suggestion-without-guidance">
+        1. Navigate to /templates/new
+        2. Upload sample invoice PDF
+        3. Leave analysis guidance textarea empty
+        4. Click "Get AI Field Suggestions"
+        5. Verify loading spinner appears
+        6. Verify suggested fields displayed (e.g., invoice_number, date, vendor, line_items)
+        7. Select 3 fields with checkboxes
+        8. Click "Add Selected Fields"
+        9. Verify 3 fields appear in field definition form
+        10. Manually add 1 more field
+        11. Save template
+        12. Verify template saved with 4 fields total
+      </location>
+
+      <location type="manual-test" scenario="field-suggestion-with-guidance">
+        1. Navigate to /templates/new
+        2. Upload complex invoice PDF (line items on page 2)
+        3. Enter guidance: "This is an invoice. Line items are in a table on page 2. Dates are in MM/DD/YYYY format."
+        4. Click "Get AI Field Suggestions"
+        5. Verify suggested fields include line item fields (detail category)
+        6. Verify suggestions more accurate than without guidance
+        7. Verify guidance NOT saved when template saved
+      </location>
+
+      <location type="manual-test" scenario="api-error-handling">
+        1. Remove ANTHROPIC_API_KEY from .env.local
+        2. Restart dev server
+        3. Navigate to /templates/new
+        4. Upload sample document
+        5. Click "Get AI Field Suggestions"
+        6. Verify error message: "Unable to analyze document..."
+        7. Verify field definition form still accessible
+        8. Manually add fields
+        9. Verify template save works without AI suggestions
+      </location>
+
+      <location type="manual-test" scenario="multiple-file-formats">
+        1. Test with PDF file → verify suggestions
+        2. Remove file, upload DOCX file → verify suggestions
+        3. Remove file, upload TXT file → verify suggestions
+        4. Verify all formats produce appropriate field suggestions
+      </location>
+    </locations>
+
+    <ideas>
+      <!-- Future Enhancements -->
+      <idea type="enhancement">
+        Prompt Refinement: If initial suggestions poor, allow user to refine analysis guidance and re-run suggestion (similar to Story 2.6 iterative refinement). For MVP, user can manually adjust fields.
+      </idea>
+
+      <idea type="enhancement">
+        Field Confidence Scores: Claude could return confidence score per field suggestion. Display high-confidence suggestions checked by default. Deferred to future version.
+      </idea>
+
+      <idea type="enhancement">
+        Suggestion Explanations: Claude could explain why each field was suggested (e.g., "Found in header on page 1"). Display as tooltip or help text. Deferred to future version.
+      </idea>
+
+      <idea type="optimization">
+        Caching: Cache field suggestions per document hash to avoid re-analysis if user uploads same document twice. Requires document hash calculation and cache storage. Deferred to future version.
+      </idea>
+
+      <idea type="testing">
+        Synthetic Test Documents: Create test documents with known structure to validate suggestion accuracy. Include edge cases: tables, multi-page, mixed formats.
+      </idea>
+
+      <idea type="analytics">
+        Track Suggestion Acceptance Rate: Log how many AI suggestions user accepts vs rejects. Helps measure AI value and identify improvement areas. Requires analytics infrastructure (deferred).
+      </idea>
+    </ideas>
+  </tests>
+</story-context>
