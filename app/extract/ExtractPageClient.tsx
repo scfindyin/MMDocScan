@@ -6,6 +6,7 @@ import { useExtractionStore } from '@/stores/extractionStore';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { TemplateSection } from './components/TemplateSection';
+import { FileUploadSection } from './components/FileUploadSection';
 
 export default function ExtractPageClient() {
   const leftPanelRef = useRef<ImperativePanelHandle>(null);
@@ -122,7 +123,10 @@ export default function ExtractPageClient() {
                   <h2 className="text-lg font-semibold mb-4 pr-12">
                     Template Configuration
                   </h2>
-                  <TemplateSection />
+                  <div className="space-y-6">
+                    <TemplateSection />
+                    <FileUploadSection />
+                  </div>
                 </div>
               </div>
             )}

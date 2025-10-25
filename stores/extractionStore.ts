@@ -24,6 +24,9 @@ interface ExtractionStore {
   extractionPrompt: string; // Global extraction instructions (0-2000 chars)
   isDirty: boolean; // True if template has unsaved changes
 
+  // File upload state (Story 3.6)
+  uploadedFile: File | null; // Uploaded file for extraction
+
   // Actions
   setPanelSizes: (left: number, right: number) => void;
   maximizeLeft: () => void;
@@ -40,6 +43,10 @@ interface ExtractionStore {
   setExtractionPrompt: (prompt: string) => void;
   loadTemplate: (templateId: string, templateName: string, fields: ExtractionField[], prompt: string) => void;
   resetTemplate: () => void; // Clear all template state
+
+  // File upload actions (Story 3.6)
+  setUploadedFile: (file: File | null) => void;
+  removeUploadedFile: () => void;
 
   // Dirty tracking actions (Story 3.5)
   setDirty: () => void; // Mark template as having unsaved changes
@@ -63,6 +70,9 @@ export const useExtractionStore = create<ExtractionStore>()(
       fields: [],
       extractionPrompt: '',
       isDirty: false,
+
+      // File upload initial state (Story 3.6)
+      uploadedFile: null,
 
       // Actions
       setPanelSizes: (left, right) =>
@@ -183,6 +193,17 @@ export const useExtractionStore = create<ExtractionStore>()(
           fields: [],
           extractionPrompt: '',
           isDirty: false,
+        }),
+
+      // File upload actions (Story 3.6)
+      setUploadedFile: (file) =>
+        set({
+          uploadedFile: file,
+        }),
+
+      removeUploadedFile: () =>
+        set({
+          uploadedFile: null,
         }),
 
       // Dirty tracking actions (Story 3.5)
