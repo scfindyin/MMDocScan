@@ -1,0 +1,377 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.5</storyId>
+    <title>Save Template Flow</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to save my template configuration</iWant>
+    <soThat>I can reuse it for future extractions</soThat>
+    <tasks>
+      <task id="1" ac="1,2">
+        <title>Create SaveTemplateModal component</title>
+        <subtasks>
+          <subtask>Modal component with ShadCN Dialog</subtask>
+          <subtask>Template name input field with validation</subtask>
+          <subtask>Template summary display (field count, prompt status)</subtask>
+          <subtask>Responsive layout (desktop/tablet)</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="3,8">
+        <title>Implement save flow for new templates</title>
+        <subtasks>
+          <subtask>Component handles POST /api/templates endpoint call</subtask>
+          <subtask>Zod validation: name required, 1-100 chars</subtask>
+          <subtask>Client-side check for duplicate template names (UX optimization)</subtask>
+          <subtask>Handle 400 duplicate error from API (server-side constraint is source of truth)</subtask>
+          <subtask>Success toast notification with ShadCN Toast</subtask>
+          <subtask>Error handling with user-friendly messages</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="4">
+        <title>Implement save flow for existing templates</title>
+        <subtasks>
+          <subtask>Detect if template is modified (dirty state)</subtask>
+          <subtask>Show two radio options: Replace vs. Save as new</subtask>
+          <subtask>Replace: Component calls PUT /api/templates/:id</subtask>
+          <subtask>Save as new: Component calls POST /api/templates with new name</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="5,6">
+        <title>Add change detection to Save Template button</title>
+        <subtasks>
+          <subtask>Track dirty state in Zustand store (simple approach: dirty on ANY change)</subtask>
+          <subtask>Add setDirty() and clearDirty() store actions</subtask>
+          <subtask>Show dot indicator (•) when dirty: "Save Template •"</subtask>
+          <subtask>Disable button when no changes detected</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="7">
+        <title>Update UI after successful save</title>
+        <subtasks>
+          <subtask>Component refreshes templates dropdown with GET /api/templates</subtask>
+          <subtask>Switch template mode from "New" to "Load existing"</subtask>
+          <subtask>Select newly saved template in dropdown</subtask>
+          <subtask>Clear dirty state via store action</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="9">
+        <title>Add loading states</title>
+        <subtasks>
+          <subtask>Show spinner in modal during save operation</subtask>
+          <subtask>Disable save button during save</subtask>
+          <subtask>Show "Saving..." text in button</subtask>
+        </subtasks>
+      </task>
+      <task id="7">
+        <title>Write unit tests</title>
+        <subtasks>
+          <subtask>SaveTemplateModal component rendering tests</subtask>
+          <subtask>Validation logic tests (name required, duplicates)</subtask>
+          <subtask>Dirty state detection tests</subtask>
+          <subtask>Modal interaction tests (open, close, submit)</subtask>
+        </subtasks>
+      </task>
+      <task id="8">
+        <title>Write integration tests</title>
+        <subtasks>
+          <subtask>End-to-end save flow (new template)</subtask>
+          <subtask>End-to-end save flow (replace existing)</subtask>
+          <subtask>End-to-end save flow (save as new)</subtask>
+          <subtask>Error handling scenarios (network errors, validation failures, 400 duplicate errors)</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">"Save Template" button opens Save Template Modal</criterion>
+    <criterion id="2">Modal shows: template name input, summary (X fields, prompt included/not)</criterion>
+    <criterion id="3">For new template: Saves to database, shows success toast</criterion>
+    <criterion id="4">
+      For existing template (modified): Shows two options:
+      - "Replace [Template Name]" (default)
+      - "Save as new template" with name input
+    </criterion>
+    <criterion id="5">Change detection: Button shows dot indicator (•) when dirty</criterion>
+    <criterion id="6">Button disabled when no changes detected</criterion>
+    <criterion id="7">After save: Updates dropdown, switches mode to "Load existing"</criterion>
+    <criterion id="8">Validation: Template name required, no duplicate names</criterion>
+    <criterion id="9">Loading state during save</criterion>
+    <criterion id="10">Error handling with user-friendly messages</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Data Models and Contracts (lines 96-210)</section>
+        <snippet>Template interface with id, name, fields (JSONB), extraction_prompt, user_id, timestamps. TemplateField interface with id, name, instructions, order. ExtractionStore interface includes isDirty flag for change tracking.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>APIs and Interfaces (lines 272-298)</section>
+        <snippet>POST /api/templates (create), PUT /api/templates/:id (update), GET /api/templates (list). Zod validation: name 1-100 chars, min 1 field, prompt 0-2000 chars. Returns 400 for duplicate names.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Test Strategy Summary (lines 910-1053)</section>
+        <snippet>Unit tests (60% coverage) with Vitest. Integration tests (30%) with MSW for API mocking. Test coverage target: 80% for SaveTemplateModal and store actions. Run via `npm test`.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epics Document</title>
+        <section>Story 3.5: Save Template Flow (lines 577-596)</section>
+        <snippet>Comprehensive acceptance criteria for save template functionality including modal UI, validation, change detection, and error handling.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>stores/extractionStore.ts</path>
+        <kind>store</kind>
+        <symbol>ExtractionStore</symbol>
+        <lines>15-47</lines>
+        <reason>Zustand store managing template state with isDirty flag and markClean() action. Need to add setDirty() and clearDirty() actions for Story 3.5.</reason>
+      </artifact>
+      <artifact>
+        <path>stores/extractionStore.ts</path>
+        <kind>store</kind>
+        <symbol>ExtractionField</symbol>
+        <lines>5-10</lines>
+        <reason>Interface for extraction fields (id, name, instructions, order). Used in template state management.</reason>
+      </artifact>
+      <artifact>
+        <path>types/template.ts</path>
+        <kind>types</kind>
+        <symbol>Template</symbol>
+        <lines>39-47</lines>
+        <reason>Template interface matching Epic 3 schema with JSONB fields. Single source of truth for template types.</reason>
+      </artifact>
+      <artifact>
+        <path>types/template.ts</path>
+        <kind>types</kind>
+        <symbol>TemplateField</symbol>
+        <lines>22-27</lines>
+        <reason>TemplateField interface (id, name, instructions, order). CRITICAL: Use this instead of ExtractionField for template-related operations.</reason>
+      </artifact>
+      <artifact>
+        <path>types/template.ts</path>
+        <kind>types</kind>
+        <symbol>CreateTemplateRequest</symbol>
+        <lines>55-59</lines>
+        <reason>Request interface for POST /api/templates (name, fields, extraction_prompt).</reason>
+      </artifact>
+      <artifact>
+        <path>types/template.ts</path>
+        <kind>types</kind>
+        <symbol>UpdateTemplateRequest</symbol>
+        <lines>67-71</lines>
+        <reason>Request interface for PUT /api/templates/:id (partial updates).</reason>
+      </artifact>
+      <artifact>
+        <path>app/extract/components/TemplateSection.tsx</path>
+        <kind>component</kind>
+        <symbol>TemplateSection</symbol>
+        <lines>20-230</lines>
+        <reason>Contains fetchTemplates() pattern (lines 45-61) and handleSaveTemplate() placeholder (lines 103-107). Modal will be triggered from Save Template button here.</reason>
+      </artifact>
+      <artifact>
+        <path>app/extract/components/TemplateSection.tsx</path>
+        <kind>component</kind>
+        <symbol>fetchTemplates</symbol>
+        <lines>45-61</lines>
+        <reason>Pattern for API calls: async/await, error handling, state management. SaveTemplateModal should follow this pattern.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/templates/route.ts</path>
+        <kind>api</kind>
+        <symbol>POST</symbol>
+        <lines>70-132</lines>
+        <reason>POST /api/templates endpoint. Returns 400 for duplicate names (line 120-125). SaveTemplateModal must handle this error.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/templates/route.ts</path>
+        <kind>api</kind>
+        <symbol>GET</symbol>
+        <lines>27-60</lines>
+        <reason>GET /api/templates endpoint for refreshing dropdown after save.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/templates/[id]/route.ts</path>
+        <kind>api</kind>
+        <symbol>PUT</symbol>
+        <lines>103-185</lines>
+        <reason>PUT /api/templates/:id endpoint for updating existing templates. Returns 400 for duplicate names (line 173-177).</reason>
+      </artifact>
+      <artifact>
+        <path>components/ui/dialog.tsx</path>
+        <kind>component</kind>
+        <symbol>Dialog</symbol>
+        <lines>full</lines>
+        <reason>ShadCN Dialog component for modal wrapper. Use Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter.</reason>
+      </artifact>
+      <artifact>
+        <path>components/ui/toast.tsx</path>
+        <kind>component</kind>
+        <symbol>Toast</symbol>
+        <lines>full</lines>
+        <reason>ShadCN Toast component for success/error notifications after save.</reason>
+      </artifact>
+      <artifact>
+        <path>components/ui/radio-group.tsx</path>
+        <kind>component</kind>
+        <symbol>RadioGroup</symbol>
+        <lines>full</lines>
+        <reason>ShadCN RadioGroup component for "Replace vs. Save as new" options in existing template flow.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="@radix-ui/react-dialog" version="^1.1.15">Modal dialog primitive</package>
+        <package name="@radix-ui/react-toast" version="^1.2.15">Toast notification primitive</package>
+        <package name="@radix-ui/react-radio-group" version="^1.3.8">Radio group primitive</package>
+        <package name="zustand" version="^4.5.7">State management for dirty tracking</package>
+        <package name="zod" version="^4.1.12">Runtime validation for template data</package>
+        <package name="lucide-react" version="^0.546.0">Icons (Save icon for button)</package>
+        <package name="next" version="^14.2.0">Next.js App Router framework</package>
+        <package name="react" version="^18.2.0">React framework</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint category="state-management">
+      Zustand store manages template state and dirty tracking. Store actions: setDirty(), clearDirty(). Simple dirty state: Set on ANY change, clear on save. Store does NOT handle API calls - components handle API calls directly.
+    </constraint>
+    <constraint category="type-system">
+      CRITICAL: Use TemplateField from @/types/template (single source of truth). Do NOT use ExtractionField for template-related state. Maintain type consistency across extraction and template UI.
+    </constraint>
+    <constraint category="api-integration">
+      Components handle API calls directly (pattern from TemplateSection.tsx lines 45-100). POST /api/templates for new, PUT /api/templates/:id for updates, GET /api/templates for refresh. Client-side duplicate check is UX optimization only. Server-side 400 error is source of truth.
+    </constraint>
+    <constraint category="validation">
+      Template name: Required, 1-100 characters, no duplicates (API-validated). Fields: Minimum 1 field required. Extraction prompt: Optional, 0-2000 characters. Zod schemas for request/response validation.
+    </constraint>
+    <constraint category="error-handling">
+      Network errors: "Unable to save template. Please try again." Duplicate name (400): "Template name already exists. Please choose a different name." Validation errors: Inline messages. Log API errors to console.
+    </constraint>
+    <constraint category="ui-components">
+      ShadCN Dialog for modal wrapper. ShadCN Input for name field. ShadCN RadioGroup for Replace vs. Save as new. ShadCN Toast for notifications. ShadCN Button with loading state.
+    </constraint>
+    <constraint category="architecture">
+      Modal components in app/extract/components/. API routes in app/api/templates/. Zustand store in stores/. Tests co-located in __tests__/ directories. Follows Next.js App Router pattern.
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>POST /api/templates</name>
+      <kind>REST endpoint</kind>
+      <signature>
+        Request: { name: string, fields: TemplateField[], extraction_prompt?: string }
+        Response: { template: Template } | { error: string, details?: any }
+        Status: 201 (success), 400 (validation/duplicate), 401 (unauthorized), 500 (server error)
+      </signature>
+      <path>app/api/templates/route.ts</path>
+      <notes>Validates with Zod. Returns 400 if name exists (unique constraint). RLS auto-adds user_id.</notes>
+    </interface>
+    <interface>
+      <name>PUT /api/templates/:id</name>
+      <kind>REST endpoint</kind>
+      <signature>
+        Request: { name?: string, fields?: TemplateField[], extraction_prompt?: string }
+        Response: { template: Template } | { error: string, details?: any }
+        Status: 200 (success), 400 (validation/duplicate), 401 (unauthorized), 404 (not found), 500 (server error)
+      </signature>
+      <path>app/api/templates/[id]/route.ts</path>
+      <notes>Partial updates. Returns 400 if name exists. RLS filters to user's templates.</notes>
+    </interface>
+    <interface>
+      <name>GET /api/templates</name>
+      <kind>REST endpoint</kind>
+      <signature>
+        Request: None
+        Response: { templates: Template[] } | { error: string }
+        Status: 200 (success), 401 (unauthorized), 500 (server error)
+      </signature>
+      <path>app/api/templates/route.ts</path>
+      <notes>Lists user's templates filtered by RLS. Used to refresh dropdown after save.</notes>
+    </interface>
+    <interface>
+      <name>ExtractionStore.setDirty</name>
+      <kind>Zustand action</kind>
+      <signature>setDirty: () => void</signature>
+      <path>stores/extractionStore.ts</path>
+      <notes>Sets isDirty to true. Call when any template change occurs (add/edit/remove field, change prompt).</notes>
+    </interface>
+    <interface>
+      <name>ExtractionStore.clearDirty</name>
+      <kind>Zustand action</kind>
+      <signature>clearDirty: () => void</signature>
+      <path>stores/extractionStore.ts</path>
+      <notes>Sets isDirty to false. Call after successful save or when loading a template.</notes>
+    </interface>
+    <interface>
+      <name>ExtractionStore.markClean</name>
+      <kind>Zustand action</kind>
+      <signature>markClean: () => void</signature>
+      <path>stores/extractionStore.ts (line 179-182)</path>
+      <notes>Existing action that sets isDirty to false. May be renamed to clearDirty() for consistency.</notes>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests (60% coverage) using Vitest framework. Integration tests (30%) using Vitest + MSW for API mocking. E2E tests (10%) using Playwright. Test coverage target: 80% for SaveTemplateModal component and related store actions. Test execution via `npm test` (Vitest watch mode).
+    </standards>
+
+    <locations>
+      <location>app/extract/components/__tests__/SaveTemplateModal.test.tsx</location>
+      <location>stores/__tests__/extractionStore.test.ts</location>
+    </locations>
+
+    <ideas>
+      <idea ac="1,2">
+        Unit test: SaveTemplateModal renders correctly with name input, field count summary, and prompt status indicator. Verify modal opens/closes properly.
+      </idea>
+      <idea ac="3,8">
+        Integration test: New template save flow - POST request with valid data, success toast shown, dropdown refreshed. Test validation errors (empty name, duplicate name 400 error).
+      </idea>
+      <idea ac="4">
+        Unit test: Existing template save flow - verify radio options rendered, Replace option default selected, Save as new shows name input.
+      </idea>
+      <idea ac="4">
+        Integration test: Replace existing template - PUT request to correct ID, verify template updated, dropdown refreshed.
+      </idea>
+      <idea ac="4">
+        Integration test: Save as new from existing - POST request with new name, verify new template created, original unchanged.
+      </idea>
+      <idea ac="5,6">
+        Unit test: Dirty state detection - button shows dot indicator when isDirty=true, disabled when isDirty=false. Verify setDirty() and clearDirty() actions work.
+      </idea>
+      <idea ac="7">
+        Integration test: UI updates after save - verify mode switches to "existing", dropdown refreshed, new template selected, dirty flag cleared.
+      </idea>
+      <idea ac="9">
+        Unit test: Loading states - spinner shown during save, button disabled, "Saving..." text displayed. Verify loading state clears after completion.
+      </idea>
+      <idea ac="10">
+        Integration test: Error handling - network failure shows "Unable to save", duplicate name (400) shows "already exists", generic errors logged.
+      </idea>
+      <idea>
+        Mock API responses using MSW for all integration tests. Test success (201/200), validation errors (400), auth errors (401), server errors (500).
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

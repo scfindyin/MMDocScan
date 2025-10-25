@@ -1,13 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { TemplateField } from '@/types/template';
 
-// Template field interface for Story 3.2
-export interface ExtractionField {
-  id: string; // Unique identifier for the field (client-side generated)
-  name: string; // Field name (1-100 chars)
-  instructions?: string; // Optional field-specific instructions (0-500 chars)
-  order: number; // Display order (for drag-and-drop in Story 3.3)
-}
+// CRITICAL: Use TemplateField from @/types/template (Story 3.5 type alignment)
+// Re-export for backward compatibility
+export type ExtractionField = TemplateField;
 
 // Template mode type
 export type TemplateMode = 'new' | 'existing';
@@ -43,7 +40,11 @@ interface ExtractionStore {
   setExtractionPrompt: (prompt: string) => void;
   loadTemplate: (templateId: string, templateName: string, fields: ExtractionField[], prompt: string) => void;
   resetTemplate: () => void; // Clear all template state
-  markClean: () => void; // Mark template as saved (for Story 3.5)
+
+  // Dirty tracking actions (Story 3.5)
+  setDirty: () => void; // Mark template as having unsaved changes
+  clearDirty: () => void; // Mark template as saved (alias for markClean)
+  markClean: () => void; // Legacy alias for clearDirty
 }
 
 export const useExtractionStore = create<ExtractionStore>()(
@@ -173,6 +174,17 @@ export const useExtractionStore = create<ExtractionStore>()(
           selectedTemplateName: null,
           fields: [],
           extractionPrompt: '',
+          isDirty: false,
+        }),
+
+      // Dirty tracking actions (Story 3.5)
+      setDirty: () =>
+        set({
+          isDirty: true,
+        }),
+
+      clearDirty: () =>
+        set({
           isDirty: false,
         }),
 

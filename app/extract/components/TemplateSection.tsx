@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useExtractionStore, type ExtractionField } from '@/stores/extractionStore';
 import { FieldTagsArea } from './FieldTagsArea';
+import { SaveTemplateModal } from './SaveTemplateModal';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
@@ -34,6 +35,7 @@ export function TemplateSection() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 
   // Fetch templates when "existing" mode is selected
   useEffect(() => {
@@ -101,9 +103,28 @@ export function TemplateSection() {
   };
 
   const handleSaveTemplate = () => {
-    // TODO Story 3.5: Implement Save Template Modal and save functionality
-    console.log('Save template clicked - will be implemented in Story 3.5');
-    alert('Save template functionality will be implemented in Story 3.5');
+    setIsSaveModalOpen(true);
+  };
+
+  // Handle successful save from modal
+  const handleSaveSuccess = async (template: Template) => {
+    // Refresh templates list
+    await fetchTemplates();
+
+    // Switch to "existing" mode and select the saved template
+    const extractionFields: ExtractionField[] = template.fields.map((field) => ({
+      id: field.id,
+      name: field.name,
+      instructions: field.instructions,
+      order: field.order,
+    }));
+
+    loadTemplate(
+      template.id,
+      template.name,
+      extractionFields,
+      template.extraction_prompt || ''
+    );
   };
 
   const promptLength = extractionPrompt.length;
@@ -211,12 +232,12 @@ export function TemplateSection() {
       <div className="pt-2">
         <Button
           onClick={handleSaveTemplate}
-          disabled={!canSaveTemplate}
+          disabled={!canSaveTemplate || !isDirty}
           className="w-full"
           variant={isDirty ? 'default' : 'secondary'}
         >
           <Save className="h-4 w-4 mr-2" />
-          {templateMode === 'new' ? 'Save Template' : `Update "${selectedTemplateName}"`}
+          Save Template
           {isDirty && ' •'}
         </Button>
         {!canSaveTemplate && (
@@ -224,7 +245,20 @@ export function TemplateSection() {
             Add at least one field to save the template
           </p>
         )}
+        {canSaveTemplate && !isDirty && (
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            No unsaved changes
+          </p>
+        )}
       </div>
+
+      {/* Save Template Modal */}
+      <SaveTemplateModal
+        open={isSaveModalOpen}
+        onOpenChange={setIsSaveModalOpen}
+        onSaveSuccess={handleSaveSuccess}
+        existingTemplates={templates}
+      />
     </div>
   );
 }
