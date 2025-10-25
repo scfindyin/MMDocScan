@@ -76,6 +76,8 @@ export default function ExtractPageClient() {
       return; // Button should be disabled
     }
 
+    console.log('🚀 Starting extraction, setting isExtracting to true');
+
     // Start extraction
     setIsExtracting(true);
     clearResults();

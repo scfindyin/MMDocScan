@@ -30,6 +30,13 @@ export function ResultsTable({
   error = null,
   onRetry,
 }: ResultsTableProps) {
+  console.log('📊 ResultsTable render:', {
+    isLoading,
+    hasError: !!error,
+    resultCount: results?.length || 0,
+    fieldsCount: fields?.length || 0
+  });
+
   // Error State
   if (error) {
     return (
