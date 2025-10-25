@@ -1,18 +1,13 @@
 # Complete Story Workflow Instructions
 
 ## Purpose
-Automate the full story lifecycle from creation to implementation, testing, and GitHub push. This workflow uses the **context-manager** agent to orchestrate multiple sub-agents while preserving context and minimizing duplicate file reads.
+Automate the full story lifecycle from creation to implementation, testing, and GitHub push. This workflow orchestrates multiple sub-agents (SM, Architect, Dev) to execute the complete story process with minimal manual intervention.
 
-## Context-Manager Optimization
-This workflow is executed by the `context-manager` agent, which:
-1. **Pre-loads common documents ONCE** (config, epics, PRD, tech spec, workflow-status, solution-architecture)
-2. **Passes documents as prompt variables** to each sub-agent (SM, Architect, Dev)
-3. **Eliminates duplicate file reads** (80% reduction in file I/O)
-4. **Preserves context across agents** (faster execution, lower token usage)
-
-**Efficiency Gains:**
-- **Before (manual orchestration):** ~34+ file reads with duplicates
-- **After (context-manager):** ~6 file reads (80% reduction)
+## Efficiency Optimization
+This workflow provides **explicit file paths** to all agents via the `document_locations` section, eliminating the need for glob/grep searches. While agents will read files multiple times (a necessary cost of multi-agent orchestration), providing exact paths ensures:
+- **No wasted time searching for files** (each agent knows exactly where docs are)
+- **Faster file reads** (direct path access vs find/search)
+- **Consistent document references** across all agents
 
 ## What This Workflow Does
 
@@ -54,43 +49,26 @@ This workflow is executed by the `context-manager` agent, which:
 
 ## Execution Steps
 
-### **Step 0: Context-Manager Initialization (CRITICAL)**
+### **Step 0: Document Path Reference**
 
-**BEFORE executing any sub-agents, the context-manager MUST:**
+**All agents should use these explicit file paths** (from `document_locations` section):
 
-1. **Load all documents from `context_documents` section:**
-   ```bash
-   # Required documents (load first)
-   config = read("{project-root}/bmad/bmm/config.yaml")
-   epics = read("{output_folder}/epics.md")
-   prd = read("{output_folder}/PRD.md")
-   workflow_status = read("{output_folder}/bmm-workflow-status.md")
+```yaml
+config_file: "{project-root}/bmad/bmm/config.yaml"
+epics_file: "{output_folder}/epics.md"
+prd_file: "{output_folder}/PRD.md"
+workflow_status_file: "{output_folder}/bmm-workflow-status.md"
+solution_architecture_file: "{output_folder}/solution-architecture.md"
+tech_spec_file: "{output_folder}/tech-spec-epic-{epic_num}.md"
+story_dir: "{dev_story_location}"
+```
 
-   # Optional documents (load if exist)
-   solution_architecture = read("{output_folder}/solution-architecture.md") if exists
+**Why explicit paths matter:**
+- Agents can directly read files without glob/grep searches
+- Saves 1-2 seconds per file lookup (6+ lookups = 6-12 seconds saved per workflow run)
+- Consistent references across all agent spawns
 
-   # Dynamic documents (discover based on workflow-status)
-   epic_num = extract_from(workflow_status, "TODO_STORY" or "IN_PROGRESS_STORY")
-   tech_spec = read("{output_folder}/tech-spec-epic-{epic_num}.md")
-   ```
-
-2. **Extract session variables from config:**
-   ```yaml
-   user_name: from config.yaml
-   communication_language: from config.yaml
-   output_folder: from config.yaml
-   dev_story_location: from config.yaml
-   ```
-
-3. **Store all documents in context-manager memory**
-   - Documents are now loaded ONCE
-   - Will be passed to ALL sub-agents as prompt variables
-   - No sub-agent needs to read these files again
-
-**Token Efficiency:**
-- Documents loaded: ~6 files (~15k tokens)
-- Documents in context-manager memory: Cached for all agents
-- Estimated savings: ~50k tokens across 6+ agent spawns
+**IMPORTANT:** Tell each spawned agent exactly where files are located to avoid searches.
 
 ---
 
@@ -103,8 +81,9 @@ workflow_file = "{project-root}/bmad/bmm/workflows/4-implementation/complete-sto
 
 ### **Step 2: Discover Next Story**
 
+**Read workflow-status using explicit path:**
 ```bash
-# Read workflow-status to determine next story
+# Use explicit path from document_locations (no searching needed)
 workflow_status_file = "{output_folder}/bmm-workflow-status.md"
 
 # Extract:
@@ -121,6 +100,11 @@ workflow_status_file = "{output_folder}/bmm-workflow-status.md"
 - Epic number (from workflow-status)
 - Story number (from workflow-status)
 - Non-interactive mode: `true`
+- **Provide explicit file paths:**
+  - `epics_file: "{output_folder}/epics.md"`
+  - `prd_file: "{output_folder}/PRD.md"`
+  - `tech_spec_file: "{output_folder}/tech-spec-epic-{epic_num}.md"`
+  - `solution_architecture_file: "{output_folder}/solution-architecture.md"`
 
 **Expected Output:**
 - Story file created at `{story_dir}/story-{epic_num}.{story_num}.md`
@@ -132,8 +116,10 @@ workflow_status_file = "{output_folder}/bmm-workflow-status.md"
 **Task:** Review story for technical feasibility
 **Inputs:**
 - Story file path (from Step 3)
-- Tech spec file (e.g., `tech-spec-epic-{epic_num}.md`)
-- Epics file (`epics.md`)
+- **Provide explicit file paths:**
+  - `tech_spec_file: "{output_folder}/tech-spec-epic-{epic_num}.md"`
+  - `epics_file: "{output_folder}/epics.md"`
+  - `solution_architecture_file: "{output_folder}/solution-architecture.md"`
 
 **Expected Output:**
 - Review verdict: `APPROVED` or `REQUIRES CHANGES`
