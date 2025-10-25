@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { TemplateField } from '@/types/template';
+import { ExtractedRow } from '@/types/extraction';
 
 // CRITICAL: Use TemplateField from @/types/template (Story 3.5 type alignment)
 // Re-export for backward compatibility
@@ -9,20 +10,15 @@ export type ExtractionField = TemplateField;
 // Template mode type
 export type TemplateMode = 'new' | 'existing';
 
-// Extraction result types (Story 3.7)
-export interface FieldResult {
-  fieldName: string;
-  fieldType: string;
-  extractedValue: any;
-}
+// Re-export ExtractedRow from types/extraction for convenience
+export type { ExtractedRow } from '@/types/extraction';
 
-export interface ExtractionResult {
-  extractionId: string;
+// Extraction response format (Story 3.7 - matches Story 2.3 format)
+export interface ExtractionResponse {
+  success: true;
+  data: ExtractedRow[];
+  rowCount: number;
   filename: string;
-  templateId?: string;
-  templateName?: string;
-  timestamp: string;
-  results: FieldResult[];
 }
 
 interface ExtractionStore {
@@ -44,7 +40,7 @@ interface ExtractionStore {
   uploadedFile: File | null; // Uploaded file for extraction
 
   // Extraction state (Story 3.7)
-  results: ExtractionResult | null; // Extraction results
+  results: ExtractionResponse | null; // Extraction results in ExtractedRow[] format
   isExtracting: boolean; // True during extraction API call
   extractionError: string | null; // Error message from failed extraction
 
@@ -75,7 +71,7 @@ interface ExtractionStore {
   markClean: () => void; // Legacy alias for clearDirty
 
   // Extraction actions (Story 3.7)
-  setResults: (results: ExtractionResult) => void;
+  setResults: (results: ExtractionResponse) => void;
   clearResults: () => void;
   setIsExtracting: (isExtracting: boolean) => void;
   setExtractionError: (error: string | null) => void;

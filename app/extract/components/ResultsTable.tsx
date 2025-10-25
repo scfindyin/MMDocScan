@@ -3,18 +3,33 @@
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import { FieldResult } from '@/stores/extractionStore';
+import { ExtractedRow } from '@/stores/extractionStore';
+import { TemplateField } from '@/types/template';
 
 interface ResultsTableProps {
-  results: FieldResult[];
+  results: ExtractedRow[];
+  fields: TemplateField[];
   isLoading?: boolean;
   error?: string | null;
   onRetry?: () => void;
 }
 
-export function ResultsTable({ results, isLoading = false, error = null, onRetry }: ResultsTableProps) {
+export function ResultsTable({
+  results,
+  fields,
+  isLoading = false,
+  error = null,
+  onRetry,
+}: ResultsTableProps) {
   // Error State
   if (error) {
     return (
@@ -26,12 +41,7 @@ export function ResultsTable({ results, isLoading = false, error = null, onRetry
               <p className="font-semibold">Extraction Failed</p>
               <p className="text-sm">{error}</p>
               {onRetry && (
-                <Button
-                  onClick={onRetry}
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                >
+                <Button onClick={onRetry} variant="outline" size="sm" className="mt-2">
                   Try Again
                 </Button>
               )}
@@ -72,37 +82,90 @@ export function ResultsTable({ results, isLoading = false, error = null, onRetry
     );
   }
 
-  // Success State - Display Results Table
+  // Success State - Display Results Table in ROW x COLUMN format
+  // Columns: All template fields
+  // Rows: Each ExtractedRow with confidence and source metadata
+
+  const fieldNames = fields.map((f) => f.name);
+
   return (
     <Card className="p-6">
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Extracted Fields</h3>
-          <p className="text-sm text-gray-500">
-            {results.length} {results.length === 1 ? 'field' : 'fields'} extracted
-          </p>
+          <h3 className="text-lg font-semibold text-gray-900">Extracted Data</h3>
+          <div className="text-sm text-gray-500">
+            {results.length} {results.length === 1 ? 'row' : 'rows'} extracted
+          </div>
         </div>
 
-        <div className="border rounded-lg overflow-hidden">
+        {/* Results table with horizontal scroll */}
+        <div className="border rounded-lg overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-1/3 font-semibold">Field Name</TableHead>
-                <TableHead className="font-semibold">Extracted Value</TableHead>
+                {/* Confidence column */}
+                <TableHead className="font-semibold whitespace-nowrap w-24">
+                  Confidence
+                </TableHead>
+                {/* Field columns */}
+                {fieldNames.map((fieldName) => (
+                  <TableHead key={fieldName} className="font-semibold whitespace-nowrap">
+                    {fieldName}
+                  </TableHead>
+                ))}
+                {/* Source column */}
+                <TableHead className="font-semibold whitespace-nowrap w-48">
+                  Source
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {results.map((result, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium text-gray-700">
-                    {result.fieldName}
+              {results.map((row, rowIndex) => (
+                <TableRow key={row.rowId || rowIndex}>
+                  {/* Confidence cell */}
+                  <TableCell className="text-center">
+                    <span
+                      className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                        row.confidence >= 0.8
+                          ? 'bg-green-100 text-green-800'
+                          : row.confidence >= 0.6
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-orange-100 text-orange-800'
+                      }`}
+                    >
+                      {Math.round(row.confidence * 100)}%
+                    </span>
                   </TableCell>
-                  <TableCell className="text-gray-900">
-                    {result.extractedValue !== null && result.extractedValue !== undefined && result.extractedValue !== '' ? (
-                      <span>{String(result.extractedValue)}</span>
-                    ) : (
-                      <span className="text-gray-400 italic">No value extracted</span>
-                    )}
+
+                  {/* Field value cells */}
+                  {fieldNames.map((fieldName) => {
+                    const value = row.fields[fieldName];
+                    const isEmpty =
+                      value === null || value === undefined || value === '';
+
+                    return (
+                      <TableCell key={`${row.rowId}-${fieldName}`} className="max-w-xs">
+                        {isEmpty ? (
+                          <span className="text-gray-400 italic text-sm">—</span>
+                        ) : (
+                          <span className="text-gray-900">{String(value)}</span>
+                        )}
+                      </TableCell>
+                    );
+                  })}
+
+                  {/* Source metadata cell */}
+                  <TableCell className="text-sm text-gray-600">
+                    <div className="space-y-1">
+                      <div className="truncate" title={row.sourceMetadata.filename}>
+                        {row.sourceMetadata.filename}
+                      </div>
+                      {row.sourceMetadata.pageNumber && (
+                        <div className="text-xs text-gray-500">
+                          Page {row.sourceMetadata.pageNumber}
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -110,12 +173,29 @@ export function ResultsTable({ results, isLoading = false, error = null, onRetry
           </Table>
         </div>
 
-        {/* Empty results warning */}
-        {results.every((r) => !r.extractedValue || r.extractedValue === '') && (
+        {/* Low confidence warning */}
+        {results.some((r) => r.confidence < 0.7) && (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="ml-2">
-              No data was extracted from the document. This could mean the document is empty or the fields don&apos;t match the content.
+              Some rows have low confidence scores (below 70%). Please review these
+              entries carefully.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Empty fields warning */}
+        {results.every((r) =>
+          fieldNames.every((fieldName) => {
+            const value = r.fields[fieldName];
+            return value === null || value === undefined || value === '';
+          })
+        ) && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="ml-2">
+              No data was extracted from the document. This could mean the document is
+              empty or the fields don&apos;t match the content.
             </AlertDescription>
           </Alert>
         )}

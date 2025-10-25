@@ -109,21 +109,8 @@ export default function ExtractPageClient() {
 
       const data = await response.json();
 
-      // Transform API response to match store format
-      const extractionResult = {
-        extractionId: data.extraction_id,
-        filename: data.filename,
-        templateId: data.template_id,
-        templateName: data.template_name,
-        timestamp: data.timestamp,
-        results: data.results.map((r: any) => ({
-          fieldName: r.field_name,
-          fieldType: r.field_type,
-          extractedValue: r.extracted_value,
-        })),
-      };
-
-      setResults(extractionResult);
+      // Store API response (now in ExtractedRow[] format)
+      setResults(data);
     } catch (error) {
       console.error('Extraction error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Extraction failed. Please try again.';
@@ -298,7 +285,8 @@ export default function ExtractPageClient() {
                     Extraction Results
                   </h2>
                   <ResultsTable
-                    results={results?.results || []}
+                    results={results?.data || []}
+                    fields={fields}
                     isLoading={isExtracting}
                     error={extractionError}
                     onRetry={handleExtract}

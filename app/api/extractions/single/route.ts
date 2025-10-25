@@ -1,43 +1,127 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import { TemplateField } from '@/types/template';
+import { ExtractedRow, SourceMetadata } from '@/types/extraction';
 
 /**
  * Story 3.7: Single File Extraction API Endpoint
  *
  * POST /api/extractions/single
  * Processes a single PDF file with template fields and returns structured extraction results
+ * Returns ExtractedRow[] format matching Story 2.3 for consistency
  *
  * Request (multipart/form-data):
  * - file: File (PDF document to extract from)
  * - fields: string (JSON array of TemplateField objects)
  * - extraction_prompt: string (optional custom instructions)
- * - template_id: string (optional UUID of saved template)
  *
  * Response 200:
  * {
  *   "success": true,
- *   "extraction_id": "uuid",
- *   "filename": "document.pdf",
- *   "template_id": "uuid | null",
- *   "template_name": "string | null",
- *   "timestamp": "ISO 8601",
- *   "results": [
- *     {
- *       "field_name": "Invoice Number",
- *       "field_type": "text",
- *       "extracted_value": "INV-12345"
- *     }
- *   ]
+ *   "data": ExtractedRow[],
+ *   "rowCount": number,
+ *   "filename": string
  * }
  */
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-interface FieldResult {
-  field_name: string;
-  field_type: string;
-  extracted_value: any;
+/**
+ * Calculate confidence score for an extracted row
+ * Based on field completeness and data type validation
+ */
+function calculateConfidence(
+  fields: Record<string, any>,
+  templateFields: TemplateField[]
+): number {
+  const totalFields = templateFields.length;
+  if (totalFields === 0) return 1.0;
+
+  let populatedFields = 0;
+
+  for (const templateField of templateFields) {
+    const value = fields[templateField.name];
+
+    // Check if field is populated (non-empty string or valid value)
+    if (value !== null && value !== undefined && value !== '') {
+      populatedFields++;
+    }
+  }
+
+  // Completeness factor: percentage of fields populated
+  const completenessFactor = populatedFields / totalFields;
+
+  return completenessFactor;
+}
+
+/**
+ * Denormalize data: repeat header fields on each detail row
+ * If extraction returns structured data with header and details, flatten it
+ */
+function denormalizeData(
+  extractedData: any,
+  templateFields: TemplateField[],
+  filename: string
+): ExtractedRow[] {
+  const results: ExtractedRow[] = [];
+
+  // Check if extracted data has header/detail structure
+  if (
+    extractedData.header &&
+    extractedData.details &&
+    Array.isArray(extractedData.details)
+  ) {
+    // Multi-row extraction (e.g., invoice with line items)
+    const headerFields = extractedData.header;
+
+    if (extractedData.details.length === 0) {
+      // No detail rows, create single row with header only
+      const allFields = { ...headerFields };
+      const confidence = calculateConfidence(allFields, templateFields);
+
+      results.push({
+        rowId: crypto.randomUUID(),
+        confidence,
+        fields: allFields,
+        sourceMetadata: {
+          filename,
+          extractedAt: new Date().toISOString(),
+        },
+      });
+    } else {
+      // Create one row per detail row, repeating header fields
+      for (const detailRow of extractedData.details) {
+        const allFields = { ...headerFields, ...detailRow };
+        const confidence = calculateConfidence(allFields, templateFields);
+
+        results.push({
+          rowId: crypto.randomUUID(),
+          confidence,
+          fields: allFields,
+          sourceMetadata: {
+            filename,
+            extractedAt: new Date().toISOString(),
+          },
+        });
+      }
+    }
+  } else {
+    // Simple flat extraction (single row with all fields)
+    const allFields = extractedData;
+    const confidence = calculateConfidence(allFields, templateFields);
+
+    results.push({
+      rowId: crypto.randomUUID(),
+      confidence,
+      fields: allFields,
+      sourceMetadata: {
+        filename,
+        extractedAt: new Date().toISOString(),
+      },
+    });
+  }
+
+  return results;
 }
 
 export async function POST(request: NextRequest) {
@@ -49,8 +133,6 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File | null;
     const fieldsJson = formData.get('fields') as string | null;
     const extractionPrompt = formData.get('extraction_prompt') as string | null;
-    const templateId = formData.get('template_id') as string | null;
-    const templateName = formData.get('template_name') as string | null;
 
     // Validation: file required
     if (!file) {
@@ -136,48 +218,74 @@ export async function POST(request: NextRequest) {
     });
 
     // Build extraction schema for Claude API
+    // Create a flexible schema that allows both flat and structured (header/detail) responses
     const extractionSchema = {
       type: 'object',
       properties: {
-        extracted_fields: {
+        header: {
           type: 'object',
+          description: 'Header fields (document-level information like invoice number, date, vendor)',
           properties: Object.fromEntries(
             fields.map((f) => [
               f.name,
               {
                 type: 'string',
-                description: `Extract ${f.name} from document${f.instructions ? `: ${f.instructions}` : ''}`,
+                description: f.instructions || `Extract ${f.name} from document`,
               },
             ])
           ),
         },
+        details: {
+          type: 'array',
+          description:
+            'Detail rows (line items, transactions, etc.). If document has multiple rows/items, extract each as a separate detail object. If single record, can be empty array.',
+          items: {
+            type: 'object',
+            properties: Object.fromEntries(
+              fields.map((f) => [
+                f.name,
+                {
+                  type: 'string',
+                  description: f.instructions || `Extract ${f.name}`,
+                },
+              ])
+            ),
+          },
+        },
       },
-      required: ['extracted_fields'],
     };
 
     // Build extraction prompt
-    let prompt = 'IMPORTANT: Extract the following fields from this document.\n\n';
+    let prompt = 'Extract data from this document and return it in structured format.\n\n';
 
     // Add custom extraction instructions if provided
     if (extractionPrompt && extractionPrompt.trim()) {
-      prompt += 'EXTRACTION INSTRUCTIONS:\n';
+      prompt += 'CUSTOM INSTRUCTIONS:\n';
       prompt += `${extractionPrompt.trim()}\n\n`;
     }
 
     // Add field list
-    prompt += 'Fields to extract:\n';
+    prompt += 'FIELDS TO EXTRACT:\n';
     fields.forEach((f) => {
       const fieldDesc = f.instructions ? ` - ${f.instructions}` : '';
       prompt += `- ${f.name}${fieldDesc}\n`;
     });
     prompt += '\n';
 
-    // Add formatting instructions
-    prompt += 'EXTRACTION REQUIREMENTS:\n';
-    prompt += '- All fields must be returned as strings\n';
-    prompt += '- If a field is not present in the document, use an empty string\n';
+    // Add structure instructions
+    prompt += 'IMPORTANT INSTRUCTIONS:\n';
+    prompt +=
+      '- If this document has REPEATING DATA (like invoice line items, multiple transactions, etc.):\n';
+    prompt +=
+      '  * Put document-level fields (invoice number, date, vendor, etc.) in "header"\n';
+    prompt += '  * Put each line item/row in "details" array with its own field values\n';
+    prompt += '  * Example: Invoice with 3 line items = header + 3 detail objects\n';
+    prompt += '- If this document has SINGLE RECORD (no repeating data):\n';
+    prompt += '  * Put all fields in "header"\n';
+    prompt += '  * Leave "details" as empty array []\n';
+    prompt += '- All field values should be strings\n';
+    prompt += '- If a field is not present in the document, use empty string ""\n';
     prompt += '- Extract exact values as they appear in the document\n';
-    prompt += '- Follow any custom instructions provided above\n';
 
     // Build content array for Claude API
     const contentArray: any[] = [
@@ -209,7 +317,8 @@ export async function POST(request: NextRequest) {
         tools: [
           {
             name: 'extract_data',
-            description: 'Extract structured data from document',
+            description:
+              'Extract structured data from document with header and details format',
             input_schema: extractionSchema as any,
           },
         ],
@@ -228,36 +337,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Unable to extract data from document. Please check document content or try again.',
+          error:
+            'Unable to extract data from document. Please check document content or try again.',
         },
         { status: 500 }
       );
     }
 
     const extractedData = toolUseBlock.input as any;
-    const extractedFields = extractedData.extracted_fields || {};
 
-    // Format results as FieldResult array
-    const results: FieldResult[] = fields.map((field) => ({
-      field_name: field.name,
-      field_type: 'text', // Default type
-      extracted_value: extractedFields[field.name] || '',
-    }));
+    // Denormalize data into ExtractedRow[] format
+    const extractedRows = denormalizeData(extractedData, fields, file.name);
 
-    // Generate extraction ID (client-side UUID)
-    const extractionId = crypto.randomUUID();
-
-    // Return success response
+    // Return success response matching Story 2.3 format
     return NextResponse.json({
       success: true,
-      extraction_id: extractionId,
+      data: extractedRows,
+      rowCount: extractedRows.length,
       filename: file.name,
-      template_id: templateId || null,
-      template_name: templateName || null,
-      timestamp: new Date().toISOString(),
-      results,
     });
-
   } catch (error) {
     console.error('Error in single extraction API:', error);
 
