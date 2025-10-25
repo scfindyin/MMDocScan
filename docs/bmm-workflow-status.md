@@ -22,17 +22,17 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "3.16", "3.17", "3.18", "3.19", "3.20", "3.21", "3.22", "3.23", "3.24", "3.25", "3.26", "3.27", "3.28", "3.29", "3.30"]
-TODO_STORY: 3.4
-TODO_TITLE: Template CRUD API Endpoints
-IN_PROGRESS_STORY: 3.3
-IN_PROGRESS_TITLE: Drag-and-Drop Field Reordering
-STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2"]
+TODO_STORY: 3.5
+TODO_TITLE: Save Template Flow
+IN_PROGRESS_STORY: 3.4
+IN_PROGRESS_TITLE: Template CRUD API Endpoints
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2", "3.3"]
 
 ## Next Action
 
-NEXT_ACTION: Story 3.3 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
-NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
-NEXT_AGENT: developer
+NEXT_ACTION: Story 3.3 approved and marked done. Ready to start Story 3.4: Template CRUD API Endpoints.
+NEXT_COMMAND: create-story (Draft Story 3.4: Template CRUD API Endpoints)
+NEXT_AGENT: scrum-master
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) ✅ COMPLETE (10 of 10 complete)
@@ -58,12 +58,13 @@ NEXT_AGENT: developer
 - Story 2.8: Excel Export and Download ✓
 - Story 2.9: Extraction Session Management ✓
 
-### Epic 3: Unified Batch Extraction Workflow (30 stories) 🚀 IN PROGRESS (2 of 30 complete)
+### Epic 3: Unified Batch Extraction Workflow (30 stories) 🚀 IN PROGRESS (3 of 30 complete)
 
 #### Phase 1: Foundation (Weeks 1-2) - Stories 3.1-3.7
 - Story 3.1: Unified Page Layout with Resizable Panels ✓
 - Story 3.2: Tag-Based Template Builder UI ✓
-- Story 3.3: Drag-and-Drop Field Reordering 🚧 IN PROGRESS
+- Story 3.3: Drag-and-Drop Field Reordering ✓
+- Story 3.4: Template CRUD API Endpoints 🚧 IN PROGRESS
 - Story 3.3: Drag-and-Drop Field Reordering
 - Story 3.4: Template CRUD APIs
 - Story 3.5: Save Template Flow
@@ -392,8 +393,8 @@ NEXT_AGENT: developer
 - **Integration:** Uses Zustand store from Story 3.1, drag handle prepared for Story 3.3, reuses ShadCN components
 - **DoD Complete:** All acceptance criteria met, code reviewed, build/lint passing, deployed to production
 
-### Story 3.3: Drag-and-Drop Field Reordering
-- **Status:** Ready for Review
+### Story 3.3: Drag-and-Drop Field Reordering ✓
+- **Status:** Done
 - **Completed:** 2025-10-24
 - **Summary:** Drag-and-drop field reordering with @dnd-kit libraries, keyboard navigation, touch support, and accessibility features
 - **All ACs Verified:** 9/9 passing (AC1: @dnd-kit installed, AC2: draggable field tags with handle, AC3: drop zones, AC4: reorder on drop, AC5: order persisted, AC6: keyboard navigation, AC7: ARIA labels, AC8: smooth animations, AC9: touch support)

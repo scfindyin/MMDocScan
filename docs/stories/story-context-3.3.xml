@@ -1,0 +1,190 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.3</storyId>
+    <title>Drag-and-Drop Field Reordering</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to reorder extraction fields by dragging them</iWant>
+    <soThat>I can organize fields in a logical sequence</soThat>
+    <tasks>
+      - Task 1: Install @dnd-kit Dependencies (AC: 1) - Install core, sortable, utilities packages
+      - Task 2: Configure DndContext Provider (AC: 1) - Wrap FieldTagsArea with DndContext, sensors, collision detection
+      - Task 3: Make Field Tags Draggable (AC: 2, 3, 4) - Use useSortable hook, drag handle trigger, visual drop zones
+      - Task 4: Keyboard Navigation (AC: 6, 7) - Arrow up/down, ARIA labels, screen reader support
+      - Task 5: Animations and Visual Feedback (AC: 8) - CSS transitions, drag feedback, 60fps performance
+      - Task 6: Touch Device Support (AC: 9) - Touch sensor, long-press, mobile testing
+      - Task 7: Zustand Store Integration (AC: 5) - Use reorderFields action, persist order, isDirty flag
+      - Task 8: Testing and Validation - Test drag/drop, keyboard nav, touch, accessibility, build/lint
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. @dnd-kit/core installed and configured
+    2. Field tags draggable with visual drag handle (⠿)
+    3. Dragging shows drop zones between other tags
+    4. Tags reorder on drop
+    5. Order persisted in template data structure
+    6. Keyboard navigation: Arrow up/down to reorder focused tag
+    7. Screen reader announces: "Drag to reorder, press enter to edit"
+    8. Smooth animation when reordering
+    9. Drag works on desktop and touch devices
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown - Story 3.3</title>
+        <section>Epic 3: Unified Batch Extraction Workflow - Phase 1</section>
+        <snippet>Story 3.3 implements drag-and-drop field reordering using @dnd-kit. Field tags draggable with visual drag handle (⠿), drop zones shown during drag, smooth animations, keyboard navigation (arrow up/down), screen reader support, and touch device compatibility.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>AC2.4 Drag-and-drop field reordering with @dnd-kit</section>
+        <snippet>Drag-and-drop with @dnd-kit/core for DndContext, @dnd-kit/sortable for SortableContext, drag handle icon (⠿), visual drop zones, smooth animation. Keyboard navigation: Arrow up/down to reorder focused tag. Screen reader announces: "Drag to reorder, press enter to edit".</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Dependencies - @dnd-kit packages</section>
+        <snippet>@dnd-kit/core ^6.1.0 (+25KB), @dnd-kit/sortable ^8.0.0 (+10KB), @dnd-kit/utilities ^3.2.2 (+5KB). Accessible drag-and-drop for field tags, sortable list integration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>AC14: Accessibility</section>
+        <snippet>Keyboard navigation: Tab through all interactive elements. ARIA labels on icons/buttons. ARIA live regions for dynamic content. Screen reader compatible (NVDA, VoiceOver). Focus indicators visible (2px blue outline). Color contrast ≥4.5:1 (WCAG AA).</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <file>
+        <path>app/extract/components/FieldTag.tsx</path>
+        <kind>component</kind>
+        <symbol>FieldTag</symbol>
+        <lines>1-58</lines>
+        <reason>Component has drag handle icon (⠿) placeholder at line 22-25. Must add useSortable hook, apply transform/transition styles, make drag handle the trigger. Currently drag handle has cursor-grab styling but no functionality.</reason>
+      </file>
+      <file>
+        <path>app/extract/components/FieldTagsArea.tsx</path>
+        <kind>component</kind>
+        <symbol>FieldTagsArea</symbol>
+        <lines>1-73</lines>
+        <reason>Parent container for field tags. Must wrap with DndContext from @dnd-kit/core, configure sensors (mouse, touch, keyboard), add SortableContext wrapper, implement onDragEnd handler to call Zustand reorderFields action.</reason>
+      </file>
+      <file>
+        <path>stores/extractionStore.ts</path>
+        <kind>state-management</kind>
+        <symbol>reorderFields</symbol>
+        <lines>60-70</lines>
+        <reason>reorderFields action already exists from Story 3.2. Takes (startIndex, endIndex), updates field order property, reorders array. Must call this from DndContext onDragEnd handler.</reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <node>
+        <dnd-kit>
+          <package>@dnd-kit/core</package>
+          <version>^6.1.0</version>
+          <usage>DndContext provider, sensors (MouseSensor, TouchSensor, KeyboardSensor), collision detection</usage>
+        </dnd-kit>
+        <dnd-kit>
+          <package>@dnd-kit/sortable</package>
+          <version>^8.0.0</version>
+          <usage>SortableContext wrapper, useSortable hook for draggable items</usage>
+        </dnd-kit>
+        <dnd-kit>
+          <package>@dnd-kit/utilities</package>
+          <version>^3.2.2</version>
+          <usage>CSS utility functions for transform and transition styles</usage>
+        </dnd-kit>
+      </node>
+      <install>
+        <command>npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities</command>
+        <expected-size>+40KB bundle impact (25KB core + 10KB sortable + 5KB utilities)</expected-size>
+      </install>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Modify existing FieldTag.tsx and FieldTagsArea.tsx only (no new component files)
+    - Install 3 @dnd-kit packages: core, sortable, utilities
+    - Use existing reorderFields action from extractionStore (do NOT create new action)
+    - Drag handle (⠿) at line 22-25 in FieldTag.tsx must become the only drag trigger
+    - Entire tag should NOT be draggable, only the drag handle icon
+    - Configure 3 sensors: MouseSensor, TouchSensor, KeyboardSensor
+    - Collision detection: closestCenter algorithm
+    - Animations: 300ms duration, use CSS transform (not top/left)
+    - ARIA labels required: "Drag to reorder, press enter to edit"
+    - Keyboard: Arrow up/down to reorder, Enter to edit (existing behavior)
+    - Touch: Long-press activates drag (avoid conflict with scroll)
+    - Performance: 60fps target, no layout thrashing
+    - Ensure isDirty flag set when fields reordered
+    - TypeScript strict mode - all types from @dnd-kit packages
+    - Build must pass with zero errors, lint with zero warnings
+  </constraints>
+
+  <interfaces>
+    <hook>
+      <name>useSortable</name>
+      <kind>@dnd-kit hook</kind>
+      <signature>const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: field.id })</signature>
+      <path>@dnd-kit/sortable</path>
+      <usage>Apply to FieldTag component. attributes/listeners on drag handle only, setNodeRef on tag div, transform/transition for animation.</usage>
+    </hook>
+    <component>
+      <name>DndContext</name>
+      <kind>@dnd-kit provider</kind>
+      <signature>&lt;DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}&gt;...&lt;/DndContext&gt;</signature>
+      <path>@dnd-kit/core</path>
+      <usage>Wrap FieldTagsArea content. Configure sensors, collision detection, onDragEnd handler.</usage>
+    </component>
+    <component>
+      <name>SortableContext</name>
+      <kind>@dnd-kit wrapper</kind>
+      <signature>&lt;SortableContext items={fieldIds} strategy={verticalListSortingStrategy}&gt;...&lt;/SortableContext&gt;</signature>
+      <path>@dnd-kit/sortable</path>
+      <usage>Wrap field tags list. Pass array of field IDs, use verticalListSortingStrategy.</usage>
+    </component>
+    <action>
+      <name>reorderFields</name>
+      <kind>Zustand action</kind>
+      <signature>reorderFields(startIndex: number, endIndex: number)</signature>
+      <path>stores/extractionStore.ts</path>
+      <usage>Call from onDragEnd handler with active/over indices to update field order in store.</usage>
+    </action>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Follow existing test patterns from Epics 1-2. Use Vitest for unit tests. E2E tests with Playwright for critical flows. TypeScript strict mode enforced. Build must pass with zero errors, lint with zero warnings. Accessibility testing with screen reader (NVDA or VoiceOver).
+    </standards>
+
+    <locations>
+      - Component tests (if created): __tests__/components/FieldTag.test.tsx
+      - E2E tests (Story 3.30): tests/e2e/field-reordering.spec.ts
+    </locations>
+
+    <ideas>
+      - AC1: Verify @dnd-kit packages installed in package.json with correct versions
+      - AC2: Test drag handle (⠿) is draggable, rest of tag is not
+      - AC3: Test visual drop zones appear between tags during drag
+      - AC4: Test dragging field from position 1 to position 5, verify order updated
+      - AC5: Test field order property persisted in Zustand store after reorder
+      - AC6: Test keyboard navigation: Arrow up moves field up, Arrow down moves field down
+      - AC7: Test ARIA label present on field tags for screen reader
+      - AC8: Test smooth animation (300ms transition, no jank)
+      - AC9: Test drag-and-drop on touch device or Chrome DevTools mobile emulator
+      - Integration: Verify isDirty flag set to true when fields reordered
+      - Integration: Verify reordered fields maintain edit/delete functionality
+    </ideas>
+  </tests>
+</story-context>
