@@ -1,7 +1,8 @@
 name: complete-story
 description: "Full story lifecycle automation: create story → architect review → fix if needed → ready → implement → test → push to GitHub"
 author: "BMad"
-version: "1.0.0"
+version: "1.1.0"
+executor: "context-manager"  # CRITICAL: Use context-manager agent to preserve context across sub-agents
 
 # Critical variables from config
 config_source: "{project-root}/bmad/bmm/config.yaml"
@@ -17,6 +18,36 @@ installed_path: "{project-root}/bmad/bmm/workflows/4-implementation/complete-sto
 instructions: "{installed_path}/instructions.md"
 validation: "{installed_path}/checklist.md"
 
+# Context pre-loading configuration (for context-manager agent)
+context_documents:
+  # Core configuration (always load first)
+  - path: "{project-root}/bmad/bmm/config.yaml"
+    alias: "config"
+    required: true
+
+  # Project documentation (load once, pass to all agents)
+  - path: "{output_folder}/epics.md"
+    alias: "epics"
+    required: true
+
+  - path: "{output_folder}/PRD.md"
+    alias: "prd"
+    required: true
+
+  - path: "{output_folder}/bmm-workflow-status.md"
+    alias: "workflow_status"
+    required: true
+
+  - path: "{output_folder}/solution-architecture.md"
+    alias: "solution_architecture"
+    required: false
+
+  # Tech spec will be discovered dynamically based on current epic
+  - path: "{output_folder}/tech-spec-epic-{{epic_num}}.md"
+    alias: "tech_spec"
+    required: true
+    dynamic: true  # Path contains {{epic_num}} variable
+
 # Variables and inputs
 variables:
   story_dir: "{config_source}:dev_story_location" # Directory where stories are stored
@@ -25,6 +56,10 @@ variables:
   enable_database_testing: true # Use Supabase MCP to test database operations
   auto_push_to_github: true # Automatically push successful implementations
   skip_manual_approval: false # If true, skip story-ready approval step
+
+  # Context efficiency metrics
+  enable_context_preload: true # Use context-manager to pre-load documents
+  pass_documents_to_agents: true # Pass pre-loaded docs in agent prompts
 
 # Orchestration steps
 orchestration:

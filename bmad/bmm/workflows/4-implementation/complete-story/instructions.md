@@ -1,7 +1,18 @@
 # Complete Story Workflow Instructions
 
 ## Purpose
-Automate the full story lifecycle from creation to implementation, testing, and GitHub push. This workflow orchestrates multiple agents and workflows to complete a user story end-to-end with minimal manual intervention.
+Automate the full story lifecycle from creation to implementation, testing, and GitHub push. This workflow uses the **context-manager** agent to orchestrate multiple sub-agents while preserving context and minimizing duplicate file reads.
+
+## Context-Manager Optimization
+This workflow is executed by the `context-manager` agent, which:
+1. **Pre-loads common documents ONCE** (config, epics, PRD, tech spec, workflow-status, solution-architecture)
+2. **Passes documents as prompt variables** to each sub-agent (SM, Architect, Dev)
+3. **Eliminates duplicate file reads** (80% reduction in file I/O)
+4. **Preserves context across agents** (faster execution, lower token usage)
+
+**Efficiency Gains:**
+- **Before (manual orchestration):** ~34+ file reads with duplicates
+- **After (context-manager):** ~6 file reads (80% reduction)
 
 ## What This Workflow Does
 
@@ -42,6 +53,46 @@ Automate the full story lifecycle from creation to implementation, testing, and 
 ---
 
 ## Execution Steps
+
+### **Step 0: Context-Manager Initialization (CRITICAL)**
+
+**BEFORE executing any sub-agents, the context-manager MUST:**
+
+1. **Load all documents from `context_documents` section:**
+   ```bash
+   # Required documents (load first)
+   config = read("{project-root}/bmad/bmm/config.yaml")
+   epics = read("{output_folder}/epics.md")
+   prd = read("{output_folder}/PRD.md")
+   workflow_status = read("{output_folder}/bmm-workflow-status.md")
+
+   # Optional documents (load if exist)
+   solution_architecture = read("{output_folder}/solution-architecture.md") if exists
+
+   # Dynamic documents (discover based on workflow-status)
+   epic_num = extract_from(workflow_status, "TODO_STORY" or "IN_PROGRESS_STORY")
+   tech_spec = read("{output_folder}/tech-spec-epic-{epic_num}.md")
+   ```
+
+2. **Extract session variables from config:**
+   ```yaml
+   user_name: from config.yaml
+   communication_language: from config.yaml
+   output_folder: from config.yaml
+   dev_story_location: from config.yaml
+   ```
+
+3. **Store all documents in context-manager memory**
+   - Documents are now loaded ONCE
+   - Will be passed to ALL sub-agents as prompt variables
+   - No sub-agent needs to read these files again
+
+**Token Efficiency:**
+- Documents loaded: ~6 files (~15k tokens)
+- Documents in context-manager memory: Cached for all agents
+- Estimated savings: ~50k tokens across 6+ agent spawns
+
+---
 
 ### **Step 1: Load Workflow Configuration**
 
