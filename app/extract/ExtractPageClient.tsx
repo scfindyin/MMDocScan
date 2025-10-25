@@ -5,6 +5,7 @@ import { PanelGroup, Panel, PanelResizeHandle, ImperativePanelHandle } from 'rea
 import { useExtractionStore } from '@/stores/extractionStore';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { TemplateSection } from './components/TemplateSection';
 
 export default function ExtractPageClient() {
   const leftPanelRef = useRef<ImperativePanelHandle>(null);
@@ -121,11 +122,7 @@ export default function ExtractPageClient() {
                   <h2 className="text-lg font-semibold mb-4 pr-12">
                     Template Configuration
                   </h2>
-                  <Card className="flex-1 p-6 flex items-center justify-center">
-                    <p className="text-gray-500 text-center">
-                      Coming in Story 3.2: Tag-Based Template Builder UI
-                    </p>
-                  </Card>
+                  <TemplateSection />
                 </div>
               </div>
             )}

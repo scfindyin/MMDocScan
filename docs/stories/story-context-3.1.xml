@@ -1,0 +1,177 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.1</storyId>
+    <title>Unified Page Layout with Resizable Panels</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>a single-page interface with resizable left and right panels</iWant>
+    <soThat>I can configure extraction settings and view results without losing context</soThat>
+    <tasks>
+      - Task 1: Install and configure react-resizable-panels (AC: #3)
+      - Task 2: Install and configure Zustand for global state (AC: #6, #7, #8, #9)
+      - Task 3: Create /extract route and basic page structure (AC: #1, #2)
+      - Task 4: Implement ResizablePanelGroup layout (AC: #2, #3, #4, #5)
+      - Task 5: Implement panel size persistence with localStorage (AC: #6)
+      - Task 6: Implement maximize/minimize controls (AC: #7, #8, #9)
+      - Task 7: Add smooth resize animations (AC: #10)
+      - Task 8: Create placeholder content for panels
+      - Task 9: Responsive design and mobile considerations
+      - Task 10: Testing and validation
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. New `/extract` route created with App Router
+    2. Page layout with left panel (configuration) and right panel (results)
+    3. Panels resizable via draggable divider using react-resizable-panels
+    4. Default: Left panel 300px, right panel fluid
+    5. Min widths: Left 250px, Right 600px
+    6. Panel sizes persist to localStorage
+    7. Maximize button on left panel → right minimizes to thin bar
+    8. Maximize button on right panel → left minimizes to thin bar
+    9. Click minimized bar to restore panel
+    10. Smooth resize animations
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/tech-spec-epic-3.md" title="Technical Specification: Unified Batch Extraction Workflow" section="System Architecture Alignment → New Architectural Components">
+        State Management: Zustand store replaces component-level state for global extraction workflow state. Resizable UI: react-resizable-panels for draggable panel divider and maximize/minimize controls.
+      </doc>
+      <doc path="docs/tech-spec-epic-3.md" title="Technical Specification: Epic 3" section="Detailed Design → ExtractionStore (Zustand Store)">
+        ExtractionStore interface with panel state (leftPanelSize, rightPanelSize, isLeftMaximized, isRightMaximized) and actions (setPanelSizes, maximizeLeft, maximizeRight, restoreLeft, restoreRight).
+      </doc>
+      <doc path="docs/tech-spec-epic-3.md" title="Technical Specification: Epic 3" section="NFR → Performance">
+        Performance Targets: Page load <2 seconds, Bundle size <200KB gzipped for /extract route.
+      </doc>
+      <doc path="docs/tech-spec-epic-3.md" title="Technical Specification: Epic 3" section="Acceptance Criteria → AC1: Unified Page Layout">
+        New /extract route with resizable panels (default: Left 300px, Right fluid; min: Left 250px, Right 600px). Panel sizes persist to localStorage with maximize/minimize controls.
+      </doc>
+      <doc path="docs/epics.md" title="Epic 3 Breakdown" section="Story 3.1">
+        Acceptance Criteria 1-10 for Unified Page Layout with Resizable Panels. Phase 1: Foundation (Weeks 1-2). Blocks Story 3.2 (Tag-Based Template Builder requires left panel).
+      </doc>
+      <doc path="docs/technical-implementation-plan.md" title="Technical Implementation Plan" section="Dependencies">
+        react-resizable-panels ^2.0.0 (+15KB bundle), zustand ^4.5.0 (+8KB bundle). Bundle optimization via code splitting and tree shaking.
+      </doc>
+    </docs>
+    <code>
+      <artifact path="app/templates/page.tsx" kind="page" symbol="TemplatesPage" lines="1-50" reason="Reference for App Router page structure, server component pattern, and navigation integration">
+        Existing page using App Router with metadata export, server component, and list/management UI patterns.
+      </artifact>
+      <artifact path="app/process/page.tsx" kind="page" symbol="ProcessPage" lines="1-100" reason="Reference for multi-step workflow with client state, react-dropzone usage, and ShadCN component integration">
+        Client component with "use client" directive, multi-step state management, file upload with react-dropzone, and ShadCN Dialog/Button usage.
+      </artifact>
+      <artifact path="components/navigation.tsx" kind="component" symbol="Navigation" lines="1-50" reason="Navigation component that needs to be updated with /extract link">
+        Navigation component using ShadCN NavigationMenu with links to Templates, Process Documents, and Recent Extractions. New "Batch Extract" link needed.
+      </artifact>
+      <artifact path="app/layout.tsx" kind="layout" symbol="RootLayout" lines="1-50" reason="Root layout with Toaster and navigation integration">
+        Root layout including Navigation component and Toaster for toast notifications. Provides base styling and structure.
+      </artifact>
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="next" version="^14.2.0" />
+        <package name="react" version="^18.2.0" />
+        <package name="react-dom" version="^18.2.0" />
+        <package name="typescript" version="^5.3.0" />
+        <package name="tailwindcss" version="^3.4.0" />
+        <package name="@radix-ui/react-*" version="Various (ShadCN components)" />
+        <package name="react-resizable-panels" version="^2.0.0" note="TO BE INSTALLED in Task 1" />
+        <package name="zustand" version="^4.5.0" note="TO BE INSTALLED in Task 2" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Follow Next.js 14 App Router patterns from existing pages (app/templates/, app/process/)
+    - Use "use client" directive for client components with state/interactivity
+    - Maintain Tailwind CSS styling consistency with existing pages
+    - Use ShadCN components (Button, Card) for UI elements where applicable
+    - No database schema changes in this story (deferred to Story 3.11)
+    - Bundle size target: /extract route <200KB gzipped
+    - Performance target: Page load <2 seconds
+    - Zustand store pattern: Create stores/ directory, use TypeScript interfaces
+    - localStorage persistence: Use Zustand persist middleware or custom hook
+    - Panel size constraints: Left min 25%, Right min 60%
+    - Responsive design: Test on desktop (1280px), tablet (768px), mobile (375px)
+  </constraints>
+
+  <interfaces>
+    <interface name="ExtractionStore" kind="Zustand Store" path="stores/extractionStore.ts">
+      <signature>
+        interface ExtractionStore {
+          // Panel state
+          leftPanelSize: number      // 0-100 percentage
+          rightPanelSize: number     // 0-100 percentage
+          isLeftMaximized: boolean
+          isRightMaximized: boolean
+
+          // Actions
+          setPanelSizes: (left: number, right: number) => void
+          maximizeLeft: () => void
+          maximizeRight: () => void
+          restoreLeft: () => void
+          restoreRight: () => void
+        }
+      </signature>
+    </interface>
+    <interface name="PanelGroup" kind="React Component" path="node_modules/react-resizable-panels">
+      <signature>
+        &lt;PanelGroup direction="horizontal" | "vertical"&gt;
+          &lt;Panel defaultSize={number} minSize={number} maxSize={number}&gt;...&lt;/Panel&gt;
+          &lt;PanelResizeHandle /&gt;
+          &lt;Panel defaultSize={number} minSize={number}&gt;...&lt;/Panel&gt;
+        &lt;/PanelGroup&gt;
+      </signature>
+    </interface>
+    <interface name="/extract route" kind="Next.js App Router Route" path="app/extract/page.tsx">
+      <signature>
+        // Server component with metadata
+        export const metadata: Metadata = {
+          title: "Batch Extraction",
+          description: "Extract data from multiple documents"
+        }
+
+        // Renders client component
+        export default function ExtractPage() {
+          return &lt;ExtractPageClient /&gt;
+        }
+      </signature>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Testing pyramid: 60% unit tests, 30% integration tests, 10% E2E tests. Frameworks: Vitest for unit/integration tests, Playwright for E2E tests. Test files colocated with source (*.test.ts, *.test.tsx). Definition of Done requires: unit tests passing, build passing (zero errors), lint passing (zero warnings).
+    </standards>
+    <locations>
+      - Unit tests: stores/extractionStore.test.ts (Zustand store logic)
+      - Unit tests: lib/hooks/useLocalStorage.test.ts (localStorage utilities)
+      - Integration tests: app/extract/ExtractPage.test.tsx (panel resize, maximize/minimize)
+      - E2E tests: e2e/extract-page.spec.ts (full user journey with Playwright)
+    </locations>
+    <ideas>
+      <test-idea ac="1,2,3" description="Verify /extract route renders with resizable panels">
+        Navigate to /extract → Verify left and right panels exist → Verify draggable handle between panels → Test dragging divider left/right
+      </test-idea>
+      <test-idea ac="4,5" description="Verify panel size defaults and constraints">
+        Verify left panel default 30% → Verify right panel default 70% → Drag to min widths → Verify left stops at 25% → Verify right stops at 60%
+      </test-idea>
+      <test-idea ac="6" description="Verify panel sizes persist across page refreshes">
+        Resize panels to custom sizes → Refresh page → Verify sizes restored from localStorage
+      </test-idea>
+      <test-idea ac="7,8,9" description="Verify maximize/minimize controls">
+        Click maximize left → Verify right minimizes to thin bar → Click minimized bar → Verify right restores → Click maximize right → Verify left minimizes → Click minimized bar → Verify left restores
+      </test-idea>
+      <test-idea ac="10" description="Verify smooth resize animations">
+        Test maximize/minimize actions → Verify CSS transitions apply (300ms ease-in-out) → Verify no layout jank during resize
+      </test-idea>
+    </ideas>
+  </tests>
+</story-context>

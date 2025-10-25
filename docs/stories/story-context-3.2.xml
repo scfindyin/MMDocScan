@@ -1,0 +1,224 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.2</storyId>
+    <title>Tag-Based Template Builder UI</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to define extraction fields as draggable tags</iWant>
+    <soThat>I can quickly create and visualize my template structure</soThat>
+    <tasks>
+      - Task 1: Template Section Structure (AC: 1) - Create TemplateSection component in left panel
+      - Task 2: Load Existing Template UI (AC: 2) - Dropdown to fetch and load templates from API
+      - Task 3: Field Tags Display (AC: 3, 4, 8) - FieldTagsArea with horizontal chip tags, notes indicator, delete
+      - Task 4: Add Field Button (AC: 5) - Opens Field Edit Modal for new fields
+      - Task 5: Field Edit Modal (AC: 6, 7) - Name input, instructions textarea (0-500 chars), save/cancel
+      - Task 6: Extraction Instructions Textarea (AC: 10) - 0-2000 chars with character count
+      - Task 7: Save Template Button (AC: 9) - Context-aware label, dirty indicator, modal trigger
+      - Task 8: Zustand Store Integration - Extend store with template state and actions
+      - Task 9: Testing and Validation - Test all interactions, verify build/lint passes
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Template section in left panel with mode toggle (New/Load existing)
+    2. "Load existing" shows dropdown populated from /api/templates
+    3. Field tags area showing fields as horizontal chips
+    4. Each tag shows: field name, notes indicator (📝 if instructions exist), delete button [×]
+    5. "+ Add field" button creates new field tag
+    6. Click tag opens Field Edit Modal
+    7. Field Edit Modal shows: field name input, instructions textarea (0-500 chars)
+    8. Visual styling: tags with 4px vertical gap, drag handle icon, hover states
+    9. "Save Template" button (context-aware: "Save" or "Update")
+    10. Extraction instructions textarea (0-2000 chars) with character count
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown - Story 3.2</title>
+        <section>Epic 3: Unified Batch Extraction Workflow - Phase 1</section>
+        <snippet>Story 3.2 delivers tag-based template builder with mode toggle, field tags as horizontal chips with notes indicator and delete button, Field Edit Modal for name/instructions, extraction instructions textarea, and context-aware Save Template button.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>AC2: Tag-Based Template Builder (Stories 3.2-3.3)</section>
+        <snippet>Template section shows mode toggle (New/Load existing). Fields displayed as horizontal chip tags with drag handles (⠿). Each tag shows field name, notes indicator (📝 if instructions exist), delete [×]. Drag-and-drop field reordering with @dnd-kit. Click tag opens Field Edit Modal (name input, instructions textarea 0-500 chars). Save Template button context-aware with dirty indicator (•).</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Detailed Design - TemplateBuilder Component</section>
+        <snippet>Component Structure: TemplateSection (container), FieldTagsArea (horizontal chip tags with gap-1), FieldTag (name, notes 📝, delete [×], drag handle ⠿), FieldEditModal (ShadCN Dialog for field name + instructions 0-500 chars), SaveTemplateButton (context-aware with dirty •).</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Data Models - Template and TemplateField</section>
+        <snippet>Template: { id, name, fields: TemplateField[], extraction_prompt, user_id, created_at, updated_at }. TemplateField: { id, name, instructions?, order }. Field name 1-100 chars (required), instructions 0-500 chars (optional), extraction prompt 0-2000 chars (optional).</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <file>
+        <path>stores/extractionStore.ts</path>
+        <kind>state-management</kind>
+        <symbol>ExtractionStore</symbol>
+        <lines>1-79</lines>
+        <reason>Zustand store created in Story 3.1. Must extend with template state: templateMode, selectedTemplate, fields[], extractionPrompt, isDirty, and actions: addField, updateField, removeField, setExtractionPrompt, loadTemplate.</reason>
+      </file>
+      <file>
+        <path>app/extract/ExtractPageClient.tsx</path>
+        <kind>component</kind>
+        <symbol>ExtractPageClient</symbol>
+        <lines>1-196</lines>
+        <reason>Left panel container (lines 106-131) currently shows placeholder "Coming in Story 3.2". Replace Card with TemplateSection component. Panel structure, maximize/minimize controls, and resizing already implemented.</reason>
+      </file>
+      <file>
+        <path>types/template.ts</path>
+        <kind>type-definition</kind>
+        <symbol>Template, TemplateField</symbol>
+        <lines>38-110</lines>
+        <reason>Existing type definitions from Story 1.3. Template with fields array structure. TemplateListResponse for GET /api/templates. Use TemplateField for field tags display.</reason>
+      </file>
+      <file>
+        <path>app/api/templates/route.ts</path>
+        <kind>api-route</kind>
+        <symbol>GET /api/templates</symbol>
+        <lines>N/A</lines>
+        <reason>API endpoint created in Story 1.3. Fetch templates for "Load existing" dropdown. Returns TemplateListResponse with templates array.</reason>
+      </file>
+      <file>
+        <path>app/api/templates/[id]/route.ts</path>
+        <kind>api-route</kind>
+        <symbol>GET /api/templates/:id</symbol>
+        <lines>N/A</lines>
+        <reason>API endpoint for loading single template with fields and prompts. Use when user selects template from dropdown to populate Zustand store.</reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <node>
+        <core>
+          <package>react</package>
+          <version>^18.2.0</version>
+          <usage>Component framework</usage>
+        </core>
+        <core>
+          <package>next</package>
+          <version>^14.2.0</version>
+          <usage>App Router for /extract page</usage>
+        </core>
+        <zustand>
+          <package>zustand</package>
+          <version>^4.5.7</version>
+          <usage>State management - extend extractionStore with template state</usage>
+        </zustand>
+        <forms>
+          <package>react-hook-form</package>
+          <version>^7.65.0</version>
+          <usage>Field Edit Modal form validation</usage>
+        </forms>
+        <ui>
+          <package>@radix-ui/react-dialog</package>
+          <version>^1.1.15</version>
+          <usage>ShadCN Dialog component for Field Edit Modal</usage>
+        </ui>
+        <ui>
+          <package>@radix-ui/react-select</package>
+          <version>^2.2.6</version>
+          <usage>ShadCN Select for template dropdown</usage>
+        </ui>
+        <tailwind>
+          <package>tailwindcss</package>
+          <version>^3.4.0</version>
+          <usage>Styling - gap-1 for 4px vertical spacing, hover states</usage>
+        </tailwind>
+      </node>
+      <new>
+        <action>Install ShadCN components via CLI: dialog, select, textarea</action>
+        <command>npx shadcn@latest add dialog select textarea</command>
+      </new>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Extend stores/extractionStore.ts - do NOT create new store file
+    - Replace placeholder in ExtractPageClient left panel (line 124-128) with TemplateSection
+    - Component path: app/extract/components/ (route-specific, not shared)
+    - Use existing API endpoints: GET /api/templates (no new routes in this story)
+    - Save functionality deferred to Story 3.5 - add TODO comment in Save button onClick
+    - Drag-and-drop deferred to Story 3.3 - show drag handle icon (⠿) as placeholder only
+    - Field tag styling: horizontal layout, gap-1 (4px vertical gap), hover states
+    - Character limits: field name 1-100, field instructions 0-500, extraction prompt 0-2000
+    - Validation: required field name, no duplicate field names
+    - Zustand partialize: DO NOT persist fields/prompt (session-only for now)
+    - TypeScript strict mode - all types from types/template.ts
+    - Follow ShadCN component patterns from Stories 2.2, 2.6 (Dialog, Form)
+    - Follow Textarea patterns from Story 1.8 (character count, validation)
+  </constraints>
+
+  <interfaces>
+    <api>
+      <name>GET /api/templates</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/templates → TemplateListResponse</signature>
+      <path>app/api/templates/route.ts</path>
+      <usage>Fetch user's templates for dropdown in "Load existing" mode</usage>
+    </api>
+    <api>
+      <name>GET /api/templates/:id</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/templates/:id → TemplateDetailResponse</signature>
+      <path>app/api/templates/[id]/route.ts</path>
+      <usage>Load single template with fields and prompts when user selects from dropdown</usage>
+    </api>
+    <component>
+      <name>useExtractionStore</name>
+      <kind>Zustand hook</kind>
+      <signature>const { templateMode, fields, extractionPrompt, addField, removeField, ... } = useExtractionStore()</signature>
+      <path>stores/extractionStore.ts</path>
+      <usage>Access and modify template state in all components</usage>
+    </component>
+    <component>
+      <name>Dialog (ShadCN)</name>
+      <kind>UI component</kind>
+      <signature>&lt;Dialog&gt;&lt;DialogTrigger /&gt;&lt;DialogContent&gt;...&lt;/DialogContent&gt;&lt;/Dialog&gt;</signature>
+      <path>components/ui/dialog.tsx</path>
+      <usage>Field Edit Modal wrapper - follow patterns from Story 2.2</usage>
+    </component>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Follow existing test patterns from Epics 1-2. Use Vitest for unit tests, integration tests with MSW for API mocking. E2E tests with Playwright for critical flows. TypeScript strict mode enforced. Build must pass with zero errors, lint with zero warnings.
+    </standards>
+
+    <locations>
+      - Unit tests (if created): __tests__/stores/extractionStore.test.ts
+      - Component tests (if created): __tests__/components/TemplateSection.test.tsx
+      - E2E tests (Story 3.30): tests/e2e/template-builder.spec.ts
+    </locations>
+
+    <ideas>
+      - AC1: Test mode toggle switching between New/Load existing
+      - AC2: Test loading existing template from dropdown, verify fields/prompt loaded into store
+      - AC3-4: Test field tags display with 5 fields, verify horizontal layout, notes indicator, delete button
+      - AC5: Test "+ Add field" button opens Field Edit Modal
+      - AC6-7: Test Field Edit Modal: add new field, edit existing field, character count validation
+      - AC8: Test visual styling: 4px gap (gap-1 class), drag handle icon present, hover states
+      - AC9: Test "Save Template" button states: disabled when no fields, enabled when fields present, dirty indicator when modified
+      - AC10: Test extraction instructions character count, verify 0-2000 limit
+      - Integration: Test store actions (addField, updateField, removeField) update UI correctly
+      - Integration: Test template loading from API populates store and UI
+    </ideas>
+  </tests>
+</story-context>

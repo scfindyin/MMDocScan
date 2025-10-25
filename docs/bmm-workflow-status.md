@@ -22,16 +22,16 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "3.16", "3.17", "3.18", "3.19", "3.20", "3.21", "3.22", "3.23", "3.24", "3.25", "3.26", "3.27", "3.28", "3.29", "3.30"]
-TODO_STORY: 3.3
-TODO_TITLE: Drag-and-Drop Field Reordering
-IN_PROGRESS_STORY: 3.2
-IN_PROGRESS_TITLE: Tag-Based Template Builder UI
-STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1"]
+TODO_STORY: 3.4
+TODO_TITLE: Template CRUD API Endpoints
+IN_PROGRESS_STORY: 3.3
+IN_PROGRESS_TITLE: Drag-and-Drop Field Reordering
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2"]
 
 ## Next Action
 
-NEXT_ACTION: Story 3.1 approved and marked done. Story 3.2 moved to IN PROGRESS. Load SM agent and run create-story workflow to draft Story 3.2.
-NEXT_COMMAND: create-story (Draft Story 3.2: Tag-Based Template Builder UI)
+NEXT_ACTION: Story 3.2 completed successfully. Ready to start Story 3.3: Drag-and-Drop Field Reordering.
+NEXT_COMMAND: create-story (Draft Story 3.3: Drag-and-Drop Field Reordering)
 NEXT_AGENT: scrum-master
 ## Story Backlog
 
@@ -58,11 +58,12 @@ NEXT_AGENT: scrum-master
 - Story 2.8: Excel Export and Download ✓
 - Story 2.9: Extraction Session Management ✓
 
-### Epic 3: Unified Batch Extraction Workflow (30 stories) 🚀 IN PROGRESS (1 of 30 complete)
+### Epic 3: Unified Batch Extraction Workflow (30 stories) 🚀 IN PROGRESS (2 of 30 complete)
 
 #### Phase 1: Foundation (Weeks 1-2) - Stories 3.1-3.7
 - Story 3.1: Unified Page Layout with Resizable Panels ✓
-- Story 3.2: Tag-Based Template Builder UI 🚧 IN PROGRESS
+- Story 3.2: Tag-Based Template Builder UI ✓
+- Story 3.3: Drag-and-Drop Field Reordering 🚧 IN PROGRESS
 - Story 3.3: Drag-and-Drop Field Reordering
 - Story 3.4: Template CRUD APIs
 - Story 3.5: Save Template Flow
