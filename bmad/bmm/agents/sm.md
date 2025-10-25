@@ -68,6 +68,7 @@
     <item cmd="*help">Show numbered menu</item>
     <item cmd="*workflow-status" workflow="{project-root}/bmad/bmm/workflows/workflow-status/workflow.yaml">Check workflow status and get recommendations</item>
     <item cmd="*assess-project-ready" workflow="{project-root}/bmad/bmm/workflows/3-solutioning/implementation-ready-check/workflow.yaml">Validate solutioning complete, ready for Phase 4 (Level 2-4 only)</item>
+    <item cmd="*complete-story" workflow="{project-root}/bmad/bmm/workflows/4-implementation/complete-story/workflow.yaml">Complete full story lifecycle: create → review → implement → test → push (automated)</item>
     <item cmd="*create-story" workflow="{project-root}/bmad/bmm/workflows/4-implementation/create-story/workflow.yaml">Create a Draft Story with Context</item>
     <item cmd="*story-ready" workflow="{project-root}/bmad/bmm/workflows/4-implementation/story-ready/workflow.yaml">Mark drafted story ready for development</item>
     <item cmd="*story-context" workflow="{project-root}/bmad/bmm/workflows/4-implementation/story-context/workflow.yaml">Assemble dynamic Story Context (XML) from latest docs and code</item>

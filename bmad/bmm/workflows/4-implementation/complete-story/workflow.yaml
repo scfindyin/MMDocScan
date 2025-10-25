@@ -1,0 +1,124 @@
+name: complete-story
+description: "Full story lifecycle automation: create story → architect review → fix if needed → ready → implement → test → push to GitHub"
+author: "BMad"
+version: "1.0.0"
+
+# Critical variables from config
+config_source: "{project-root}/bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+document_output_language: "{config_source}:document_output_language"
+user_skill_level: "{config_source}:user_skill_level"
+date: system-generated
+
+# Workflow components
+installed_path: "{project-root}/bmad/bmm/workflows/4-implementation/complete-story"
+instructions: "{installed_path}/instructions.md"
+validation: "{installed_path}/checklist.md"
+
+# Variables and inputs
+variables:
+  story_dir: "{config_source}:dev_story_location" # Directory where stories are stored
+  workflow_status_file: "{output_folder}/bmm-workflow-status.md"
+  max_architect_iterations: 2 # Maximum times to regenerate story based on architect feedback
+  enable_database_testing: true # Use Supabase MCP to test database operations
+  auto_push_to_github: true # Automatically push successful implementations
+  skip_manual_approval: false # If true, skip story-ready approval step
+
+# Orchestration steps
+orchestration:
+  - name: "Step 1: Create Story"
+    agent: "SM"
+    workflow: "create-story"
+    description: "SM agent creates draft story using epics, PRD, tech spec, and architecture docs"
+    on_failure: "abort"
+
+  - name: "Step 2: Architect Review"
+    agent: "architect-reviewer"
+    description: "Architect reviews story for technical feasibility and architectural alignment"
+    inputs:
+      - story_file: "Output from Step 1"
+      - tech_spec: "From workflow-status current epic"
+      - epics_file: "{output_folder}/epics.md"
+    outputs:
+      - review_verdict: "APPROVED or REQUIRES CHANGES"
+      - issues_found: "List of critical issues (if any)"
+      - recommendations: "List of improvements"
+    on_failure: "continue_to_step_3"
+
+  - name: "Step 3: Regenerate Story (if needed)"
+    agent: "SM"
+    workflow: "create-story"
+    description: "SM agent regenerates story incorporating architect feedback"
+    condition: "Step 2 verdict == REQUIRES CHANGES"
+    inputs:
+      - architect_feedback: "Output from Step 2"
+    max_iterations: "{max_architect_iterations}"
+    on_max_iterations: "prompt_user"
+    loop_to: "Step 2"
+
+  - name: "Step 4: Mark Story Ready"
+    agent: "SM"
+    workflow: "story-ready"
+    description: "Mark story as Ready for Development"
+    condition: "Step 2 verdict == APPROVED"
+    skip_if: "{skip_manual_approval}"
+
+  - name: "Step 5: Generate Story Context"
+    agent: "SM"
+    workflow: "story-context"
+    description: "Assemble dynamic Story Context XML from latest docs and code"
+
+  - name: "Step 6: Implement Story"
+    agent: "dev"
+    workflow: "dev-story"
+    description: "Dev agent implements all tasks, creates files, runs tests"
+    inputs:
+      - story_file: "From Step 1 (or Step 3 if regenerated)"
+      - story_context: "From Step 5"
+    outputs:
+      - files_created: "List of new files"
+      - files_modified: "List of modified files"
+      - tests_passed: "Boolean"
+      - implementation_status: "completed or blocked"
+    on_failure: "report_and_abort"
+
+  - name: "Step 7: Test Implementation (Database)"
+    agent: "SM"
+    description: "Test database operations using Supabase MCP if applicable"
+    condition: "{enable_database_testing} AND story involves database changes"
+    test_types:
+      - "RLS policies (SELECT, INSERT, UPDATE, DELETE)"
+      - "Cross-user isolation"
+      - "Data migration verification"
+      - "Constraints and indexes"
+    outputs:
+      - test_results: "Pass/fail for each test"
+      - security_advisors: "Supabase security lint results"
+    on_failure: "report_issues"
+
+  - name: "Step 8: Push to GitHub"
+    agent: "dev"
+    description: "Commit changes and push to GitHub"
+    condition: "{auto_push_to_github} AND Step 6 status == completed"
+    inputs:
+      - commit_message: "Auto-generated from story metadata"
+    on_failure: "report_and_continue"
+
+  - name: "Step 9: Report Completion"
+    agent: "SM"
+    description: "Generate completion report with summary and next steps"
+    outputs:
+      - story_status: "Ready for approval or Blocked"
+      - test_summary: "All test results"
+      - next_action: "Run approve-story workflow or fix issues"
+
+# Output configuration
+default_output_file: "{output_folder}/complete-story-report-{{epic_num}}.{{story_num}}.md"
+
+recommended_inputs:
+  - workflow_status: "To determine next story"
+  - epics: "Epic breakdown"
+  - tech_spec: "Technical specification for current epic"
+  - supabase_mcp: "For database testing (optional)"

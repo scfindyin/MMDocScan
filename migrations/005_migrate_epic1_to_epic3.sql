@@ -152,7 +152,10 @@ DROP INDEX IF EXISTS idx_templates_template_type;
 ALTER TABLE templates
 DROP COLUMN template_type;
 
-RAISE NOTICE 'Removed template_type column (not in Epic 3 specification)';
+DO $$
+BEGIN
+  RAISE NOTICE 'Removed template_type column (not in Epic 3 specification)';
+END $$;
 
 -- ==============================================================================
 -- STEP 7: Add UNIQUE constraint on (user_id, name)
@@ -199,7 +202,10 @@ COMMENT ON POLICY delete_own_templates ON templates IS 'RLS: Users can only DELE
 
 ALTER TABLE templates ENABLE ROW LEVEL SECURITY;
 
-RAISE NOTICE 'Row Level Security (RLS) enabled on templates table with 4 policies';
+DO $$
+BEGIN
+  RAISE NOTICE 'Row Level Security (RLS) enabled on templates table with 4 policies';
+END $$;
 
 -- ==============================================================================
 -- STEP 10: Drop Epic 1 tables (template_fields, template_prompts)
@@ -207,11 +213,15 @@ RAISE NOTICE 'Row Level Security (RLS) enabled on templates table with 4 policie
 
 -- Drop template_prompts table (data already migrated)
 DROP TABLE IF EXISTS template_prompts CASCADE;
-RAISE NOTICE 'Dropped template_prompts table (data migrated to templates.extraction_prompt)';
 
 -- Drop template_fields table (data already migrated)
 DROP TABLE IF EXISTS template_fields CASCADE;
-RAISE NOTICE 'Dropped template_fields table (data migrated to templates.fields JSONB)';
+
+DO $$
+BEGIN
+  RAISE NOTICE 'Dropped template_prompts table (data migrated to templates.extraction_prompt)';
+  RAISE NOTICE 'Dropped template_fields table (data migrated to templates.fields JSONB)';
+END $$;
 
 -- ==============================================================================
 -- MIGRATION COMPLETE
