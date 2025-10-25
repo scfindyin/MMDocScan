@@ -1,0 +1,91 @@
+================================================================================
+AUTHENTICATION REMOVAL - MIGRATION STATUS
+================================================================================
+
+PROJECT: MMDocScan Templates System
+DATE: 2025-10-25
+TASK: Remove authentication and revert to single-user mode
+
+================================================================================
+CODE CHANGES: ✓ COMPLETE
+================================================================================
+
+Files Modified:
+  ✓ app/api/templates/route.ts
+  ✓ app/api/templates/[id]/route.ts  
+  ✓ types/template.ts
+  ✓ lib/db/templates.ts
+
+Build Status:
+  ✓ TypeScript compilation: PASSED
+  ✓ No type errors
+  ✓ All imports resolved
+
+API Test (without DB migration):
+  ✓ GET /api/templates returns: {"templates":[]}
+  ✓ No 401 Unauthorized error (code working)
+
+================================================================================
+DATABASE MIGRATION: ⚠ PENDING - REQUIRES MANUAL EXECUTION
+================================================================================
+
+Migration File: migrations/006_remove_template_authentication.sql
+Status: Created but NOT executed
+
+What it does:
+  - Disable Row Level Security (RLS)
+  - Drop RLS policies (4 policies)
+  - Remove user_id column
+  - Remove user_id constraints
+  - Add UNIQUE(name) constraint
+
+HOW TO RUN:
+  1. Go to https://supabase.com/dashboard
+  2. Select project: ttvykbxlufwwfucfrkfy
+  3. Open SQL Editor
+  4. Copy/paste contents of: migrations/006_remove_template_authentication.sql
+  5. Click "Run"
+
+================================================================================
+SUMMARY OF CHANGES
+================================================================================
+
+BEFORE (Story 3.4 - Multi-user with Auth):
+  - Server-side Supabase client with auth context
+  - Row Level Security enabled
+  - user_id column required
+  - 401 Unauthorized on unauthenticated requests
+  - Each user sees only their templates
+
+AFTER (Single-user mode):
+  - Anonymous Supabase client (no auth)
+  - Row Level Security disabled  
+  - No user_id column
+  - All requests allowed without authentication
+  - All templates shared (single-user tool)
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. RUN DATABASE MIGRATION (see above)
+2. Verify migration success:
+   - Check RLS disabled: SELECT rowsecurity FROM pg_tables WHERE tablename='templates'
+   - Check user_id removed: \d templates
+3. Test API endpoints:
+   - curl http://localhost:3000/api/templates
+   - Should return templates without 401 error
+4. Test in browser:
+   - Navigate to /templates
+   - Should load without authentication errors
+
+================================================================================
+DOCUMENTATION FILES
+================================================================================
+
+  migrations/006_remove_template_authentication.sql - Migration SQL
+  migrations/README_006_MIGRATION.md - Detailed migration guide
+  AUTHENTICATION_REMOVAL_SUMMARY.md - Complete change summary
+  MIGRATION_STATUS.txt - This file
+
+================================================================================

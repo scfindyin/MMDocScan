@@ -1,53 +1,37 @@
 /**
  * Templates API Route
- * Story 3.4: Template CRUD API Endpoints - Epic 3 Schema
+ * Reverted from Story 3.4 authentication to single-user mode
  *
- * BREAKING CHANGE from Story 1.3:
- * - Now requires authentication (server-side Supabase client)
- * - Uses Epic 3 schema (JSONB fields, user_id, RLS)
- * - Returns 401 if not authenticated
+ * CHANGE from Story 3.4:
+ * - Removed authentication requirement (no server-side auth client)
+ * - Uses Epic 3 schema (JSONB fields) but WITHOUT user_id or RLS
+ * - Returns templates without authentication checks
  *
  * Endpoints:
- * - GET  /api/templates - List user's templates (with RLS)
- * - POST /api/templates - Create a new template
+ * - GET  /api/templates - List all templates (no auth)
+ * - POST /api/templates - Create a new template (no auth)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { supabase } from '@/lib/supabase';
 import { createTemplate, getTemplates } from '@/lib/db/templates';
 import { CreateTemplateSchema } from '@/lib/validation/templates';
 
 /**
  * GET /api/templates
- * List user's templates (RLS-filtered)
+ * List all templates (no authentication)
  *
- * Authentication: REQUIRED
- * Returns: 200 with Template[], 401 if not authenticated, 500 on error
+ * Authentication: NOT REQUIRED (single-user mode)
+ * Returns: 200 with Template[], 500 on error
  */
 export async function GET(request: NextRequest) {
   try {
-    console.log('📋 GET /api/templates - Fetching user templates...');
+    console.log('📋 GET /api/templates - Fetching templates...');
 
-    // Create server-side Supabase client with auth context
-    const supabase = createClient();
-
-    // Validate authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      console.error('❌ Authentication failed:', authError?.message);
-      return NextResponse.json(
-        { error: 'Unauthorized - authentication required' },
-        { status: 401 }
-      );
-    }
-
-    console.log(`✅ Authenticated user: ${user.id}`);
-
-    // Fetch templates (RLS automatically filters to user's templates)
+    // Fetch templates (no authentication required)
     const templates = await getTemplates(supabase);
 
-    console.log(`✅ Retrieved ${templates.length} templates for user ${user.id}`);
+    console.log(`✅ Retrieved ${templates.length} templates`);
 
     return NextResponse.json({ templates });
   } catch (error: any) {
@@ -63,29 +47,13 @@ export async function GET(request: NextRequest) {
  * POST /api/templates
  * Create a new template
  *
- * Authentication: REQUIRED
+ * Authentication: NOT REQUIRED (single-user mode)
  * Body: { name, fields, extraction_prompt? }
- * Returns: 201 with created Template, 400 for validation errors, 401 if not authenticated, 500 on error
+ * Returns: 201 with created Template, 400 for validation errors, 500 on error
  */
 export async function POST(request: NextRequest) {
   try {
     console.log('➕ POST /api/templates - Creating new template...');
-
-    // Create server-side Supabase client with auth context
-    const supabase = createClient();
-
-    // Validate authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      console.error('❌ Authentication failed:', authError?.message);
-      return NextResponse.json(
-        { error: 'Unauthorized - authentication required' },
-        { status: 401 }
-      );
-    }
-
-    console.log(`✅ Authenticated user: ${user.id}`);
 
     // Parse and validate request body
     const body = await request.json();
@@ -104,10 +72,10 @@ export async function POST(request: NextRequest) {
 
     const data = validationResult.data;
 
-    // Create template (RLS automatically sets user_id from auth.uid())
+    // Create template (no authentication required)
     const template = await createTemplate(supabase, data);
 
-    console.log(`✅ Template created: ${template.id} (${template.name}) for user ${user.id}`);
+    console.log(`✅ Template created: ${template.id} (${template.name})`);
 
     return NextResponse.json(
       { template },

@@ -105,14 +105,22 @@ export const useExtractionStore = create<ExtractionStore>()(
 
       // Template actions (Story 3.2)
       setTemplateMode: (mode) =>
-        set({
-          templateMode: mode,
-          // Reset template state when switching modes
-          selectedTemplateId: null,
-          selectedTemplateName: null,
-          fields: [],
-          extractionPrompt: '',
-          isDirty: false,
+        set((state) => {
+          // Only reset state when switching TO 'new' mode
+          if (mode === 'new') {
+            return {
+              templateMode: mode,
+              selectedTemplateId: null,
+              selectedTemplateName: null,
+              fields: [],
+              extractionPrompt: '',
+              isDirty: false,
+            };
+          }
+          // When switching to 'existing', just update the mode
+          return {
+            templateMode: mode,
+          };
         }),
 
       addField: (name, instructions) =>

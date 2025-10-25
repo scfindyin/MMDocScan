@@ -1,11 +1,11 @@
 /**
  * Template Data Access Layer
- * Story 3.4: Template CRUD API Endpoints - Epic 3 Schema
+ * Reverted from Story 3.4 authentication to single-user mode
  *
- * BREAKING CHANGE from Story 1.3:
- * - Now uses Epic 3 denormalized schema (1 table with JSONB fields + user_id + RLS)
- * - Requires server-side Supabase client with auth context (NOT anonymous client)
- * - RLS policies automatically enforce user isolation (no manual WHERE user_id needed)
+ * CHANGE from Story 3.4:
+ * - Now uses Epic 3 denormalized schema (1 table with JSONB fields) WITHOUT user_id or RLS
+ * - Uses anonymous Supabase client from lib/supabase.ts (no authentication)
+ * - No RLS policies (single-user mode)
  *
  * Database utility functions for template CRUD operations
  * Provides separation of concerns between API routes and database logic
@@ -19,12 +19,11 @@ import {
 } from '@/types/template';
 
 /**
- * Create a new template (Epic 3)
+ * Create a new template
  *
- * IMPORTANT: Requires authenticated Supabase client from lib/supabase-server.ts
- * RLS policies automatically set user_id from auth.uid()
+ * No authentication required (single-user mode)
  *
- * @param supabase - Authenticated server-side Supabase client
+ * @param supabase - Supabase client
  * @param data - Template data (name, fields, extraction_prompt)
  * @returns Created template with all fields
  */
@@ -33,8 +32,7 @@ export async function createTemplate(
   data: CreateTemplateRequest
 ): Promise<Template> {
   try {
-    // Insert template with Epic 3 schema
-    // RLS INSERT policy automatically sets user_id = auth.uid()
+    // Insert template (no auth required)
     const { data: template, error: templateError } = await supabase
       .from('templates')
       .insert({
@@ -46,7 +44,7 @@ export async function createTemplate(
       .single();
 
     if (templateError) {
-      // Handle unique constraint violation (duplicate template name for user)
+      // Handle unique constraint violation (duplicate template name)
       if (templateError.code === '23505') {
         throw new Error('A template with this name already exists');
       }
@@ -65,18 +63,16 @@ export async function createTemplate(
 }
 
 /**
- * Get all templates for authenticated user (Epic 3)
+ * Get all templates
  *
- * IMPORTANT: Requires authenticated Supabase client from lib/supabase-server.ts
- * RLS SELECT policy automatically filters by user_id = auth.uid()
+ * No authentication required (single-user mode)
  *
- * @param supabase - Authenticated server-side Supabase client
- * @returns Array of templates (RLS-filtered to current user only)
+ * @param supabase - Supabase client
+ * @returns Array of all templates
  */
 export async function getTemplates(supabase: SupabaseClient): Promise<Template[]> {
   try {
-    // RLS SELECT policy automatically filters to user's templates
-    // No need for manual .eq('user_id', user.id)
+    // Fetch all templates (no auth filtering)
     const { data: templates, error: templatesError } = await supabase
       .from('templates')
       .select('*')
@@ -94,22 +90,20 @@ export async function getTemplates(supabase: SupabaseClient): Promise<Template[]
 }
 
 /**
- * Get a single template by ID (Epic 3)
+ * Get a single template by ID
  *
- * IMPORTANT: Requires authenticated Supabase client from lib/supabase-server.ts
- * RLS SELECT policy automatically filters by user_id = auth.uid()
- * Returns null if template not found OR user doesn't own it (security: don't reveal existence)
+ * No authentication required (single-user mode)
  *
- * @param supabase - Authenticated server-side Supabase client
+ * @param supabase - Supabase client
  * @param id - Template UUID
- * @returns Template or null if not found/not owned by user
+ * @returns Template or null if not found
  */
 export async function getTemplateById(
   supabase: SupabaseClient,
   id: string
 ): Promise<Template | null> {
   try {
-    // RLS SELECT policy automatically filters to user's templates
+    // Fetch template by ID (no auth filtering)
     const { data: template, error: templateError } = await supabase
       .from('templates')
       .select('*')
@@ -117,7 +111,7 @@ export async function getTemplateById(
       .single();
 
     if (templateError) {
-      // PGRST116 = no rows returned (either doesn't exist or RLS filtered it out)
+      // PGRST116 = no rows returned
       if (templateError.code === 'PGRST116') {
         return null;
       }
@@ -132,16 +126,14 @@ export async function getTemplateById(
 }
 
 /**
- * Update a template (Epic 3)
+ * Update a template
  *
- * IMPORTANT: Requires authenticated Supabase client from lib/supabase-server.ts
- * RLS UPDATE policy automatically filters by user_id = auth.uid()
- * Returns null if template not found OR user doesn't own it
+ * No authentication required (single-user mode)
  *
- * @param supabase - Authenticated server-side Supabase client
+ * @param supabase - Supabase client
  * @param id - Template UUID
  * @param data - Partial template data (only provided fields will be updated)
- * @returns Updated template or null if not found/not owned by user
+ * @returns Updated template or null if not found
  */
 export async function updateTemplate(
   supabase: SupabaseClient,
@@ -155,7 +147,7 @@ export async function updateTemplate(
     if (data.fields !== undefined) updateData.fields = data.fields;
     if (data.extraction_prompt !== undefined) updateData.extraction_prompt = data.extraction_prompt;
 
-    // RLS UPDATE policy automatically filters to user's templates
+    // Update template (no auth filtering)
     // updated_at automatically updated by database trigger
     const { data: template, error: templateError } = await supabase
       .from('templates')
@@ -165,11 +157,11 @@ export async function updateTemplate(
       .single();
 
     if (templateError) {
-      // PGRST116 = no rows updated (either doesn't exist or RLS blocked it)
+      // PGRST116 = no rows updated
       if (templateError.code === 'PGRST116') {
         return null;
       }
-      // Handle unique constraint violation (duplicate template name for user)
+      // Handle unique constraint violation (duplicate template name)
       if (templateError.code === '23505') {
         throw new Error('A template with this name already exists');
       }
@@ -184,22 +176,20 @@ export async function updateTemplate(
 }
 
 /**
- * Delete a template (Epic 3)
+ * Delete a template
  *
- * IMPORTANT: Requires authenticated Supabase client from lib/supabase-server.ts
- * RLS DELETE policy automatically filters by user_id = auth.uid()
- * Returns false if template not found OR user doesn't own it
+ * No authentication required (single-user mode)
  *
- * @param supabase - Authenticated server-side Supabase client
+ * @param supabase - Supabase client
  * @param id - Template UUID
- * @returns true if deleted, false if not found/not owned by user
+ * @returns true if deleted, false if not found
  */
 export async function deleteTemplate(
   supabase: SupabaseClient,
   id: string
 ): Promise<boolean> {
   try {
-    // RLS DELETE policy automatically filters to user's templates
+    // Delete template (no auth filtering)
     const { error, count } = await supabase
       .from('templates')
       .delete({ count: 'exact' })
@@ -209,7 +199,7 @@ export async function deleteTemplate(
       throw new Error(`Failed to delete template: ${error.message}`);
     }
 
-    // Return true if a row was deleted, false if nothing was deleted (not found or RLS blocked)
+    // Return true if a row was deleted, false if nothing was deleted
     return (count ?? 0) > 0;
   } catch (error: any) {
     console.error('Error in deleteTemplate:', error);

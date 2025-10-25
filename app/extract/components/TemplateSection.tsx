@@ -64,10 +64,8 @@ export function TemplateSection() {
 
   const handleModeChange = (mode: string) => {
     if (mode === 'new' || mode === 'existing') {
+      // setTemplateMode now handles state reset internally
       setTemplateMode(mode);
-      if (mode === 'new') {
-        resetTemplate();
-      }
     }
   };
 
@@ -86,14 +84,10 @@ export function TemplateSection() {
         throw new Error('Template not found');
       }
 
-      // For Story 3.2, we're working with a simplified structure
-      // Convert DB template fields to extraction fields
-      // Note: In Epic 1, templates use template_fields table
-      // For Story 3.2, we'll load with empty fields as placeholder
-      // TODO Story 3.4: Implement proper template loading with fields from DB
-
-      const extractionFields: ExtractionField[] = [];
-      const extractionPromptText = ''; // TODO: Load from template_prompts table
+      // Epic 3 schema: template has fields (JSONB array) and extraction_prompt directly
+      // Convert template fields to extraction fields (they already match ExtractionField interface)
+      const extractionFields: ExtractionField[] = template.fields || [];
+      const extractionPromptText = template.extraction_prompt || '';
 
       loadTemplate(template.id, template.name, extractionFields, extractionPromptText);
     } catch (error: any) {

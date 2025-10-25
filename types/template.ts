@@ -1,16 +1,17 @@
 /**
  * Template Type Definitions
- * Story 3.4: Template CRUD API Endpoints - Epic 3 Schema
+ * Reverted from Story 3.4 authentication to single-user mode
  *
- * BREAKING CHANGE from Story 1.3:
+ * CHANGE from Story 3.4:
  * - Epic 1: Normalized 3-table schema (templates, template_fields, template_prompts)
- * - Epic 3: Denormalized 1-table schema with JSONB fields and user_id + RLS
+ * - Epic 3: Denormalized 1-table schema with JSONB fields
+ * - Removed: user_id and RLS (single-user mode)
  *
- * Shared TypeScript interfaces matching Epic 3 database schema
+ * Shared TypeScript interfaces matching Epic 3 database schema (without auth)
  */
 
 /**
- * Template Field Interface (Epic 3)
+ * Template Field Interface
  * Stored as JSONB array in templates.fields column
  *
  * Changes from Epic 1:
@@ -27,18 +28,16 @@ export interface TemplateField {
 }
 
 /**
- * Template Interface (Epic 3)
- * Matches the `templates` database table after migration
+ * Template Interface
+ * Matches the `templates` database table (single-user, no auth)
  *
- * Changes from Epic 1:
- * - Added: user_id (FK to auth.users, required for multi-user support)
- * - Added: fields (JSONB array, replaces template_fields table)
- * - Added: extraction_prompt (TEXT, replaces template_prompts table)
- * - Removed: template_type (not in Epic 3 spec)
+ * Changes from Story 3.4:
+ * - Removed: user_id (reverted to single-user mode)
+ * - Kept: fields (JSONB array, replaces template_fields table)
+ * - Kept: extraction_prompt (TEXT, replaces template_prompts table)
  */
 export interface Template {
   id: string;
-  user_id: string;
   name: string;
   fields: TemplateField[];
   extraction_prompt: string | null;
