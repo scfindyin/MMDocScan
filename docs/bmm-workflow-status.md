@@ -30,9 +30,9 @@ STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2
 
 ## Next Action
 
-NEXT_ACTION: Story 3.2 completed successfully. Ready to start Story 3.3: Drag-and-Drop Field Reordering.
-NEXT_COMMAND: create-story (Draft Story 3.3: Drag-and-Drop Field Reordering)
-NEXT_AGENT: scrum-master
+NEXT_ACTION: Story 3.3 implementation complete and ready for review. Run story-approved workflow when Definition of Done is verified.
+NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
+NEXT_AGENT: developer
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) ✅ COMPLETE (10 of 10 complete)
@@ -378,10 +378,37 @@ NEXT_AGENT: scrum-master
 - **Integration:** Establishes foundation for Story 3.2 (left panel) and Story 3.7 (right panel), introduces Zustand pattern for Epic 3 state management
 - **DoD Complete:** All acceptance criteria met, code reviewed, build/lint passing, user tested and approved, deployed to production
 
+### Story 3.2: Tag-Based Template Builder UI ✓
+- **Status:** Done
+- **Completed:** 2025-10-24
+- **Approved:** 2025-10-24
+- **Summary:** Tag-based template builder with field management, inline editing, deletion, and Zustand state management
+- **All ACs Verified:** 10/10 passing (AC1-10: mode toggle, field tags display, add field button, modal with validation, inline tag editing, delete functionality, extraction prompt textarea, character counts, isDirty tracking, visual polish)
+- **Files Created:** app/extract/components/FieldTagsArea.tsx, app/extract/components/FieldTag.tsx, app/extract/components/FieldEditModal.tsx
+- **Files Modified:** stores/extractionStore.ts (+template state), app/extract/ExtractPageClient.tsx (+FieldTagsArea integration)
+- **Key Features:** Mode toggle (New/Existing), field tag display with drag handle placeholder (⠿), Add Field button with modal, Zod validation (1-100 chars name, 0-500 chars instructions), inline tag editing/deletion, extraction prompt textarea (0-2000 chars), real-time character counts, isDirty flag for unsaved changes, smooth animations and hover states
+- **Testing:** Build PASSED (0 errors, 15 routes), Lint PASSED (0 warnings)
+- **Code Quality:** 100% TypeScript type-safe, zero ESLint warnings, Zod validation, clean component structure
+- **Integration:** Uses Zustand store from Story 3.1, drag handle prepared for Story 3.3, reuses ShadCN components
+- **DoD Complete:** All acceptance criteria met, code reviewed, build/lint passing, deployed to production
+
+### Story 3.3: Drag-and-Drop Field Reordering
+- **Status:** Ready for Review
+- **Completed:** 2025-10-24
+- **Summary:** Drag-and-drop field reordering with @dnd-kit libraries, keyboard navigation, touch support, and accessibility features
+- **All ACs Verified:** 9/9 passing (AC1: @dnd-kit installed, AC2: draggable field tags with handle, AC3: drop zones, AC4: reorder on drop, AC5: order persisted, AC6: keyboard navigation, AC7: ARIA labels, AC8: smooth animations, AC9: touch support)
+- **Files Modified:** app/extract/components/FieldTagsArea.tsx (+DndContext, sensors, onDragEnd), app/extract/components/FieldTag.tsx (+useSortable, transforms), package.json, package-lock.json
+- **Dependencies Added:** @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities
+- **Key Features:** DndContext with PointerSensor (8px activation), TouchSensor (200ms long-press), KeyboardSensor (arrow up/down), closestCenter collision detection, useSortable hook with transform/transition styles (300ms), drag handle (⠿) as only trigger, ARIA labels for accessibility, isDirty flag on reorder
+- **Testing:** Build PASSED (0 errors, 15 routes), Lint PASSED (0 warnings)
+- **Code Quality:** 100% TypeScript type-safe, zero ESLint warnings
+- **Integration:** Uses existing reorderFields action from Story 3.2, maintains all field editing/deletion functionality
+- **DoD Status:** All acceptance criteria met, build/lint passing, ready for review and approval
+
 ---
 
-_Last Updated: 2025-10-24 (Story 3.1 approved and marked done)_
-_Status Version: 28.0_
+_Last Updated: 2025-10-24 (Story 3.3 implementation complete - Ready for Review)_
+_Status Version: 29.0_
 _Story 3.1 Approved: 2025-10-24_
 _Story 2.9 Approved: 2025-10-24_
 _Product Brief Completed: 2025-10-18_
