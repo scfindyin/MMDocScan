@@ -1,7 +1,8 @@
 name: complete-story
 description: "Full story lifecycle automation: create story → architect review → fix if needed → ready → implement → test → push to GitHub"
 author: "BMad"
-version: "1.1.0"
+version: "1.2.0"
+executor: "context-manager"  # Use context-manager agent to preserve context across sub-agents
 
 # Critical variables from config
 config_source: "{project-root}/bmad/bmm/config.yaml"
@@ -16,6 +17,39 @@ date: system-generated
 installed_path: "{project-root}/bmad/bmm/workflows/4-implementation/complete-story"
 instructions: "{installed_path}/instructions.md"
 validation: "{installed_path}/checklist.md"
+
+# Context pre-loading configuration (for context-manager agent)
+# These documents will be loaded ONCE by context-manager and kept in memory
+# All spawned sub-agents (SM, Architect, Dev) will have access to these documents
+# without needing to re-read them from disk
+context_documents:
+  # Core configuration (always load first)
+  - path: "{project-root}/bmad/bmm/config.yaml"
+    alias: "config"
+    required: true
+
+  # Project documentation (load once, pass to all agents)
+  - path: "{output_folder}/epics.md"
+    alias: "epics"
+    required: true
+
+  - path: "{output_folder}/PRD.md"
+    alias: "prd"
+    required: true
+
+  - path: "{output_folder}/bmm-workflow-status.md"
+    alias: "workflow_status"
+    required: true
+
+  - path: "{output_folder}/solution-architecture.md"
+    alias: "solution_architecture"
+    required: false
+
+  # Tech spec will be discovered dynamically based on current epic
+  - path: "{output_folder}/tech-spec-epic-{{epic_num}}.md"
+    alias: "tech_spec"
+    required: true
+    dynamic: true  # Path contains {{epic_num}} variable resolved from workflow-status
 
 # Document locations (provide explicit paths to agents to avoid glob/grep searching)
 document_locations:
