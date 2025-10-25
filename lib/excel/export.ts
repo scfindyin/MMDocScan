@@ -8,7 +8,8 @@
 
 import ExcelJS from 'exceljs';
 import { ExtractedRow, SourceMetadata } from '@/types/extraction';
-import { TemplateWithRelations, TemplateField, FieldType } from '@/types/template';
+// TODO Story 3.X: Update for Epic 3 schema (FieldType removed, use Template instead of TemplateWithRelations)
+import { Template, TemplateField } from '@/types/template';
 
 /**
  * Configuration constants for Excel formatting
@@ -44,7 +45,7 @@ const EXCEL_CONFIG = {
  */
 export async function generateExcelFile(
   extractedData: ExtractedRow[],
-  template: TemplateWithRelations
+  template: Template // TODO: Was TemplateWithRelations in Epic 1
 ): Promise<ExcelJS.Buffer> {
   try {
     // Validate inputs
@@ -60,12 +61,14 @@ export async function generateExcelFile(
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Extracted Data');
 
-    // Sort fields by display_order for consistent column ordering
-    const sortedFields = [...template.fields].sort((a, b) => a.display_order - b.display_order);
+    // TODO Story 3.X: Epic 3 uses 'order' instead of 'display_order'
+    // Sort fields by order for consistent column ordering
+    const sortedFields = [...template.fields].sort((a, b) => a.order - b.order);
 
     // Generate column headers: template fields + metadata columns
+    // TODO Story 3.X: Epic 3 uses 'name' instead of 'field_name'
     const columnHeaders = [
-      ...sortedFields.map(field => field.field_name),
+      ...sortedFields.map(field => field.name),
       'Confidence',
       'Source Filename',
       'Extraction Timestamp',
@@ -82,8 +85,10 @@ export async function generateExcelFile(
       const rowData = [
         // Template field values (already denormalized with header fields repeated)
         ...sortedFields.map(field => {
-          const value = row.fields[field.field_name];
-          return formatCellValue(value, field.field_type);
+          // TODO Story 3.X: Epic 3 uses 'name' instead of 'field_name'
+          const value = row.fields[field.name];
+          // TODO Story 3.X: field_type doesn't exist in Epic 3 TemplateField, needs refactor
+          return formatCellValue(value, 'text'); // Default to text for now
         }),
         // Metadata columns
         row.confidence,
@@ -160,18 +165,19 @@ function formatCellValue(value: any, fieldType: string): any {
     return '';
   }
 
+  // TODO Story 3.X: Epic 3 removed FieldType enum
   switch (fieldType) {
-    case FieldType.NUMBER:
-    case FieldType.CURRENCY:
+    case 'number':
+    case 'currency':
       // Convert to number
       const numValue = typeof value === 'string' ? parseFloat(value) : value;
       return isNaN(numValue) ? '' : numValue;
 
-    case FieldType.DATE:
+    case 'date':
       // Keep as string (will be formatted by Excel)
       return value;
 
-    case FieldType.TEXT:
+    case 'text':
     default:
       // Return as string
       return String(value);
@@ -189,24 +195,28 @@ function applyCellFormatting(
   fields.forEach((field, index) => {
     const cell = row.getCell(index + 1);
 
+    // TODO Story 3.X: Epic 3 TemplateField doesn't have field_type
+    // Comment out formatting until field types are added back
+    /*
     switch (field.field_type) {
-      case FieldType.NUMBER:
+      case 'number':
         cell.numFmt = EXCEL_CONFIG.NUMBER_FORMAT;
         break;
 
-      case FieldType.CURRENCY:
+      case 'currency':
         cell.numFmt = EXCEL_CONFIG.CURRENCY_FORMAT;
         break;
 
-      case FieldType.DATE:
+      case 'date':
         cell.numFmt = EXCEL_CONFIG.DATE_FORMAT;
         break;
 
-      case FieldType.TEXT:
+      case 'text':
       default:
         // Default text format (no special formatting)
         break;
     }
+    */
   });
 
   // Format confidence column (number with 2 decimal places)

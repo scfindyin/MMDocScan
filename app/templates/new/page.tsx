@@ -23,7 +23,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ArrowLeft, Plus, Trash2, ArrowUp, ArrowDown, Upload, X, FileText, Sparkles, Loader2, ChevronDown, CheckCircle, AlertCircle } from "lucide-react";
-import { TemplateType, FieldType } from "@/types/template";
+// TODO Story 3.X: Update for Epic 3 schema (TemplateType and FieldType removed)
+// import { TemplateType, FieldType } from "@/types/template";
 import { ExtractedRow } from "@/types/extraction";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {

@@ -25,14 +25,14 @@ function calculateConfidence(
   let typeValidFields = 0;
 
   for (const templateField of templateFields) {
-    const value = fields[templateField.field_name];
+    const value = fields[templateField.name];
 
     // Check if field is populated
     if (value !== null && value !== undefined && value !== '') {
       populatedFields++;
 
       // Validate data type
-      const isValid = validateFieldType(value, templateField.field_type);
+      const isValid = validateFieldType(value, 'text') // TODO Story 3.X: Epic 3 removed field_type;
       if (isValid) {
         typeValidFields++;
       }
