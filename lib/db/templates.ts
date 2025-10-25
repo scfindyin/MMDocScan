@@ -1,86 +1,60 @@
 /**
  * Template Data Access Layer
- * Story 1.3: Template Data Model and Storage
+ * Story 3.4: Template CRUD API Endpoints - Epic 3 Schema
+ *
+ * BREAKING CHANGE from Story 1.3:
+ * - Now uses Epic 3 denormalized schema (1 table with JSONB fields + user_id + RLS)
+ * - Requires server-side Supabase client with auth context (NOT anonymous client)
+ * - RLS policies automatically enforce user isolation (no manual WHERE user_id needed)
  *
  * Database utility functions for template CRUD operations
  * Provides separation of concerns between API routes and database logic
  */
 
-import { supabase } from '@/lib/supabase';
+import { SupabaseClient } from '@supabase/supabase-js';
 import {
   Template,
-  TemplateListItem,
-  TemplateField,
-  TemplatePrompt,
-  TemplateWithRelations,
   CreateTemplateRequest,
   UpdateTemplateRequest
 } from '@/types/template';
 
 /**
- * Create a new template with optional fields and prompts
- * Uses transaction-like behavior with rollback on failure
+ * Create a new template (Epic 3)
+ *
+ * IMPORTANT: Requires authenticated Supabase client from lib/supabase-server.ts
+ * RLS policies automatically set user_id from auth.uid()
+ *
+ * @param supabase - Authenticated server-side Supabase client
+ * @param data - Template data (name, fields, extraction_prompt)
+ * @returns Created template with all fields
  */
 export async function createTemplate(
+  supabase: SupabaseClient,
   data: CreateTemplateRequest
 ): Promise<Template> {
   try {
-    // 1. Create the template
+    // Insert template with Epic 3 schema
+    // RLS INSERT policy automatically sets user_id = auth.uid()
     const { data: template, error: templateError } = await supabase
       .from('templates')
       .insert({
         name: data.name,
-        template_type: data.template_type
+        fields: data.fields,  // JSONB array
+        extraction_prompt: data.extraction_prompt || null
       })
       .select()
       .single();
 
     if (templateError) {
+      // Handle unique constraint violation (duplicate template name for user)
+      if (templateError.code === '23505') {
+        throw new Error('A template with this name already exists');
+      }
       throw new Error(`Failed to create template: ${templateError.message}`);
     }
 
     if (!template) {
       throw new Error('Template created but no data returned');
-    }
-
-    // 2. Create fields if provided
-    if (data.fields && data.fields.length > 0) {
-      const fieldsToInsert = data.fields.map((field) => ({
-        template_id: template.id,
-        field_name: field.field_name,
-        field_type: field.field_type,
-        is_header: field.is_header,
-        display_order: field.display_order
-      }));
-
-      const { error: fieldsError } = await supabase
-        .from('template_fields')
-        .insert(fieldsToInsert);
-
-      if (fieldsError) {
-        // Rollback: delete the template if fields failed
-        await supabase.from('templates').delete().eq('id', template.id);
-        throw new Error(`Failed to create template fields: ${fieldsError.message}`);
-      }
-    }
-
-    // 3. Create prompts if provided
-    if (data.prompts && data.prompts.length > 0) {
-      const promptsToInsert = data.prompts.map((prompt) => ({
-        template_id: template.id,
-        prompt_text: prompt.prompt_text,
-        prompt_type: prompt.prompt_type
-      }));
-
-      const { error: promptsError } = await supabase
-        .from('template_prompts')
-        .insert(promptsToInsert);
-
-      if (promptsError) {
-        // Rollback: delete the template if prompts failed
-        await supabase.from('templates').delete().eq('id', template.id);
-        throw new Error(`Failed to create template prompts: ${promptsError.message}`);
-      }
     }
 
     return template;
@@ -91,13 +65,18 @@ export async function createTemplate(
 }
 
 /**
- * Get all templates with field counts
+ * Get all templates for authenticated user (Epic 3)
+ *
+ * IMPORTANT: Requires authenticated Supabase client from lib/supabase-server.ts
+ * RLS SELECT policy automatically filters by user_id = auth.uid()
+ *
+ * @param supabase - Authenticated server-side Supabase client
+ * @returns Array of templates (RLS-filtered to current user only)
  */
-export async function getTemplates(): Promise<TemplateListItem[]> {
+export async function getTemplates(supabase: SupabaseClient): Promise<Template[]> {
   try {
-    // Use RPC function to get templates with field counts
-    // Note: Supabase doesn't support COUNT(*) in select directly, so we use a workaround
-    // We'll fetch templates and then get field counts separately
+    // RLS SELECT policy automatically filters to user's templates
+    // No need for manual .eq('user_id', user.id)
     const { data: templates, error: templatesError } = await supabase
       .from('templates')
       .select('*')
@@ -107,35 +86,7 @@ export async function getTemplates(): Promise<TemplateListItem[]> {
       throw new Error(`Failed to fetch templates: ${templatesError.message}`);
     }
 
-    if (!templates || templates.length === 0) {
-      return [];
-    }
-
-    // Get field counts for all templates
-    const { data: fieldCounts, error: countsError } = await supabase
-      .from('template_fields')
-      .select('template_id')
-      .in('template_id', templates.map(t => t.id));
-
-    if (countsError) {
-      console.error('Failed to fetch field counts:', countsError.message);
-      // Return templates without field counts if query fails
-      return templates.map(t => ({ ...t, field_count: 0 }));
-    }
-
-    // Count fields per template
-    const fieldCountMap = new Map<string, number>();
-    if (fieldCounts) {
-      fieldCounts.forEach(fc => {
-        fieldCountMap.set(fc.template_id, (fieldCountMap.get(fc.template_id) || 0) + 1);
-      });
-    }
-
-    // Merge field counts with templates
-    return templates.map(template => ({
-      ...template,
-      field_count: fieldCountMap.get(template.id) || 0
-    }));
+    return templates || [];
   } catch (error: any) {
     console.error('Error in getTemplates:', error);
     throw error;
@@ -143,13 +94,22 @@ export async function getTemplates(): Promise<TemplateListItem[]> {
 }
 
 /**
- * Get a single template by ID with all related fields and prompts
+ * Get a single template by ID (Epic 3)
+ *
+ * IMPORTANT: Requires authenticated Supabase client from lib/supabase-server.ts
+ * RLS SELECT policy automatically filters by user_id = auth.uid()
+ * Returns null if template not found OR user doesn't own it (security: don't reveal existence)
+ *
+ * @param supabase - Authenticated server-side Supabase client
+ * @param id - Template UUID
+ * @returns Template or null if not found/not owned by user
  */
 export async function getTemplateById(
+  supabase: SupabaseClient,
   id: string
-): Promise<TemplateWithRelations | null> {
+): Promise<Template | null> {
   try {
-    // Fetch template
+    // RLS SELECT policy automatically filters to user's templates
     const { data: template, error: templateError } = await supabase
       .from('templates')
       .select('*')
@@ -157,43 +117,14 @@ export async function getTemplateById(
       .single();
 
     if (templateError) {
+      // PGRST116 = no rows returned (either doesn't exist or RLS filtered it out)
       if (templateError.code === 'PGRST116') {
-        return null; // Not found
+        return null;
       }
       throw new Error(`Failed to fetch template: ${templateError.message}`);
     }
 
-    if (!template) {
-      return null;
-    }
-
-    // Fetch fields
-    const { data: fields, error: fieldsError } = await supabase
-      .from('template_fields')
-      .select('*')
-      .eq('template_id', id)
-      .order('display_order', { ascending: true });
-
-    if (fieldsError) {
-      throw new Error(`Failed to fetch template fields: ${fieldsError.message}`);
-    }
-
-    // Fetch prompts
-    const { data: prompts, error: promptsError } = await supabase
-      .from('template_prompts')
-      .select('*')
-      .eq('template_id', id)
-      .order('created_at', { ascending: true });
-
-    if (promptsError) {
-      throw new Error(`Failed to fetch template prompts: ${promptsError.message}`);
-    }
-
-    return {
-      ...template,
-      fields: fields || [],
-      prompts: prompts || []
-    };
+    return template;
   } catch (error: any) {
     console.error('Error in getTemplateById:', error);
     throw error;
@@ -201,18 +132,31 @@ export async function getTemplateById(
 }
 
 /**
- * Update a template and optionally replace fields/prompts
+ * Update a template (Epic 3)
+ *
+ * IMPORTANT: Requires authenticated Supabase client from lib/supabase-server.ts
+ * RLS UPDATE policy automatically filters by user_id = auth.uid()
+ * Returns null if template not found OR user doesn't own it
+ *
+ * @param supabase - Authenticated server-side Supabase client
+ * @param id - Template UUID
+ * @param data - Partial template data (only provided fields will be updated)
+ * @returns Updated template or null if not found/not owned by user
  */
 export async function updateTemplate(
+  supabase: SupabaseClient,
   id: string,
   data: UpdateTemplateRequest
-): Promise<Template> {
+): Promise<Template | null> {
   try {
-    // 1. Update template basic fields
+    // Build update object with only provided fields
     const updateData: Partial<Template> = {};
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.template_type !== undefined) updateData.template_type = data.template_type;
+    if (data.fields !== undefined) updateData.fields = data.fields;
+    if (data.extraction_prompt !== undefined) updateData.extraction_prompt = data.extraction_prompt;
 
+    // RLS UPDATE policy automatically filters to user's templates
+    // updated_at automatically updated by database trigger
     const { data: template, error: templateError } = await supabase
       .from('templates')
       .update(updateData)
@@ -221,73 +165,15 @@ export async function updateTemplate(
       .single();
 
     if (templateError) {
+      // PGRST116 = no rows updated (either doesn't exist or RLS blocked it)
+      if (templateError.code === 'PGRST116') {
+        return null;
+      }
+      // Handle unique constraint violation (duplicate template name for user)
+      if (templateError.code === '23505') {
+        throw new Error('A template with this name already exists');
+      }
       throw new Error(`Failed to update template: ${templateError.message}`);
-    }
-
-    if (!template) {
-      throw new Error('Template not found');
-    }
-
-    // 2. Replace fields if provided
-    if (data.fields !== undefined) {
-      // Delete existing fields
-      const { error: deleteFieldsError } = await supabase
-        .from('template_fields')
-        .delete()
-        .eq('template_id', id);
-
-      if (deleteFieldsError) {
-        throw new Error(`Failed to delete old fields: ${deleteFieldsError.message}`);
-      }
-
-      // Insert new fields
-      if (data.fields.length > 0) {
-        const fieldsToInsert = data.fields.map((field) => ({
-          template_id: id,
-          field_name: field.field_name,
-          field_type: field.field_type,
-          is_header: field.is_header,
-          display_order: field.display_order
-        }));
-
-        const { error: fieldsError } = await supabase
-          .from('template_fields')
-          .insert(fieldsToInsert);
-
-        if (fieldsError) {
-          throw new Error(`Failed to create new fields: ${fieldsError.message}`);
-        }
-      }
-    }
-
-    // 3. Replace prompts if provided
-    if (data.prompts !== undefined) {
-      // Delete existing prompts
-      const { error: deletePromptsError } = await supabase
-        .from('template_prompts')
-        .delete()
-        .eq('template_id', id);
-
-      if (deletePromptsError) {
-        throw new Error(`Failed to delete old prompts: ${deletePromptsError.message}`);
-      }
-
-      // Insert new prompts
-      if (data.prompts.length > 0) {
-        const promptsToInsert = data.prompts.map((prompt) => ({
-          template_id: id,
-          prompt_text: prompt.prompt_text,
-          prompt_type: prompt.prompt_type
-        }));
-
-        const { error: promptsError } = await supabase
-          .from('template_prompts')
-          .insert(promptsToInsert);
-
-        if (promptsError) {
-          throw new Error(`Failed to create new prompts: ${promptsError.message}`);
-        }
-      }
     }
 
     return template;
@@ -298,20 +184,33 @@ export async function updateTemplate(
 }
 
 /**
- * Delete a template (cascade deletes fields and prompts)
+ * Delete a template (Epic 3)
+ *
+ * IMPORTANT: Requires authenticated Supabase client from lib/supabase-server.ts
+ * RLS DELETE policy automatically filters by user_id = auth.uid()
+ * Returns false if template not found OR user doesn't own it
+ *
+ * @param supabase - Authenticated server-side Supabase client
+ * @param id - Template UUID
+ * @returns true if deleted, false if not found/not owned by user
  */
-export async function deleteTemplate(id: string): Promise<boolean> {
+export async function deleteTemplate(
+  supabase: SupabaseClient,
+  id: string
+): Promise<boolean> {
   try {
-    const { error } = await supabase
+    // RLS DELETE policy automatically filters to user's templates
+    const { error, count } = await supabase
       .from('templates')
-      .delete()
+      .delete({ count: 'exact' })
       .eq('id', id);
 
     if (error) {
       throw new Error(`Failed to delete template: ${error.message}`);
     }
 
-    return true;
+    // Return true if a row was deleted, false if nothing was deleted (not found or RLS blocked)
+    return (count ?? 0) > 0;
   } catch (error: any) {
     console.error('Error in deleteTemplate:', error);
     throw error;

@@ -12,8 +12,8 @@ WORKFLOW_PATH: greenfield-level-2.yaml
 ## Current State
 
 CURRENT_PHASE: 4
-CURRENT_WORKFLOW: dev-story
-CURRENT_AGENT: developer
+CURRENT_WORKFLOW: story-context
+CURRENT_AGENT: scrum-master
 PHASE_1_COMPLETE: true
 PHASE_2_COMPLETE: true
 PHASE_3_COMPLETE: true
@@ -30,9 +30,9 @@ STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2
 
 ## Next Action
 
-NEXT_ACTION: Story 3.3 approved and marked done. Ready to start Story 3.4: Template CRUD API Endpoints.
-NEXT_COMMAND: create-story (Draft Story 3.4: Template CRUD API Endpoints)
-NEXT_AGENT: scrum-master
+NEXT_ACTION: Story Context XML generated for Story 3.4. Context file ready for DEV agent to begin implementation.
+NEXT_COMMAND: Load DEV agent and run dev-story workflow to implement Story 3.4
+NEXT_AGENT: dev (bmad/bmm/agents/dev.md)
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) ✅ COMPLETE (10 of 10 complete)
@@ -408,8 +408,8 @@ NEXT_AGENT: scrum-master
 
 ---
 
-_Last Updated: 2025-10-24 (Story 3.3 implementation complete - Ready for Review)_
-_Status Version: 29.0_
+_Last Updated: 2025-10-24 (Story 3.4 drafted - Ready for Approval)_
+_Status Version: 30.0_
 _Story 3.1 Approved: 2025-10-24_
 _Story 2.9 Approved: 2025-10-24_
 _Product Brief Completed: 2025-10-18_

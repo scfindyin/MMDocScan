@@ -1,111 +1,73 @@
 /**
  * Template Type Definitions
- * Story 1.3: Template Data Model and Storage
+ * Story 3.4: Template CRUD API Endpoints - Epic 3 Schema
  *
- * Shared TypeScript interfaces matching database schema
+ * BREAKING CHANGE from Story 1.3:
+ * - Epic 1: Normalized 3-table schema (templates, template_fields, template_prompts)
+ * - Epic 3: Denormalized 1-table schema with JSONB fields and user_id + RLS
+ *
+ * Shared TypeScript interfaces matching Epic 3 database schema
  */
 
-// Template Types Enum - matches database CHECK constraint
-export enum TemplateType {
-  INVOICE = 'invoice',
-  ESTIMATE = 'estimate',
-  EQUIPMENT_LOG = 'equipment_log',
-  TIMESHEET = 'timesheet',
-  CONSUMABLE_LOG = 'consumable_log',
-  GENERIC = 'generic'
-}
-
-// Field Types Enum - application-level validation
-export enum FieldType {
-  TEXT = 'text',
-  NUMBER = 'number',
-  DATE = 'date',
-  CURRENCY = 'currency'
-}
-
-// Prompt Types - for different AI prompt use cases
-export enum PromptType {
-  EXTRACTION = 'extraction',
-  VALIDATION = 'validation',
-  REFINEMENT = 'refinement',
-  CUSTOM = 'custom'
+/**
+ * Template Field Interface (Epic 3)
+ * Stored as JSONB array in templates.fields column
+ *
+ * Changes from Epic 1:
+ * - Removed: template_id (no longer separate table)
+ * - Removed: field_type, is_header, created_at (not in Epic 3 spec)
+ * - Renamed: field_name → name, display_order → order
+ * - Added: instructions (optional custom field instructions)
+ */
+export interface TemplateField {
+  id: string;
+  name: string;
+  instructions?: string;
+  order: number;
 }
 
 /**
- * Template Interface
- * Matches the `templates` database table
+ * Template Interface (Epic 3)
+ * Matches the `templates` database table after migration
+ *
+ * Changes from Epic 1:
+ * - Added: user_id (FK to auth.users, required for multi-user support)
+ * - Added: fields (JSONB array, replaces template_fields table)
+ * - Added: extraction_prompt (TEXT, replaces template_prompts table)
+ * - Removed: template_type (not in Epic 3 spec)
  */
 export interface Template {
   id: string;
+  user_id: string;
   name: string;
-  template_type: TemplateType | string;
+  fields: TemplateField[];
+  extraction_prompt: string | null;
   created_at: string;
   updated_at: string;
 }
 
 /**
- * Template Field Interface
- * Matches the `template_fields` database table
- */
-export interface TemplateField {
-  id: string;
-  template_id: string;
-  field_name: string;
-  field_type: FieldType | string;
-  is_header: boolean;
-  display_order: number;
-  created_at: string;
-}
-
-/**
- * Template Prompt Interface
- * Matches the `template_prompts` database table
- */
-export interface TemplatePrompt {
-  id: string;
-  template_id: string;
-  prompt_text: string;
-  prompt_type: PromptType | string;
-  created_at: string;
-}
-
-/**
- * Template with Related Data
- * Used when fetching complete template with fields and prompts
- */
-export interface TemplateWithRelations extends Template {
-  fields?: TemplateField[];
-  prompts?: TemplatePrompt[];
-}
-
-/**
- * Create Template Request
+ * Create Template Request (Epic 3)
  * Used for POST /api/templates
+ *
+ * Note: user_id auto-added by RLS from auth.uid()
  */
 export interface CreateTemplateRequest {
   name: string;
-  template_type: TemplateType | string;
-  fields?: Omit<TemplateField, 'id' | 'template_id' | 'created_at'>[];
-  prompts?: Omit<TemplatePrompt, 'id' | 'template_id' | 'created_at'>[];
+  fields: TemplateField[];
+  extraction_prompt?: string;
 }
 
 /**
- * Update Template Request
+ * Update Template Request (Epic 3)
  * Used for PUT /api/templates/:id
+ *
+ * All fields optional for partial updates
  */
 export interface UpdateTemplateRequest {
   name?: string;
-  template_type?: TemplateType | string;
-  fields?: Omit<TemplateField, 'id' | 'template_id' | 'created_at'>[];
-  prompts?: Omit<TemplatePrompt, 'id' | 'template_id' | 'created_at'>[];
-}
-
-/**
- * Template List Item
- * Extended Template with field count for list views
- */
-export interface TemplateListItem extends Template {
-  field_count?: number;
+  fields?: TemplateField[];
+  extraction_prompt?: string;
 }
 
 /**
@@ -113,7 +75,7 @@ export interface TemplateListItem extends Template {
  * Used for GET /api/templates
  */
 export interface TemplateListResponse {
-  templates: TemplateListItem[];
+  templates: Template[];
 }
 
 /**
@@ -122,8 +84,6 @@ export interface TemplateListResponse {
  */
 export interface TemplateDetailResponse {
   template: Template;
-  fields: TemplateField[];
-  prompts: TemplatePrompt[];
 }
 
 /**
@@ -148,7 +108,7 @@ export interface TemplateUpdateResponse {
  */
 export interface TemplateDeleteResponse {
   success: boolean;
-  id: string;
+  message: string;
 }
 
 /**
@@ -157,5 +117,5 @@ export interface TemplateDeleteResponse {
  */
 export interface ErrorResponse {
   error: string;
-  details?: string;
+  details?: any;
 }
