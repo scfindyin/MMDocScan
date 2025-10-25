@@ -19,18 +19,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { TemplateListItem } from "@/types/template";
+import { Template } from "@/types/template";
 import { AlertCircle, Plus, Edit, Eye } from "lucide-react";
-
-// Template type display labels
-const TEMPLATE_TYPE_LABELS: Record<string, string> = {
-  invoice: "Invoice",
-  estimate: "Estimate",
-  equipment_log: "Equipment Log",
-  timesheet: "Timesheet",
-  consumable_log: "Consumable Log",
-  generic: "Generic",
-};
 
 // Format date string to readable format
 function formatDate(dateString: string): string {
@@ -44,7 +34,7 @@ function formatDate(dateString: string): string {
 
 export default function TemplatesPage() {
   const router = useRouter();
-  const [templates, setTemplates] = useState<TemplateListItem[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -154,7 +144,6 @@ export default function TemplatesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Fields</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -168,13 +157,9 @@ export default function TemplatesPage() {
                   className="cursor-pointer hover:bg-muted/50"
                 >
                   <TableCell className="font-medium">{template.name}</TableCell>
-                  <TableCell>
-                    {TEMPLATE_TYPE_LABELS[template.template_type] ||
-                      template.template_type}
-                  </TableCell>
                   <TableCell>{formatDate(template.created_at)}</TableCell>
                   <TableCell className="text-right">
-                    {template.field_count ?? 0}
+                    {template.fields?.length ?? 0}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -208,8 +193,7 @@ export default function TemplatesPage() {
                 <div>
                   <CardTitle className="text-xl">{template.name}</CardTitle>
                   <CardDescription>
-                    {TEMPLATE_TYPE_LABELS[template.template_type] ||
-                      template.template_type}
+                    {template.fields?.length ?? 0} fields
                   </CardDescription>
                 </div>
                 <Button
@@ -228,7 +212,7 @@ export default function TemplatesPage() {
                   Created: {formatDate(template.created_at)}
                 </span>
                 <span className="text-muted-foreground">
-                  Fields: {template.field_count ?? 0}
+                  Fields: {template.fields?.length ?? 0}
                 </span>
               </div>
             </CardContent>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, FileText, File as FileIcon, X, ArrowRight, CheckCircle2, Eye, PlayCircle, AlertCircle, Loader2, ArrowUpDown, ArrowUp, ArrowDown, Info, FileSpreadsheet, RefreshCw } from "lucide-react";
-import type { TemplateListItem, TemplateField, TemplatePrompt } from "@/types/template";
+import type { Template, TemplateField } from "@/types/template";
 import type { ExtractedRow } from "@/types/extraction";
 import {
   Dialog,
@@ -53,7 +53,7 @@ export default function ProcessDocumentsPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Template selection state
-  const [templates, setTemplates] = useState<TemplateListItem[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
@@ -62,9 +62,8 @@ export default function ProcessDocumentsPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<{
     name: string;
-    type: string;
     fields: TemplateField[];
-    prompts: TemplatePrompt[];
+    extraction_prompt: string | null;
   } | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 
@@ -128,11 +127,10 @@ export default function ProcessDocumentsPage() {
       const data = await response.json();
       setSelectedTemplateFields(data.fields || []);
 
-      // Load template prompts for refinement feature
-      const customPrompt = data.prompts?.find((p: TemplatePrompt) => p.prompt_type === 'custom');
-      if (customPrompt) {
-        setCurrentPrompt(customPrompt.prompt_text);
-        setPromptOverride(customPrompt.prompt_text);
+      // Load extraction_prompt for refinement feature (Epic 3: single prompt field)
+      if (data.extraction_prompt) {
+        setCurrentPrompt(data.extraction_prompt);
+        setPromptOverride(data.extraction_prompt);
       } else {
         setCurrentPrompt('');
         setPromptOverride('');
@@ -316,11 +314,11 @@ export default function ProcessDocumentsPage() {
       }
 
       const data = await response.json();
+      // Epic 3: API returns template object directly
       setPreviewTemplate({
-        name: data.template.name,
-        type: data.template.template_type,
+        name: data.name,
         fields: data.fields || [],
-        prompts: data.prompts || [],
+        extraction_prompt: data.extraction_prompt || null,
       });
     } catch (err) {
       console.error('Error fetching template details:', err);
@@ -421,8 +419,8 @@ export default function ProcessDocumentsPage() {
 
   // Get field data type for sorting
   const getFieldType = (fieldName: string): string => {
-    const field = selectedTemplateFields.find(f => f.field_name === fieldName);
-    return field?.field_type || 'text';
+    const field = selectedTemplateFields.find(f => f.name === fieldName);
+    return 'text'; // Epic 3: All fields are text type
   };
 
   // Sort extracted data
@@ -788,14 +786,8 @@ export default function ProcessDocumentsPage() {
         },
         body: JSON.stringify({
           name: templateData.template.name,
-          template_type: templateData.template.template_type,
           fields: templateData.fields,
-          prompts: [
-            {
-              prompt_type: 'custom',
-              prompt_text: promptOverride,
-            },
-          ],
+          extraction_prompt: promptOverride || null,
         }),
       });
 
@@ -844,19 +836,13 @@ export default function ProcessDocumentsPage() {
         },
         body: JSON.stringify({
           name: newTemplateName.trim(),
-          template_type: templateData.template.template_type,
           fields: templateData.fields.map((f: TemplateField) => ({
-            field_name: f.field_name,
-            field_type: f.field_type,
-            is_header: f.is_header,
-            display_order: f.display_order,
+            id: f.id,
+            name: f.name,
+            instructions: f.instructions,
+            order: f.order,
           })),
-          prompts: [
-            {
-              prompt_type: 'custom',
-              prompt_text: promptOverride,
-            },
-          ],
+          extraction_prompt: promptOverride || null,
         }),
       });
 
@@ -1096,11 +1082,8 @@ export default function ProcessDocumentsPage() {
                         {template.name}
                       </h3>
 
-                      {/* Template Type Badge */}
+                      {/* Selection Badge */}
                       <div className="flex items-center gap-2 mb-3">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeBadgeColor(template.template_type)}`}>
-                          {formatTemplateType(template.template_type)}
-                        </span>
                         {isSelected && (
                           <span className="text-xs font-medium text-blue-600">
                             Selected
@@ -1110,7 +1093,7 @@ export default function ProcessDocumentsPage() {
 
                       {/* Field Count */}
                       <p className="text-sm text-muted-foreground">
-                        {template.field_count || 0} fields
+                        {template.fields?.length || 0} fields
                       </p>
 
                       {/* Last Used Date - Placeholder */}
@@ -1437,23 +1420,23 @@ export default function ProcessDocumentsPage() {
                         <TableRow>
                           {/* Template Field Columns */}
                           {selectedTemplateFields
-                            .sort((a, b) => a.display_order - b.display_order)
+                            .sort((a, b) => a.order - b.order)
                             .map((field) => (
                               <TableHead
                                 key={field.id}
                                 className="cursor-pointer hover:bg-gray-50 transition-colors"
-                                onClick={() => handleSort(field.field_name)}
+                                onClick={() => handleSort(field.name)}
                               >
                                 <div className="flex items-center gap-1">
-                                  <span>{field.field_name}</span>
-                                  {sortColumn === field.field_name && (
+                                  <span>{field.name}</span>
+                                  {sortColumn === field.name && (
                                     sortDirection === 'asc' ? (
                                       <ArrowUp className="h-4 w-4" />
                                     ) : (
                                       <ArrowDown className="h-4 w-4" />
                                     )
                                   )}
-                                  {sortColumn !== field.field_name && (
+                                  {sortColumn !== field.name && (
                                     <ArrowUpDown className="h-4 w-4 opacity-30" />
                                   )}
                                 </div>
@@ -1541,10 +1524,10 @@ export default function ProcessDocumentsPage() {
                             >
                               {/* Template Field Values */}
                               {selectedTemplateFields
-                                .sort((a, b) => a.display_order - b.display_order)
+                                .sort((a, b) => a.order - b.order)
                                 .map((field) => (
                                   <TableCell key={field.id}>
-                                    {formatFieldValue(row.fields[field.field_name], field.field_name)}
+                                    {formatFieldValue(row.fields[field.name], field.name)}
                                   </TableCell>
                                 ))}
 
@@ -1601,7 +1584,7 @@ export default function ProcessDocumentsPage() {
               {previewTemplate?.name || 'Template Preview'}
             </DialogTitle>
             <DialogDescription>
-              {previewTemplate && `${formatTemplateType(previewTemplate.type)} Template`}
+              Template Preview
             </DialogDescription>
           </DialogHeader>
 
@@ -1617,17 +1600,17 @@ export default function ProcessDocumentsPage() {
                 {previewTemplate.fields.length > 0 ? (
                   <div className="space-y-2">
                     {previewTemplate.fields
-                      .sort((a, b) => a.display_order - b.display_order)
+                      .sort((a, b) => a.order - b.order)
                       .map((field) => (
                         <div
                           key={field.id}
                           className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
                         >
                           <div className="flex-1">
-                            <p className="font-medium">{field.field_name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {field.field_type} • {field.is_header ? 'Header' : 'Detail'}
-                            </p>
+                            <p className="font-medium">{field.name}</p>
+                            {field.instructions && (
+                              <p className="text-sm text-muted-foreground">{field.instructions}</p>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -1637,22 +1620,15 @@ export default function ProcessDocumentsPage() {
                 )}
               </div>
 
-              {/* Prompts Section */}
+              {/* Extraction Prompt Section */}
               <div>
-                <h3 className="font-semibold mb-3">Custom Prompts</h3>
-                {previewTemplate.prompts.length > 0 ? (
-                  <div className="space-y-3">
-                    {previewTemplate.prompts.map((prompt) => (
-                      <div key={prompt.id} className="p-3 bg-gray-50 rounded-md">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">
-                          {prompt.prompt_type.toUpperCase()}
-                        </p>
-                        <p className="text-sm whitespace-pre-wrap">{prompt.prompt_text}</p>
-                      </div>
-                    ))}
+                <h3 className="font-semibold mb-3">Extraction Prompt</h3>
+                {previewTemplate.extraction_prompt ? (
+                  <div className="p-3 bg-gray-50 rounded-md">
+                    <p className="text-sm whitespace-pre-wrap">{previewTemplate.extraction_prompt}</p>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No custom prompts defined</p>
+                  <p className="text-sm text-muted-foreground">No extraction prompt defined</p>
                 )}
               </div>
 

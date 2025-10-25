@@ -373,7 +373,7 @@ export default function EditTemplatePage() {
       .map((sf) => ({
         id: crypto.randomUUID(),
         name: sf.field_name,
-        type: sf.field_type as FieldType,
+        type: sf.field_type,
         category: sf.category,
       }));
 

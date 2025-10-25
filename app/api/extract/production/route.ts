@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase-server';
 import { getTemplateById } from '@/lib/db/templates';
 import { createExtraction } from '@/lib/db/extractions';
 import {
@@ -144,8 +145,11 @@ export async function POST(request: NextRequest) {
 
     const { documentBase64, templateId, customPrompt, filename } = validationResult.data;
 
+    // Create server-side Supabase client for Epic 3 schema
+    const supabase = createClient();
+
     // Fetch template from database
-    const template = await getTemplateById(templateId);
+    const template = await getTemplateById(supabase, templateId);
 
     if (!template) {
       return NextResponse.json(
@@ -187,12 +191,14 @@ export async function POST(request: NextRequest) {
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
 
-    // Separate header and detail fields
-    const headerFields = template.fields.filter((f) => f.is_header);
-    const detailFields = template.fields.filter((f) => !f.is_header);
+    // Epic 3 Note: All fields treated as header fields (document-level extraction)
+    // Epic 3 schema removed is_header distinction - single-row extraction by default
+    const headerFields = template.fields;
+    const detailFields: TemplateField[] = [];
 
     // Build extraction schema for tool calling
     // NOTE: All fields are type 'string' to allow formatting per user instructions
+    // Epic 3: Using field.name (was field_name in Epic 1)
     const extractionSchema = {
       type: 'object',
       properties: {
@@ -200,10 +206,10 @@ export async function POST(request: NextRequest) {
           type: 'object',
           properties: Object.fromEntries(
             headerFields.map((f) => [
-              f.field_name,
+              f.name,
               {
                 type: 'string',
-                description: `Extract ${f.field_name} (${f.field_type}) from document following user formatting instructions`,
+                description: `Extract ${f.name} from document${f.instructions ? `: ${f.instructions}` : ''}`,
               },
             ])
           ),
@@ -214,10 +220,10 @@ export async function POST(request: NextRequest) {
             type: 'object',
             properties: Object.fromEntries(
               detailFields.map((f) => [
-                f.field_name,
+                f.name,
                 {
                   type: 'string',
-                  description: `Extract ${f.field_name} (${f.field_type}) from line item following user formatting instructions`,
+                  description: `Extract ${f.name} from line item${f.instructions ? `: ${f.instructions}` : ''}`,
                 },
               ])
             ),
@@ -236,22 +242,20 @@ export async function POST(request: NextRequest) {
       extractionPrompt += `${customPrompt.trim()}\n\n`;
     }
 
-    // 2. Template prompts (always include if exist - additive mode)
-    if (template.prompts && template.prompts.length > 0) {
+    // 2. Template extraction_prompt (Epic 3: single extraction_prompt field, not array)
+    if (template.extraction_prompt && template.extraction_prompt.trim()) {
       extractionPrompt += 'TEMPLATE GUIDANCE:\n';
-      template.prompts.forEach((p) => {
-        extractionPrompt += `${p.prompt_text}\n`;
-      });
-      extractionPrompt += '\n';
+      extractionPrompt += `${template.extraction_prompt.trim()}\n\n`;
     }
 
-    // 3. Field list
+    // 3. Field list (Epic 3: using field.name instead of field_name)
     extractionPrompt += 'Extract structured data from this document based on the following template:\n\n';
 
     if (headerFields.length > 0) {
-      extractionPrompt += 'Header Fields (document-level information):\n';
+      extractionPrompt += 'Document Fields:\n';
       headerFields.forEach((f) => {
-        extractionPrompt += `- ${f.field_name} (${f.field_type})\n`;
+        const fieldDesc = f.instructions ? ` - ${f.instructions}` : '';
+        extractionPrompt += `- ${f.name}${fieldDesc}\n`;
       });
       extractionPrompt += '\n';
     }
@@ -259,7 +263,8 @@ export async function POST(request: NextRequest) {
     if (detailFields.length > 0) {
       extractionPrompt += 'Detail Fields (line items or repeating information):\n';
       detailFields.forEach((f) => {
-        extractionPrompt += `- ${f.field_name} (${f.field_type})\n`;
+        const fieldDesc = f.instructions ? ` - ${f.instructions}` : '';
+        extractionPrompt += `- ${f.name}${fieldDesc}\n`;
       });
       extractionPrompt += '\n';
     }

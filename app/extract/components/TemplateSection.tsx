@@ -15,7 +15,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, Save } from 'lucide-react';
-import { Template, TemplateWithRelations, TemplateField as DBTemplateField, TemplatePrompt } from '@/types/template';
+import { Template } from '@/types/template';
 
 export function TemplateSection() {
   const {

@@ -31,7 +31,7 @@ function calculateConfidence(
   let typeValidFields = 0;
 
   for (const templateField of templateFields) {
-    const value = fields[templateField.name];
+    const value = fields[templateField.field_name];
 
     // Check if field is populated
     if (value !== null && value !== undefined && value !== '') {

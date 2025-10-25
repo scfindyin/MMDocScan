@@ -48,7 +48,7 @@ import {
 interface FieldDefinition {
   id: string; // Unique ID for React keys
   name: string;
-  type: FieldType;
+  type: "text" | "number" | "date" | "currency"; // Epic 3: FieldType removed
   category: "header" | "detail";
 }
 
@@ -59,22 +59,12 @@ interface SuggestedField {
   category: "header" | "detail";
 }
 
-// Template type options for dropdown
-const TEMPLATE_TYPES = [
-  { value: TemplateType.INVOICE, label: "Invoice" },
-  { value: TemplateType.ESTIMATE, label: "Estimate" },
-  { value: TemplateType.EQUIPMENT_LOG, label: "Equipment Log" },
-  { value: TemplateType.TIMESHEET, label: "Timesheet" },
-  { value: TemplateType.CONSUMABLE_LOG, label: "Consumable Log" },
-  { value: TemplateType.GENERIC, label: "Generic Document" },
-];
-
-// Data type options for field type selector
+// Data type options for field type selector (Epic 3: FieldType removed)
 const DATA_TYPES = [
-  { value: FieldType.TEXT, label: "Text" },
-  { value: FieldType.NUMBER, label: "Number" },
-  { value: FieldType.DATE, label: "Date" },
-  { value: FieldType.CURRENCY, label: "Currency" },
+  { value: "text", label: "Text" },
+  { value: "number", label: "Number" },
+  { value: "date", label: "Date" },
+  { value: "currency", label: "Currency" },
 ];
 
 export default function NewTemplatePage() {
@@ -83,9 +73,8 @@ export default function NewTemplatePage() {
 
   // Form state
   const [templateName, setTemplateName] = useState("");
-  const [templateType, setTemplateType] = useState<TemplateType>(
-    TemplateType.INVOICE
-  );
+  // Epic 3: template_type removed from schema
+  // const [templateType, setTemplateType] = useState("invoice");
   const [fields, setFields] = useState<FieldDefinition[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -283,7 +272,7 @@ export default function NewTemplatePage() {
       .map((sf) => ({
         id: crypto.randomUUID(),
         name: sf.field_name,
-        type: sf.field_type as FieldType,
+        type: sf.field_type,
         category: sf.category,
       }));
 
@@ -380,7 +369,7 @@ export default function NewTemplatePage() {
     const newField: FieldDefinition = {
       id: crypto.randomUUID(),
       name: "",
-      type: FieldType.TEXT,
+      type: "text",
       category: "header",
     };
     setFields([...fields, newField]);
@@ -482,12 +471,11 @@ export default function NewTemplatePage() {
           ]
         : undefined;
 
-      // Build request payload
+      // Build request payload (Epic 3: removed template_type, prompts → extraction_prompt)
       const payload = {
         name: templateName,
-        template_type: templateType,
         fields: apiFields,
-        ...(prompts && { prompts }),
+        extraction_prompt: prompts?.[0]?.prompt_text || null,
       };
 
       // Call API
@@ -573,27 +561,20 @@ export default function NewTemplatePage() {
         </div>
 
         {/* Template Type */}
+        {/* Epic 3: template_type removed from schema
         <div className="space-y-2">
           <Label htmlFor="templateType">
             Template Type <span className="text-red-500">*</span>
           </Label>
-          <Select
-            value={templateType}
-            onValueChange={(value) => setTemplateType(value as TemplateType)}
-            disabled={isLoading}
-          >
+          <Select disabled={isLoading}>
             <SelectTrigger id="templateType">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {TEMPLATE_TYPES.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
             </SelectContent>
           </Select>
         </div>
+        */}
       </div>
 
       {/* Sample Document Upload Section (Optional) - Story 1.6 */}
