@@ -1,6 +1,6 @@
 # Story 3.5: Save Template Flow
 
-Status: Ready
+Status: Done
 
 ## Story
 
@@ -203,5 +203,8 @@ claude-sonnet-4-5-20250929
 ### Debug Log References
 
 ### Completion Notes List
+
+**Completed:** 2025-10-25
+**Definition of Done:** All acceptance criteria met, code reviewed, tests passing, deployed
 
 ### File List

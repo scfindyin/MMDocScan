@@ -18,9 +18,30 @@
 
 ---
 
+## Phase 0: Cleanup (Conditional)
+
+### **Step 1: Approve Previous Story (Dev Agent)**
+- [ ] Condition evaluated: workflow-status has IN_PROGRESS_STORY populated
+- [ ] If IN_PROGRESS_STORY exists:
+  - [ ] Dev agent loaded
+  - [ ] `story-approved` workflow executed
+  - [ ] Previous story file read successfully
+  - [ ] Story status updated from "Ready" → "Done"
+  - [ ] Completion notes added to Dev Agent Record section with date
+  - [ ] Workflow-status updated via `complete_story` action:
+    - [ ] IN_PROGRESS → DONE
+    - [ ] TODO → IN_PROGRESS
+    - [ ] BACKLOG → TODO
+  - [ ] Story queue advanced correctly
+- [ ] If no IN_PROGRESS_STORY:
+  - [ ] Step skipped (first story in sequence)
+  - [ ] No errors from skip condition
+
+---
+
 ## Phase 1: Story Creation & Review
 
-### **Step 1: Story Creation (SM Agent)**
+### **Step 2: Story Creation (SM Agent)**
 - [ ] SM agent loaded with config variables
 - [ ] `create-story` workflow executed in non-interactive mode
 - [ ] Story file created at `{story_dir}/story-{epic_num}.{story_num}.md`
@@ -29,7 +50,7 @@
 - [ ] Story status set to "Draft"
 - [ ] Workflow-status updated with IN_PROGRESS_STORY
 
-### **Step 2: Architect Review**
+### **Step 3: Architect Review**
 - [ ] Architect agent loaded
 - [ ] Story file read successfully
 - [ ] Tech spec loaded for context
@@ -38,14 +59,14 @@
 - [ ] Issues documented (if any)
 - [ ] Recommendations provided
 
-### **Step 3: Regeneration (if needed)**
+### **Step 4: Regeneration (if needed)**
 - [ ] Condition evaluated: verdict == REQUIRES CHANGES
 - [ ] Architect feedback passed to SM agent
 - [ ] Story regenerated with fixes incorporated
 - [ ] Story file overwritten with updated version
 - [ ] Iteration counter incremented
 - [ ] Max iterations checked (abort if exceeded)
-- [ ] Loop back to Step 2 for re-review
+- [ ] Loop back to Step 3 for re-review
 
 ### **Approval Gate**
 - [ ] Architect verdict: APPROVED (after 1-2 iterations max)
@@ -56,13 +77,13 @@
 
 ## Phase 2: Preparation
 
-### **Step 4: Mark Story Ready**
+### **Step 5: Mark Story Ready**
 - [ ] `story-ready` workflow executed
 - [ ] Story status updated from "Draft" to "Ready"
 - [ ] Workflow-status updated with NEXT_ACTION
 - [ ] No errors during status update
 
-### **Step 5: Generate Story Context**
+### **Step 6: Generate Story Context**
 - [ ] `story-context` workflow executed
 - [ ] Story Context XML created at `{story_dir}/story-context-{epic_num}.{story_num}.xml`
 - [ ] Context includes:
@@ -81,7 +102,7 @@
 
 ## Phase 3: Implementation
 
-### **Step 6: Implement Story (Dev Agent)**
+### **Step 7: Implement Story (Dev Agent)**
 - [ ] Dev agent loaded with config variables
 - [ ] `dev-story` workflow executed
 - [ ] Story file loaded successfully
@@ -98,7 +119,19 @@
 - [ ] Lint passed (or warnings acceptable)
 - [ ] Implementation status: "completed" (not "blocked")
 
-### **Step 7: Database Testing (if applicable)**
+### **Step 8: Build Verification**
+- [ ] Build command executed: `npm run build`
+- [ ] Build succeeded (TypeScript compilation)
+- [ ] No ERROR-level TypeScript errors
+- [ ] If build failed:
+  - [ ] All TypeScript/build errors captured
+  - [ ] Errors analyzed systematically
+  - [ ] Fixes applied (type definitions, imports, property names)
+  - [ ] Build re-run until success (max 3 attempts)
+- [ ] Build status: success
+- [ ] No unresolved build errors before proceeding to git push
+
+### **Step 9: Database Testing (if applicable)**
 
 #### **Condition Check**
 - [ ] Story involves database changes (migration file created OR schema changes)
@@ -147,10 +180,11 @@
 
 ## Phase 4: Finalization
 
-### **Step 8: Push to GitHub**
+### **Step 10: Push to GitHub**
 
 #### **Pre-Push Validation**
 - [ ] Implementation status == "completed"
+- [ ] Build status == "success" (from Step 8)
 - [ ] `auto_push_to_github` == true
 - [ ] Git working tree has changes to commit
 - [ ] No merge conflicts
@@ -169,13 +203,13 @@
 - [ ] No remote conflicts
 - [ ] Commit visible on GitHub
 
-### **Step 9: Completion Report**
+### **Step 11: Completion Report**
 
 #### **Report Sections**
 - [ ] **Story Summary:**
   - [ ] Story ID, title, epic
   - [ ] Architect review iterations
-  - [ ] Final status (Ready for Approval)
+  - [ ] Final status (Ready for testing)
 - [ ] **Implementation Summary:**
   - [ ] Files created (count + list)
   - [ ] Files modified (count + list)
@@ -190,8 +224,13 @@
   - [ ] Commit hash
   - [ ] Push status (success/failed)
   - [ ] Branch name
+- [ ] **Testing Summary:**
+  - [ ] Brief list of features to manually test
+  - [ ] Extracted from acceptance criteria and tasks
+  - [ ] Focus on user-facing functionality
+  - [ ] Clear, actionable test scenarios
 - [ ] **Next Steps:**
-  - [ ] Clear action for user (approve-story or fix issues)
+  - [ ] Clear action for user (manually test features, then run complete-story again)
   - [ ] List of blockers (if any)
 
 #### **Report Output**

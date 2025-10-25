@@ -5,8 +5,11 @@ import { PanelGroup, Panel, PanelResizeHandle, ImperativePanelHandle } from 'rea
 import { useExtractionStore } from '@/stores/extractionStore';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { TemplateSection } from './components/TemplateSection';
 import { FileUploadSection } from './components/FileUploadSection';
+import { ResultsTable } from './components/ResultsTable';
+import { Loader2, Play } from 'lucide-react';
 
 export default function ExtractPageClient() {
   const leftPanelRef = useRef<ImperativePanelHandle>(null);
@@ -22,6 +25,18 @@ export default function ExtractPageClient() {
     maximizeRight,
     restoreLeft,
     restoreRight,
+    uploadedFile,
+    fields,
+    extractionPrompt,
+    selectedTemplateId,
+    selectedTemplateName,
+    results,
+    isExtracting,
+    extractionError,
+    setResults,
+    clearResults,
+    setIsExtracting,
+    setExtractionError,
   } = useExtractionStore();
 
   const handleResize = (sizes: number[]) => {
@@ -52,6 +67,81 @@ export default function ExtractPageClient() {
     restoreRight();
     leftPanelRef.current?.resize(30);
     rightPanelRef.current?.resize(70);
+  };
+
+  // Extract button handler (Story 3.7)
+  const handleExtract = async () => {
+    // Validation: check uploadedFile and fields
+    if (!uploadedFile || fields.length === 0) {
+      return; // Button should be disabled
+    }
+
+    // Start extraction
+    setIsExtracting(true);
+    clearResults();
+    setExtractionError(null);
+
+    try {
+      // Create FormData
+      const formData = new FormData();
+      formData.append('file', uploadedFile);
+      formData.append('fields', JSON.stringify(fields));
+      if (extractionPrompt) {
+        formData.append('extraction_prompt', extractionPrompt);
+      }
+      if (selectedTemplateId) {
+        formData.append('template_id', selectedTemplateId);
+      }
+      if (selectedTemplateName) {
+        formData.append('template_name', selectedTemplateName);
+      }
+
+      // Call API
+      const response = await fetch('/api/extractions/single', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Extraction failed');
+      }
+
+      const data = await response.json();
+
+      // Transform API response to match store format
+      const extractionResult = {
+        extractionId: data.extraction_id,
+        filename: data.filename,
+        templateId: data.template_id,
+        templateName: data.template_name,
+        timestamp: data.timestamp,
+        results: data.results.map((r: any) => ({
+          fieldName: r.field_name,
+          fieldType: r.field_type,
+          extractedValue: r.extracted_value,
+        })),
+      };
+
+      setResults(extractionResult);
+    } catch (error) {
+      console.error('Extraction error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Extraction failed. Please try again.';
+      setExtractionError(errorMessage);
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  // Check if Extract button should be disabled
+  const isExtractDisabled = !uploadedFile || fields.length === 0 || isExtracting;
+
+  // Tooltip message for disabled Extract button
+  const getExtractTooltip = () => {
+    if (isExtracting) return 'Extraction in progress...';
+    if (!uploadedFile) return 'Please upload a file first';
+    if (fields.length === 0) return 'Please add at least one field';
+    return 'Extract data from document';
   };
 
   // Restore panel sizes on mount from localStorage
@@ -126,6 +216,41 @@ export default function ExtractPageClient() {
                   <div className="space-y-6">
                     <TemplateSection />
                     <FileUploadSection />
+
+                    {/* Extract Button (Story 3.7) */}
+                    <div className="pt-4 border-t">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div>
+                              <Button
+                                onClick={handleExtract}
+                                disabled={isExtractDisabled}
+                                className="w-full"
+                                size="lg"
+                              >
+                                {isExtracting ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Extracting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Play className="mr-2 h-4 w-4" />
+                                    Extract
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </TooltipTrigger>
+                          {isExtractDisabled && (
+                            <TooltipContent>
+                              <p>{getExtractTooltip()}</p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -172,11 +297,12 @@ export default function ExtractPageClient() {
                   <h2 className="text-lg font-semibold mb-4 pr-12">
                     Extraction Results
                   </h2>
-                  <Card className="flex-1 p-6 flex items-center justify-center">
-                    <p className="text-gray-500 text-center">
-                      Coming in Story 3.7: Basic Extraction with Results Table
-                    </p>
-                  </Card>
+                  <ResultsTable
+                    results={results?.results || []}
+                    isLoading={isExtracting}
+                    error={extractionError}
+                    onRetry={handleExtract}
+                  />
                 </div>
               </div>
             )}

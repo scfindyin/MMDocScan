@@ -4,6 +4,12 @@ author: "BMad"
 version: "1.3.0"
 executor: "context-manager"  # Use context-manager agent to preserve context across sub-agents
 
+# CRITICAL EXECUTION POLICY
+# This workflow is designed for CONTINUOUS, UNINTERRUPTED execution from Step 1 through Step 11.
+# DO NOT stop mid-workflow to ask user if they want to continue - run all steps automatically.
+# The ONLY pause should be at the end (Step 11) for user to manually test the implemented features.
+# Purpose: Minimize interruptions so work doesn't get paused waiting for user approval between steps.
+
 # Critical variables from config
 config_source: "{project-root}/bmad/bmm/config.yaml"
 output_folder: "{config_source}:output_folder"
@@ -70,55 +76,68 @@ variables:
 
 # Orchestration steps
 orchestration:
-  - name: "Step 1: Create Story"
+  - name: "Step 1: Approve Previous Story (if exists)"
+    agent: "dev"
+    workflow: "story-approved"
+    description: "Mark the previous story (just tested) as Done and advance queue"
+    condition: "workflow-status has IN_PROGRESS_STORY populated"
+    inputs:
+      - workflow_status: "From context-manager memory"
+    outputs:
+      - story_marked_done: "Previous story ID"
+      - queue_advanced: "TODO → IN_PROGRESS, BACKLOG → TODO"
+    on_failure: "abort"
+    skip_if_no_in_progress: true
+
+  - name: "Step 2: Create Story"
     agent: "SM"
     workflow: "create-story"
     description: "SM agent creates draft story using epics, PRD, tech spec, and architecture docs"
     on_failure: "abort"
 
-  - name: "Step 2: Architect Review"
+  - name: "Step 3: Architect Review"
     agent: "architect-reviewer"
     description: "Architect reviews story for technical feasibility and architectural alignment"
     inputs:
-      - story_file: "Output from Step 1"
+      - story_file: "Output from Step 2"
       - tech_spec: "From workflow-status current epic"
       - epics_file: "{output_folder}/epics.md"
     outputs:
       - review_verdict: "APPROVED or REQUIRES CHANGES"
       - issues_found: "List of critical issues (if any)"
       - recommendations: "List of improvements"
-    on_failure: "continue_to_step_3"
+    on_failure: "continue_to_step_4"
 
-  - name: "Step 3: Regenerate Story (if needed)"
+  - name: "Step 4: Regenerate Story (if needed)"
     agent: "SM"
     workflow: "create-story"
     description: "SM agent regenerates story incorporating architect feedback"
-    condition: "Step 2 verdict == REQUIRES CHANGES"
+    condition: "Step 3 verdict == REQUIRES CHANGES"
     inputs:
-      - architect_feedback: "Output from Step 2"
+      - architect_feedback: "Output from Step 3"
     max_iterations: "{max_architect_iterations}"
     on_max_iterations: "prompt_user"
-    loop_to: "Step 2"
+    loop_to: "Step 3"
 
-  - name: "Step 4: Mark Story Ready"
+  - name: "Step 5: Mark Story Ready"
     agent: "SM"
     workflow: "story-ready"
     description: "Mark story as Ready for Development"
-    condition: "Step 2 verdict == APPROVED"
+    condition: "Step 3 verdict == APPROVED"
     skip_if: "{skip_manual_approval}"
 
-  - name: "Step 5: Generate Story Context"
+  - name: "Step 6: Generate Story Context"
     agent: "SM"
     workflow: "story-context"
     description: "Assemble dynamic Story Context XML from latest docs and code"
 
-  - name: "Step 6: Implement Story"
+  - name: "Step 7: Implement Story"
     agent: "dev"
     workflow: "dev-story"
     description: "Dev agent implements all tasks, creates files, runs tests"
     inputs:
-      - story_file: "From Step 1 (or Step 3 if regenerated)"
-      - story_context: "From Step 5"
+      - story_file: "From Step 2 (or Step 4 if regenerated)"
+      - story_context: "From Step 6"
     outputs:
       - files_created: "List of new files"
       - files_modified: "List of modified files"
@@ -126,10 +145,10 @@ orchestration:
       - implementation_status: "completed or blocked"
     on_failure: "report_and_abort"
 
-  - name: "Step 7: Build Verification"
+  - name: "Step 8: Build Verification"
     agent: "dev"
     description: "Run local build (npm run build) and fix any TypeScript/build errors before proceeding"
-    condition: "Step 6 status == completed"
+    condition: "Step 7 status == completed"
     outputs:
       - build_status: "success or failed"
       - build_errors: "List of errors if any"
@@ -139,7 +158,7 @@ orchestration:
       max_attempts: 3
       strategy: "Dev agent must fix all build errors before proceeding to git push"
 
-  - name: "Step 8: Test Implementation (Database)"
+  - name: "Step 9: Test Implementation (Database)"
     agent: "SM"
     description: "Test database operations using Supabase MCP if applicable"
     condition: "{enable_database_testing} AND story involves database changes"
@@ -153,15 +172,15 @@ orchestration:
       - security_advisors: "Supabase security lint results"
     on_failure: "report_issues"
 
-  - name: "Step 9: Push to GitHub"
+  - name: "Step 10: Push to GitHub"
     agent: "dev"
     description: "Commit changes and push to GitHub"
-    condition: "{auto_push_to_github} AND Step 7 build_status == success"
+    condition: "{auto_push_to_github} AND Step 8 build_status == success"
     inputs:
       - commit_message: "Auto-generated from story metadata"
     on_failure: "report_and_continue"
 
-  - name: "Step 10: Report Completion"
+  - name: "Step 11: Report Completion"
     agent: "SM"
     description: "Generate completion report with summary and next steps"
     outputs:

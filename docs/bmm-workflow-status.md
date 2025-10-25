@@ -22,16 +22,16 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "3.16", "3.17", "3.18", "3.19", "3.20", "3.21", "3.22", "3.23", "3.24", "3.25", "3.26", "3.27", "3.28", "3.29", "3.30"]
-TODO_STORY: 3.6
-TODO_TITLE: Basic File Upload (Single File)
-IN_PROGRESS_STORY: null
-IN_PROGRESS_TITLE: null
-STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2", "3.3", "3.4"]
+TODO_STORY: 3.8
+TODO_TITLE: Multi-File Upload UI
+IN_PROGRESS_STORY: 3.7
+IN_PROGRESS_TITLE: Basic Extraction with Results Table
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6"]
 
 ## Next Action
 
-NEXT_ACTION: Story 3.5 (Save Template Flow) marked as READY. Next: Implement Story 3.5 with DEV agent.
-NEXT_COMMAND: Load DEV agent and run dev-story workflow to implement Story 3.5
+NEXT_ACTION: Story 3.7 (Basic Extraction with Results Table) status updated to READY. Architect approved. Next: Implement Story 3.7 with DEV agent.
+NEXT_COMMAND: Load DEV agent and run dev-story workflow to implement Story 3.7
 NEXT_AGENT: dev (bmad/bmm/agents/dev.md) for implementation
 ## Story Backlog
 
@@ -58,16 +58,16 @@ NEXT_AGENT: dev (bmad/bmm/agents/dev.md) for implementation
 - Story 2.8: Excel Export and Download ✓
 - Story 2.9: Extraction Session Management ✓
 
-### Epic 3: Unified Batch Extraction Workflow (30 stories) 🚀 IN PROGRESS (4 of 30 complete)
+### Epic 3: Unified Batch Extraction Workflow (30 stories) 🚀 IN PROGRESS (6 of 30 complete)
 
 #### Phase 1: Foundation (Weeks 1-2) - Stories 3.1-3.7
 - Story 3.1: Unified Page Layout with Resizable Panels ✓
 - Story 3.2: Tag-Based Template Builder UI ✓
 - Story 3.3: Drag-and-Drop Field Reordering ✓
 - Story 3.4: Template CRUD API Endpoints ✓
-- Story 3.5: Save Template Flow 🚧 IN PROGRESS
-- Story 3.6: Basic File Upload (Single File)
-- Story 3.7: Basic Extraction with Results Table
+- Story 3.5: Save Template Flow ✓
+- Story 3.6: File Upload Section (Single File) ✓
+- Story 3.7: Basic Extraction with Results Table 🚧 IN PROGRESS
 
 #### Phase 2: Batch Processing (Weeks 3-4) - Stories 3.8-3.14
 - Story 3.8: Multi-File Upload UI
@@ -418,10 +418,19 @@ NEXT_AGENT: dev (bmad/bmm/agents/dev.md) for implementation
 - **Integration:** Ready for Story 3.5 (Save Template Flow), requires downstream updates for extraction APIs and frontend
 - **DoD Complete:** All acceptance criteria met, code reviewed, API endpoints functional with auth and RLS, migration SQL ready for execution
 
+### Story 3.5: Save Template Flow ✓
+- **Status:** Done
+- **Completed:** 2025-10-25
+- **Approved:** 2025-10-25 (retroactive)
+- **Summary:** Save template functionality with change detection, dirty state tracking, and database persistence
+- **All ACs Verified:** 10/10 passing
+- **DoD Complete:** All acceptance criteria met, code reviewed, tests passing, deployed
+
 ---
 
-_Last Updated: 2025-10-24 (Story 3.4 marked DONE, Story 3.5 moved to IN PROGRESS)_
-_Status Version: 31.0_
+_Last Updated: 2025-10-25 (Story 3.6 approved)_
+_Status Version: 33.0_
+_Story 3.5 Approved: 2025-10-25 (retroactive)_
 _Story 3.4 Approved: 2025-10-24_
 _Story 3.1 Approved: 2025-10-24_
 _Story 2.9 Approved: 2025-10-24_
@@ -443,10 +452,10 @@ _Story 1.9 Approved: 2025-10-23_
 _Story 1.10 Approved: 2025-10-23_
 _Epic 1 Status: ✅ COMPLETE - 10 of 10 stories done (100%)_
 _Epic 2 Status: ✅ COMPLETE - 9 of 9 stories done (100%)_
-_Epic 3 Status: 🚀 IN PROGRESS - 4 of 30 stories done (13.3%)_
-_Progress: 23 of 49 total stories complete (46.9%)_
+_Epic 3 Status: 🚀 IN PROGRESS - 5 of 30 stories done (16.7%)_
+_Progress: 25 of 49 total stories complete (51.0%)_
 _Phase 4 Implementation: IN PROGRESS (Epic 3)_
-_Next: Review and approve Story 3.5 (Save Template Flow), then implement with DEV agent_
+_Next: Implement Story 3.7 (Basic Extraction with Results Table) with DEV agent_
 _Story 2.5 Approved: 2025-10-24_
 _Story 2.6 Approved: 2025-10-24_
 _Story 2.7 Approved: 2025-10-24_
@@ -457,5 +466,5 @@ _Epic 3 Tech Spec Validated: 2025-10-24 (11/11 criteria PASS)_
 _Epic 3 Queued: 2025-10-24 (30 stories loaded into development queue)_
 _✅ Milestone Achieved: Epic 1 deliverable - Users can create, test, save, and edit validated extraction templates_
 _✅ Milestone Achieved: Epic 2 deliverable - Users can process documents, extract data, review results, refine prompts, export to Excel, and manage extraction history_
-_🚀 Epic 3 Status: IN PROGRESS - 0 of 30 stories complete (0%)_
-_📋 Next: Run create-story workflow for Story 3.1 (Unified Page Layout with Resizable Panels)_
+_🚀 Epic 3 Status: IN PROGRESS - 6 of 30 stories complete (20%)_
+_📋 Next: Implement Story 3.7 (Basic Extraction with Results Table)_

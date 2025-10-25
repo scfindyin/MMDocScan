@@ -9,6 +9,22 @@ export type ExtractionField = TemplateField;
 // Template mode type
 export type TemplateMode = 'new' | 'existing';
 
+// Extraction result types (Story 3.7)
+export interface FieldResult {
+  fieldName: string;
+  fieldType: string;
+  extractedValue: any;
+}
+
+export interface ExtractionResult {
+  extractionId: string;
+  filename: string;
+  templateId?: string;
+  templateName?: string;
+  timestamp: string;
+  results: FieldResult[];
+}
+
 interface ExtractionStore {
   // Panel state
   leftPanelSize: number; // 0-100 percentage
@@ -26,6 +42,11 @@ interface ExtractionStore {
 
   // File upload state (Story 3.6)
   uploadedFile: File | null; // Uploaded file for extraction
+
+  // Extraction state (Story 3.7)
+  results: ExtractionResult | null; // Extraction results
+  isExtracting: boolean; // True during extraction API call
+  extractionError: string | null; // Error message from failed extraction
 
   // Actions
   setPanelSizes: (left: number, right: number) => void;
@@ -52,6 +73,12 @@ interface ExtractionStore {
   setDirty: () => void; // Mark template as having unsaved changes
   clearDirty: () => void; // Mark template as saved (alias for markClean)
   markClean: () => void; // Legacy alias for clearDirty
+
+  // Extraction actions (Story 3.7)
+  setResults: (results: ExtractionResult) => void;
+  clearResults: () => void;
+  setIsExtracting: (isExtracting: boolean) => void;
+  setExtractionError: (error: string | null) => void;
 }
 
 export const useExtractionStore = create<ExtractionStore>()(
@@ -73,6 +100,11 @@ export const useExtractionStore = create<ExtractionStore>()(
 
       // File upload initial state (Story 3.6)
       uploadedFile: null,
+
+      // Extraction initial state (Story 3.7)
+      results: null,
+      isExtracting: false,
+      extractionError: null,
 
       // Actions
       setPanelSizes: (left, right) =>
@@ -220,6 +252,30 @@ export const useExtractionStore = create<ExtractionStore>()(
       markClean: () =>
         set({
           isDirty: false,
+        }),
+
+      // Extraction actions (Story 3.7)
+      setResults: (results) =>
+        set({
+          results,
+          extractionError: null,
+        }),
+
+      clearResults: () =>
+        set({
+          results: null,
+          extractionError: null,
+        }),
+
+      setIsExtracting: (isExtracting) =>
+        set({
+          isExtracting,
+        }),
+
+      setExtractionError: (error) =>
+        set({
+          extractionError: error,
+          isExtracting: false,
         }),
     }),
     {

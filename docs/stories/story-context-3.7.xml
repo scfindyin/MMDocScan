@@ -1,0 +1,514 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.7</storyId>
+    <title>Basic Extraction with Results Table</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-3.7.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to initiate an extraction on a single uploaded document and see the results in a table format</iWant>
+    <soThat>I can verify the extracted data and proceed with corrections if needed</soThat>
+    <tasks>
+      - Create POST /api/extractions/single endpoint for single file extraction
+      - Implement request processing (multipart form data with file + template ID)
+      - Integrate document processing service for text extraction
+      - Create ResultsTable component with field names and extracted values
+      - Implement extraction flow in ExtractPageClient with API integration
+      - Add Extract button with disabled/loading states and validation
+      - Add results section to right panel with conditional rendering
+      - Implement error handling for failed extractions and empty results
+      - Testing: API endpoint, ResultsTable component, extraction flow, E2E scenarios
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Extract button triggers POST to /api/extractions/single with file and template ID</criterion>
+    <criterion id="2">API endpoint processes single file and returns structured extraction results</criterion>
+    <criterion id="3">Results display in table format with columns matching template fields</criterion>
+    <criterion id="4">Table shows field name and extracted value for each row</criterion>
+    <criterion id="5">Empty results show table structure with empty values and inform user</criterion>
+    <criterion id="6">Loading indicator displayed during extraction, Extract button disabled</criterion>
+    <criterion id="7">Error display for failed extractions with user-friendly message and retry option</criterion>
+    <criterion id="8">Results table section hidden when no extraction initiated</criterion>
+    <criterion id="9">New extraction results replace previous extraction data</criterion>
+    <criterion id="10">Extract button disabled without file or template, shows tooltip with requirement</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 3.7: Basic Extraction with Results Table</section>
+        <snippet>As a user, I want to initiate an extraction on a single uploaded document and see the results in a table format. Prerequisites: Story 3.5 (Save Template Flow), Story 3.6 (File Upload Section). First complete extraction workflow - focus on single file; batch processing in Story 3.8.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>AC7: Results Table with Source Tracking</section>
+        <snippet>Results table shows data from all detected documents in unified view. All template fields shown as columns, sortable by clicking header. Source column format: "File1-P1" (file abbreviation + page number). Row count displayed: "47 documents extracted from 20 files".</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>APIs and Interfaces - Extraction APIs</section>
+        <snippet>POST /api/extractions/batch creates extraction_session, returns sessionId. Background processing: Parse PDFs in parallel, run auto-detection. ExtractionQueue uses p-limit (max 5 concurrent Claude API calls). Calculate confidence score per row.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Document Processing Requirements</section>
+        <snippet>FR008: System shall provide a file upload interface accepting PDF, Word (.doc, .docx), and text file formats. FR009: System shall process both clean and scanned documents. FR010: System shall extract structured data based on user-defined templates.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>stores/extractionStore.ts</path>
+        <kind>store</kind>
+        <symbol>useExtractionStore</symbol>
+        <lines>1-237</lines>
+        <reason>Zustand store for extraction workflow state. Needs extension for extraction results state: results, isExtracting, extractionError. Pattern established in Stories 3.1-3.6 to follow.</reason>
+      </artifact>
+      <artifact>
+        <path>app/extract/ExtractPageClient.tsx</path>
+        <kind>component</kind>
+        <symbol>ExtractPageClient</symbol>
+        <lines>1-196</lines>
+        <reason>Main client component with resizable panels. Right panel currently shows placeholder "Coming in Story 3.7". Will be replaced with ResultsTable and extraction controls.</reason>
+      </artifact>
+      <artifact>
+        <path>app/extract/components/FileUploadSection.tsx</path>
+        <kind>component</kind>
+        <symbol>FileUploadSection</symbol>
+        <lines>1-129</lines>
+        <reason>File upload component from Story 3.6. Stores uploadedFile in Zustand state. Extract button will use this file for extraction API call.</reason>
+      </artifact>
+      <artifact>
+        <path>app/extract/components/TemplateSection.tsx</path>
+        <kind>component</kind>
+        <symbol>TemplateSection</symbol>
+        <lines>1-200</lines>
+        <reason>Template configuration component with fields and prompt. Extract button needs access to selectedTemplateId or fields array for API call. Shows pattern for Epic 3 component architecture.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/templates/route.ts</path>
+        <kind>api-route</kind>
+        <symbol>POST handler</symbol>
+        <lines>1-100</lines>
+        <reason>Reference API implementation pattern for Story 3.7. Shows Zod validation, Supabase integration, error handling, and response structure to follow.</reason>
+      </artifact>
+      <artifact>
+        <path>app/api/extract/production/route.ts</path>
+        <kind>api-route</kind>
+        <symbol>POST handler</symbol>
+        <lines>1-150</lines>
+        <reason>Existing extraction endpoint from Story 2.1. Reference implementation showing Claude API integration, document processing, and extraction logic. Can be adapted for single file extraction.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <dependency ecosystem="npm">
+        <package name="zustand" version="^4.5.7" />
+        <package name="@anthropic-ai/sdk" version="^0.67.0" />
+        <package name="next" version="^14.2.0" />
+        <package name="react" version="^18.2.0" />
+        <package name="@supabase/supabase-js" version="^2.75.1" />
+        <package name="zod" version="^4.1.12" />
+        <package name="lucide-react" version="^0.546.0" />
+        <package name="react-dropzone" version="^14.3.8" />
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>API endpoint must be created at app/api/extractions/single/route.ts following Next.js App Router conventions</constraint>
+    <constraint>ResultsTable component must be created in app/extract/components/ to maintain Epic 3 architecture consistency</constraint>
+    <constraint>Must extend extractionStore with extraction state: results, isExtracting, extractionError, and actions</constraint>
+    <constraint>Use existing Claude API integration pattern from app/api/extract/production/route.ts - no new SDK setup required</constraint>
+    <constraint>File upload uses multipart/form-data - FormData API on client, parse in API route with request.formData()</constraint>
+    <constraint>Single file only - no batch processing yet (Story 3.8 will add multi-file support)</constraint>
+    <constraint>Results stored in Zustand state only - no database persistence in this story (Story 3.11 will add extraction_sessions table)</constraint>
+    <constraint>Use Tailwind CSS and ShadCN components (Table, Card, Button, Alert) consistent with Epic 3 UI patterns</constraint>
+    <constraint>Extract button validation: disabled when uploadedFile is null OR fields array is empty</constraint>
+    <constraint>Error handling: display user-friendly messages, log detailed errors server-side only</constraint>
+    <constraint>Loading state: disable Extract button, show spinner, change text to "Extracting..."</constraint>
+    <constraint>Results table: simple two-column layout (Field Name | Extracted Value) - advanced features in later stories</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>ExtractionStore Extension</name>
+      <kind>zustand-store</kind>
+      <signature>
+        interface ExtractionStore {
+          // Add to existing store (Stories 3.1-3.6):
+
+          // Extraction state
+          results: ExtractionResult | null
+          isExtracting: boolean
+          extractionError: string | null
+
+          // Actions
+          startExtraction: () => Promise&lt;void&gt;
+          setResults: (results: ExtractionResult) => void
+          clearResults: () => void
+          setExtractionError: (error: string | null) => void
+        }
+
+        interface ExtractionResult {
+          extractionId: string
+          filename: string
+          templateId?: string
+          templateName?: string
+          timestamp: string
+          results: FieldResult[]
+        }
+
+        interface FieldResult {
+          fieldName: string
+          fieldType: string
+          extractedValue: any
+        }
+      </signature>
+      <path>stores/extractionStore.ts</path>
+    </interface>
+    <interface>
+      <name>Single Extraction API Endpoint</name>
+      <kind>api-route</kind>
+      <signature>
+        POST /api/extractions/single
+        Content-Type: multipart/form-data
+
+        Request:
+        - file: File (PDF document to extract from)
+        - template_id: string (UUID of template, optional if fields provided)
+        - fields: string (JSON array of TemplateField, optional if template_id provided)
+        - extraction_prompt: string (optional custom instructions)
+
+        Response 200:
+        {
+          "success": true,
+          "extraction_id": "uuid",
+          "filename": "document.pdf",
+          "template_id": "uuid",
+          "template_name": "Invoice Template",
+          "timestamp": "2025-10-25T10:30:00Z",
+          "results": [
+            {
+              "field_name": "Invoice Number",
+              "field_type": "text",
+              "extracted_value": "INV-12345"
+            }
+          ]
+        }
+
+        Response 400:
+        {
+          "success": false,
+          "error": "Validation failed: file required"
+        }
+
+        Response 500:
+        {
+          "success": false,
+          "error": "Extraction processing failed"
+        }
+      </signature>
+      <path>app/api/extractions/single/route.ts</path>
+    </interface>
+    <interface>
+      <name>ResultsTable Component Props</name>
+      <kind>react-component</kind>
+      <signature>
+        interface ResultsTableProps {
+          results: FieldResult[]
+          isLoading?: boolean
+          error?: string | null
+          onRetry?: () => void
+        }
+
+        export function ResultsTable(props: ResultsTableProps): JSX.Element
+      </signature>
+      <path>app/extract/components/ResultsTable.tsx</path>
+    </interface>
+    <interface>
+      <name>Extract Button with Validation</name>
+      <kind>react-component</kind>
+      <signature>
+        // In ExtractPageClient.tsx
+        const handleExtract = async () => {
+          // Validation: check uploadedFile and fields
+          if (!uploadedFile || fields.length === 0) {
+            return // Button should be disabled
+          }
+
+          // Start extraction
+          setIsExtracting(true)
+          clearResults()
+          setExtractionError(null)
+
+          try {
+            // Create FormData
+            const formData = new FormData()
+            formData.append('file', uploadedFile)
+            formData.append('fields', JSON.stringify(fields))
+            formData.append('extraction_prompt', extractionPrompt)
+
+            // Call API
+            const response = await fetch('/api/extractions/single', {
+              method: 'POST',
+              body: formData
+            })
+
+            if (!response.ok) {
+              throw new Error(await response.text())
+            }
+
+            const data = await response.json()
+            setResults(data)
+          } catch (error) {
+            setExtractionError(error.message)
+          } finally {
+            setIsExtracting(false)
+          }
+        }
+
+        // Button disabled state
+        const isDisabled = !uploadedFile || fields.length === 0 || isExtracting
+      </signature>
+      <path>app/extract/ExtractPageClient.tsx</path>
+    </interface>
+  </interfaces>
+
+  <dependencies-from-previous-stories>
+    <dependency story="3.1">
+      <name>Resizable Panels Layout</name>
+      <description>ExtractPageClient.tsx with left/right panels using react-resizable-panels. Results will be displayed in right panel.</description>
+      <files>
+        <file>app/extract/ExtractPageClient.tsx</file>
+        <file>stores/extractionStore.ts (panel state)</file>
+      </files>
+    </dependency>
+    <dependency story="3.2">
+      <name>Template Field Configuration</name>
+      <description>Fields array in Zustand store defines extraction schema. Extract button uses fields to build Claude API prompt.</description>
+      <files>
+        <file>stores/extractionStore.ts (fields array)</file>
+        <file>app/extract/components/TemplateSection.tsx</file>
+      </files>
+    </dependency>
+    <dependency story="3.3">
+      <name>Field Reordering</name>
+      <description>Drag-and-drop field order determines table column order in results. reorderFields action maintains field order state.</description>
+      <files>
+        <file>app/extract/components/FieldTagsArea.tsx</file>
+        <file>stores/extractionStore.ts (reorderFields action)</file>
+      </files>
+    </dependency>
+    <dependency story="3.4">
+      <name>Extraction Instructions Textarea</name>
+      <description>extractionPrompt from Zustand store provides context to Claude API. Sent as part of extraction request payload.</description>
+      <files>
+        <file>app/extract/components/ExtractionInstructionsTextarea.tsx</file>
+        <file>stores/extractionStore.ts (extractionPrompt)</file>
+      </files>
+    </dependency>
+    <dependency story="3.5">
+      <name>Save Template Flow</name>
+      <description>Template saved to database can be loaded. selectedTemplateId used in extraction API request if available. Template name displayed in results.</description>
+      <files>
+        <file>app/extract/components/SaveTemplateModal.tsx</file>
+        <file>app/api/templates/route.ts</file>
+        <file>stores/extractionStore.ts (selectedTemplateId, selectedTemplateName)</file>
+      </files>
+    </dependency>
+    <dependency story="3.6">
+      <name>File Upload Section</name>
+      <description>uploadedFile from Zustand store is the document to extract from. File sent to /api/extractions/single via FormData.</description>
+      <files>
+        <file>app/extract/components/FileUploadSection.tsx</file>
+        <file>stores/extractionStore.ts (uploadedFile)</file>
+      </files>
+    </dependency>
+  </dependencies-from-previous-stories>
+
+  <api-contracts>
+    <api-contract>
+      <endpoint>POST /api/extractions/single</endpoint>
+      <description>Process single file extraction with template fields and return structured results</description>
+      <request>
+        <content-type>multipart/form-data</content-type>
+        <fields>
+          <field name="file" type="File" required="true">PDF document to extract from (max 10MB)</field>
+          <field name="template_id" type="string" required="false">UUID of saved template (optional if fields provided)</field>
+          <field name="fields" type="string" required="false">JSON array of TemplateField objects (required if template_id not provided)</field>
+          <field name="extraction_prompt" type="string" required="false">Custom extraction instructions (0-2000 chars)</field>
+        </fields>
+      </request>
+      <response status="200">
+        <content-type>application/json</content-type>
+        <schema>
+          {
+            "success": true,
+            "extraction_id": "uuid (generated client-side)",
+            "filename": "string (original filename)",
+            "template_id": "string | null (if template_id provided)",
+            "template_name": "string | null (looked up from DB if template_id provided)",
+            "timestamp": "ISO 8601 datetime string",
+            "results": [
+              {
+                "field_name": "string (from template field)",
+                "field_type": "string (default: 'text')",
+                "extracted_value": "any (Claude API response)"
+              }
+            ]
+          }
+        </schema>
+      </response>
+      <response status="400">
+        <content-type>application/json</content-type>
+        <schema>
+          {
+            "success": false,
+            "error": "string (validation error message)"
+          }
+        </schema>
+        <examples>
+          <example>"Validation failed: file required"</example>
+          <example>"Validation failed: either template_id or fields must be provided"</example>
+          <example>"File size exceeds 10MB limit"</example>
+          <example>"Invalid file type: must be PDF"</example>
+        </examples>
+      </response>
+      <response status="404">
+        <content-type>application/json</content-type>
+        <schema>
+          {
+            "success": false,
+            "error": "Template not found"
+          }
+        </schema>
+      </response>
+      <response status="500">
+        <content-type>application/json</content-type>
+        <schema>
+          {
+            "success": false,
+            "error": "string (processing error message)"
+          }
+        </schema>
+        <examples>
+          <example>"Extraction processing failed"</example>
+          <example>"Claude API error: rate limit exceeded"</example>
+          <example>"Document processing failed: corrupted PDF"</example>
+        </examples>
+      </response>
+    </api-contract>
+  </api-contracts>
+
+  <component-structure>
+    <component>
+      <name>ResultsTable</name>
+      <path>app/extract/components/ResultsTable.tsx</path>
+      <description>Displays extraction results in two-column table format (Field Name | Extracted Value)</description>
+      <props>
+        <prop name="results" type="FieldResult[]" description="Array of field results from extraction" />
+        <prop name="isLoading" type="boolean" optional="true" description="Show loading skeleton" />
+        <prop name="error" type="string | null" optional="true" description="Error message to display" />
+        <prop name="onRetry" type="() => void" optional="true" description="Retry callback for error state" />
+      </props>
+      <states>
+        <state>Empty: No results to display (initial state)</state>
+        <state>Loading: Extraction in progress (skeleton loader)</state>
+        <state>Success: Results table with data</state>
+        <state>Error: Error message with retry button</state>
+      </states>
+    </component>
+    <component>
+      <name>ExtractPageClient (Enhanced)</name>
+      <path>app/extract/ExtractPageClient.tsx</path>
+      <description>Main extraction page with Extract button and results integration</description>
+      <enhancements>
+        <enhancement>Add Extract button below FileUploadSection in left panel</enhancement>
+        <enhancement>Add extraction state management (results, isExtracting, error)</enhancement>
+        <enhancement>Add handleExtract function to call /api/extractions/single</enhancement>
+        <enhancement>Replace right panel placeholder with ResultsTable component</enhancement>
+        <enhancement>Add conditional rendering: hide results until extraction completes</enhancement>
+        <enhancement>Add button validation: disabled without file or fields</enhancement>
+        <enhancement>Add tooltip on disabled button explaining requirements</enhancement>
+      </enhancements>
+    </component>
+  </component-structure>
+
+  <tests>
+    <standards>
+      TypeScript strict mode enabled. Build must pass with zero errors. Lint must pass with zero warnings. Manual testing required for extraction flow and results display. Unit tests for ResultsTable component states. Integration tests for API endpoint with mock Claude API.
+    </standards>
+    <locations>
+      Manual testing in development environment. API tests can be written in app/api/extractions/single/route.test.ts. Component tests in app/extract/components/ResultsTable.test.tsx. Build verification via: npm run build &amp;&amp; npm run lint
+    </locations>
+    <ideas>
+      <idea ac="1">Test Extract button: Upload file, add fields, click Extract, verify POST to /api/extractions/single with FormData</idea>
+      <idea ac="2">Test API endpoint: Send valid request with file + fields, verify Claude API called, structured results returned</idea>
+      <idea ac="3">Test results table: Verify columns match template fields, rows show field name and extracted value</idea>
+      <idea ac="4">Test field display: Verify each field from template appears in table with name and value</idea>
+      <idea ac="5">Test empty results: Extract from blank document, verify table shows empty values with message</idea>
+      <idea ac="6">Test loading state: Click Extract, verify loading indicator appears, button disabled, text changes to "Extracting..."</idea>
+      <idea ac="7">Test error handling: Simulate API error (500), verify error message displays, retry button appears and works</idea>
+      <idea ac="8">Test initial state: Verify results section hidden when no extraction initiated, shows placeholder message</idea>
+      <idea ac="9">Test results replacement: Complete one extraction, start another, verify previous results cleared and replaced</idea>
+      <idea ac="10">Test button validation: Remove file, verify button disabled. Remove fields, verify button disabled. Hover, verify tooltip shows requirement.</idea>
+      <idea>Test API validation: Send request without file, expect 400 error. Send without fields/template_id, expect 400.</idea>
+      <idea>Test API template lookup: Send with template_id, verify template loaded from DB and name returned in response</idea>
+      <idea>Test Claude API integration: Verify prompt construction includes fields and extraction_prompt, response parsed correctly</idea>
+      <idea>Test file size limit: Upload 11MB file, verify 400 error with clear message</idea>
+      <idea>Test file type validation: Upload non-PDF, verify 400 error with message</idea>
+      <idea>Test results state persistence: Extract, navigate away, return, verify results still in Zustand state (if persisted)</idea>
+      <idea>Test concurrent extractions: Start extraction, quickly start another, verify first cancelled or queued properly</idea>
+      <idea>Test different data types: Extract with text, number, date fields, verify all display correctly in table</idea>
+    </ideas>
+  </tests>
+
+  <implementation-notes>
+    <note>
+      <title>API Endpoint Implementation</title>
+      <description>Create app/api/extractions/single/route.ts. Parse multipart form data with request.formData(). Validate file (type, size) and fields/template_id. If template_id provided, load from Supabase. Extract text from PDF (placeholder for now - full PDF parsing in Story 3.9). Build Claude API prompt with fields and instructions. Call Claude API, parse JSON response. Return structured results. Handle errors gracefully with appropriate HTTP status codes.</description>
+    </note>
+    <note>
+      <title>ResultsTable Component</title>
+      <description>Create simple two-column table using ShadCN Table component. Map results array to table rows. Handle loading state with skeleton loader. Handle error state with Alert component and retry button. Handle empty state with placeholder message. Use Tailwind CSS for styling consistent with Epic 3 UI patterns. Keep component simple - advanced features (sorting, filtering, pagination) deferred to later stories.</description>
+    </note>
+    <note>
+      <title>Extract Button Logic</title>
+      <description>Add Extract button below FileUploadSection in left panel. Implement disabled state logic: !uploadedFile || fields.length === 0 || isExtracting. Add Tooltip component from ShadCN for disabled state hint. Implement handleExtract async function in ExtractPageClient. Build FormData with file, fields JSON, extraction_prompt. Call /api/extractions/single with POST. Update Zustand state: setIsExtracting, setResults, setExtractionError. Clear previous results on new extraction start.</description>
+    </note>
+    <note>
+      <title>Zustand Store Extension</title>
+      <description>Add extraction state to extractionStore.ts: results (ExtractionResult | null), isExtracting (boolean), extractionError (string | null). Add actions: startExtraction (async), setResults, clearResults, setExtractionError. Keep results in-memory only (no persistence to localStorage). Database persistence deferred to Story 3.11 extraction_sessions table.</description>
+    </note>
+    <note>
+      <title>Claude API Integration</title>
+      <description>Reuse existing Claude API setup from app/api/extract/production/route.ts. Build prompt: "Extract the following fields: [field list]. Instructions: [extraction_prompt]. Document text: [extracted_text]". Parse Claude response as JSON. Map field names to extracted values. Handle API errors (rate limits, timeouts) with retries and clear error messages. For Story 3.7, use simple text extraction (full PDF parsing in Story 3.9).</description>
+    </note>
+    <note>
+      <title>Error Handling Strategy</title>
+      <description>Client-side: Catch fetch errors, display in Alert component, provide retry button. Server-side: Validate inputs with Zod, return 400 for validation errors. Catch Claude API errors, log server-side, return 500 with generic message to client. Catch file processing errors, continue gracefully, inform user. Use try-catch blocks extensively, always clean up loading state in finally block.</description>
+    </note>
+    <note>
+      <title>Testing Strategy</title>
+      <description>Unit tests: ResultsTable component with different props (loading, error, empty, data). Mock Zustand store for component tests. Integration tests: API endpoint with mock Claude API response. E2E tests: Complete flow from upload to results display. Test edge cases: no file, no fields, API errors, empty results. Manual testing: Verify UI states, button behavior, error messages.</description>
+    </note>
+    <note>
+      <title>Performance Considerations</title>
+      <description>Single file extraction should complete in under 10 seconds for typical documents. Use streaming response if extraction is slow (deferred to later story). Show loading state immediately on button click. Optimize Claude API prompt to reduce token usage. Cache template lookup if template_id provided. For Story 3.7, performance optimization is low priority - focus on functionality.</description>
+    </note>
+    <note>
+      <title>Security Considerations</title>
+      <description>Validate file type server-side (MIME type + magic number check). Enforce file size limit (10MB). Sanitize extracted data before displaying (prevent XSS). Rate limit extraction endpoint (prevent abuse). Never log sensitive extracted data. Use Supabase RLS for template access if template_id provided. Validate user owns template before loading.</description>
+    </note>
+  </implementation-notes>
+</story-context>

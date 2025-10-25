@@ -3,6 +3,21 @@
 ## Purpose
 Automate the full story lifecycle from creation to implementation, testing, and GitHub push. This workflow uses the **context-manager** agent to orchestrate multiple sub-agents while preserving context and minimizing duplicate file reads.
 
+## CRITICAL EXECUTION POLICY
+
+**🚨 CONTINUOUS EXECUTION REQUIRED:**
+- This workflow MUST run **Steps 1-11 without interruption**
+- **DO NOT** pause mid-workflow to ask user if they want to continue
+- **DO NOT** stop after Step 6 asking "What would you like to do?"
+- **RUN ALL STEPS AUTOMATICALLY** from start to finish
+- **ONLY pause at Step 11** (completion report) for user to manually test features
+- **Purpose:** Minimize interruptions - work shouldn't pause waiting for approval between steps
+
+**User Interaction Points:**
+- ✅ **Before workflow:** User triggers `*complete-story` command
+- ❌ **During workflow:** NO user input required (Steps 1-11 run automatically)
+- ✅ **After workflow:** User manually tests features, then runs `*complete-story` again for next story
+
 ## Context-Manager Optimization
 This workflow is executed by the `context-manager` agent, which:
 1. **Pre-loads common documents ONCE** (config, epics, PRD, tech spec, workflow-status, solution-architecture)
@@ -19,24 +34,27 @@ This workflow is executed by the `context-manager` agent, which:
 
 ## What This Workflow Does
 
+### **Phase 0: Cleanup (Conditional)**
+1. **Dev Agent** approves previous story (if exists) - marks Done, advances queue (`story-approved` workflow)
+
 ### **Phase 1: Story Creation & Review**
-1. **SM Agent** creates draft story using `create-story` workflow
-2. **Architect Agent** reviews for technical feasibility and alignment
-3. **If issues found:** SM Agent regenerates story with fixes (max 2 iterations)
-4. **If approved:** Continue to Phase 2
+2. **SM Agent** creates draft story using `create-story` workflow
+3. **Architect Agent** reviews for technical feasibility and alignment
+4. **If issues found:** SM Agent regenerates story with fixes (max 2 iterations)
+5. **If approved:** Continue to Phase 2
 
 ### **Phase 2: Preparation**
-5. **SM Agent** marks story as Ready for Development (`story-ready` workflow)
-6. **SM Agent** generates Story Context XML (`story-context` workflow)
+6. **SM Agent** marks story as Ready for Development (`story-ready` workflow)
+7. **SM Agent** generates Story Context XML (`story-context` workflow)
 
 ### **Phase 3: Implementation & Verification**
-7. **Dev Agent** implements all tasks (`dev-story` workflow)
-8. **Dev Agent** runs build verification (`npm run build`) and fixes any errors
-9. **SM Agent** tests database operations via Supabase MCP (if applicable)
+8. **Dev Agent** implements all tasks (`dev-story` workflow)
+9. **Dev Agent** runs build verification (`npm run build`) and fixes any errors
+10. **SM Agent** tests database operations via Supabase MCP (if applicable)
 
 ### **Phase 4: Finalization**
-10. **Dev Agent** pushes changes to GitHub with auto-generated commit message (only if build succeeds)
-11. **SM Agent** generates completion report with next steps
+11. **Dev Agent** pushes changes to GitHub with auto-generated commit message (only if build succeeds)
+12. **SM Agent** generates completion report with next steps
 
 ---
 
@@ -59,6 +77,12 @@ This workflow is executed by the `context-manager` agent, which:
 ## Execution Steps
 
 ### **Step 0: Context-Manager Initialization (CRITICAL)**
+
+**🚨 EXECUTION MODE: FULLY AUTOMATED**
+- Execute Steps 1-11 **continuously without stopping**
+- **DO NOT pause** to ask user questions between steps
+- **DO NOT offer options** like "What would you like to do next?"
+- Only user interaction: Final completion report (Step 11) for manual testing
 
 **BEFORE executing any sub-agents, the context-manager MUST:**
 
@@ -100,14 +124,47 @@ This workflow is executed by the `context-manager` agent, which:
 
 ---
 
-### **Step 1: Load Workflow Configuration**
+### **Step 1: Approve Previous Story (Conditional)**
+
+**Condition:** workflow-status has `IN_PROGRESS_STORY` populated
+
+**Agent:** `general-purpose` (acting as Dev)
+**Task:** Execute `story-approved` workflow
+
+**Purpose:** Before starting the next story, mark the previous story (that you just tested) as Done and advance the story queue.
+
+**Process:**
+1. **Check for IN_PROGRESS story in workflow-status** (already loaded in context-manager memory)
+2. **If IN_PROGRESS_STORY exists:**
+   - Read the story file at `{story_dir}/{in_progress_story_file}`
+   - Update story status from "Ready" → "Done"
+   - Add completion notes with date to Dev Agent Record section
+   - Invoke `workflow-status` update action `complete_story`:
+     - Move IN_PROGRESS → DONE
+     - Move TODO → IN_PROGRESS
+     - Move BACKLOG → TODO
+3. **If no IN_PROGRESS_STORY:**
+   - Skip this step (first story in sequence)
+
+**Expected Output:**
+- Previous story marked Done
+- Story queue advanced
+- Next story moved to IN_PROGRESS (becomes the story to create in Step 2)
+
+**On Failure:** Abort workflow (cannot proceed without clean queue state)
+
+**Workflow Benefit:** Maintains clean story lifecycle - test → approve → next story creation
+
+---
+
+### **Step 2: Load Workflow Configuration**
 
 ```bash
 # Load this workflow file
 workflow_file = "{project-root}/bmad/bmm/workflows/4-implementation/complete-story/workflow.yaml"
 ```
 
-### **Step 2: Discover Next Story**
+### **Step 3: Discover Next Story**
 
 **Context-manager reads workflow-status from memory (already loaded in Step 0):**
 ```bash
@@ -118,13 +175,13 @@ workflow_file = "{project-root}/bmad/bmm/workflows/4-implementation/complete-sto
 # - Epic number and story number
 ```
 
-### **Step 3: Spawn SM Agent for Story Creation**
+### **Step 4: Spawn SM Agent for Story Creation**
 
 **Agent:** `general-purpose` (acting as SM)
 **Task:** Execute `create-story` workflow
 **Inputs:**
 - Epic number (from workflow-status in context)
-- Story number (from workflow-status in context)
+- Story number (from workflow-status in context - advanced by Step 1 if previous story existed)
 - Non-interactive mode: `true`
 - **Context passed automatically:** epics, PRD, tech_spec, solution_architecture (from context-manager memory)
 
@@ -134,12 +191,12 @@ workflow_file = "{project-root}/bmad/bmm/workflows/4-implementation/complete-sto
 
 **Note:** SM agent receives pre-loaded documents from context-manager - no file reads needed!
 
-### **Step 4: Spawn Architect Agent for Review**
+### **Step 5: Spawn Architect Agent for Review**
 
 **Agent:** `architect-reviewer`
 **Task:** Review story for technical feasibility
 **Inputs:**
-- Story file path (from Step 3)
+- Story file path (from Step 4)
 - **Context passed automatically:** tech_spec, epics, solution_architecture (from context-manager memory)
 
 **Expected Output:**
@@ -149,36 +206,36 @@ workflow_file = "{project-root}/bmad/bmm/workflows/4-implementation/complete-sto
 
 **Note:** Architect agent receives pre-loaded documents from context-manager - no duplicate file reads!
 
-### **Step 5: Conditional - Regenerate Story (if needed)**
+### **Step 6: Conditional - Regenerate Story (if needed)**
 
 **Condition:** Architect verdict == `REQUIRES CHANGES`
 
 **Agent:** `general-purpose` (acting as SM)
 **Task:** Execute `create-story` workflow WITH architect feedback
 **Inputs:**
-- Architect feedback (from Step 4)
+- Architect feedback (from Step 5)
 - Same epic/story numbers
 - Overwrite existing story file
 
 **Max Iterations:** 2
 **After max iterations:** Prompt user for manual intervention
 
-**Loop:** Return to Step 4 for architect re-review
+**Loop:** Return to Step 5 for architect re-review
 
-### **Step 6: Mark Story Ready**
+### **Step 7: Mark Story Ready**
 
 **Condition:** Architect verdict == `APPROVED`
 
 **Agent:** `general-purpose` (acting as SM)
 **Task:** Execute `story-ready` workflow
 **Inputs:**
-- Story file path (from Step 3 or Step 5)
+- Story file path (from Step 4 or Step 6)
 
 **Expected Output:**
 - Story status updated to: Ready
 - Workflow-status updated
 
-### **Step 7: Generate Story Context**
+### **Step 8: Generate Story Context**
 
 **Agent:** `general-purpose` (acting as SM)
 **Task:** Execute `story-context` workflow
@@ -188,7 +245,7 @@ workflow_file = "{project-root}/bmad/bmm/workflows/4-implementation/complete-sto
 **Expected Output:**
 - Story Context XML created at `{story_dir}/story-context-{epic_num}.{story_num}.xml`
 
-### **Step 8: Implement Story**
+### **Step 9: Implement Story**
 
 **Agent:** `general-purpose` (acting as Dev)
 **Task:** Execute `dev-story` workflow
@@ -207,9 +264,9 @@ workflow_file = "{project-root}/bmad/bmm/workflows/4-implementation/complete-sto
 - Abort workflow
 - Notify user of blockers
 
-### **Step 9: Build Verification (CRITICAL)**
+### **Step 10: Build Verification (CRITICAL)**
 
-**Condition:** Step 8 status == `completed`
+**Condition:** Step 9 status == `completed`
 
 **Agent:** `general-purpose` (acting as Dev)
 **Task:** Run local build and fix any errors before git push
@@ -247,7 +304,7 @@ workflow_file = "{project-root}/bmad/bmm/workflows/4-implementation/complete-sto
 
 **CRITICAL:** Never push code that doesn't build. This step is mandatory before git operations.
 
-### **Step 10: Test Database Operations (if applicable)**
+### **Step 11: Test Database Operations (if applicable)**
 
 **Condition:** Story involves database changes (check story tasks for migration/schema keywords)
 
@@ -281,9 +338,9 @@ workflow_file = "{project-root}/bmad/bmm/workflows/4-implementation/complete-sto
 - Report failed tests
 - Continue to Step 11 (do not abort)
 
-### **Step 11: Push to GitHub**
+### **Step 12: Push to GitHub**
 
-**Condition:** Step 9 build_status == `success` AND auto_push_to_github == `true`
+**Condition:** Step 10 build_status == `success` AND auto_push_to_github == `true`
 
 **Agent:** `general-purpose` (acting as Dev)
 **Task:** Git commit and push
@@ -311,7 +368,7 @@ git push
 - Continue to Step 12 (do not abort)
 - User can manually push later
 
-### **Step 12: Generate Completion Report**
+### **Step 13: Generate Completion Report**
 
 **Agent:** `general-purpose` (acting as SM)
 **Task:** Summarize workflow execution
@@ -335,10 +392,16 @@ git push
    - Commit hash (if pushed)
    - Push status (success/failed)
 
-5. **Next Steps**
-   - If all passed: "Run `*approve-story` workflow to complete Story {epic_num}.{story_num}"
+5. **Testing Summary** (NEW)
+   - Brief list of features/scenarios to manually test
+   - Extracted from story acceptance criteria and tasks
+   - Focus on user-facing functionality and integration points
+   - Example: "Test: Create template, Save template, Load template from list"
+
+6. **Next Steps**
+   - If all passed: "Manually test the features above, then run `*complete-story` again for next story"
    - If blocked: "Review errors and fix issues before approval"
-   - If manual testing needed: "Perform manual testing, then run `*approve-story`"
+   - If manual testing needed: "Perform manual testing of features listed above"
 
 **Output File:** `{output_folder}/complete-story-report-{epic_num}.{story_num}.md`
 
@@ -415,55 +478,65 @@ git push
 
 ## Example Execution
 
-### **Scenario:** Complete Story 3.5 from scratch
+### **Scenario:** Complete Story 3.6 (after testing Story 3.5)
 
 ```yaml
-# User runs: *complete-story
+# User runs: *complete-story (after manually testing Story 3.5)
 
 # Workflow execution:
-Step 1: SM creates story-3.5.md (Draft)
-  ✅ Story file: docs/stories/story-3.5.md
+Step 1: Dev approves story-3.5.md
+  ✅ Story 3.5 marked Done
+  ✅ Queue advanced: 3.6 → IN_PROGRESS, 3.7 → TODO
+  ✅ Story file: docs/stories/story-3.5.md → Status: Done
+
+Step 2: SM creates story-3.6.md (Draft)
+  ✅ Story file: docs/stories/story-3.6.md
   ✅ Status: Draft
 
-Step 2: Architect reviews story-3.5.md
+Step 3: Architect reviews story-3.6.md
   ❌ Verdict: REQUIRES CHANGES
   ⚠️ Issues: 3 critical issues found
 
-Step 3: SM regenerates story-3.5.md with architect feedback
-  ✅ Story file: docs/stories/story-3.5.md (overwritten)
+Step 4: SM regenerates story-3.6.md with architect feedback
+  ✅ Story file: docs/stories/story-3.6.md (overwritten)
   ✅ Status: Draft v2
 
-Step 2 (iteration 2): Architect re-reviews story-3.5.md
+Step 3 (iteration 2): Architect re-reviews story-3.6.md
   ✅ Verdict: APPROVED
   ✅ All issues resolved
 
-Step 4: SM marks story-3.5.md as Ready
+Step 5: SM marks story-3.6.md as Ready
   ✅ Status: Ready
   ✅ Workflow-status updated
 
-Step 5: SM generates story-context-3.5.xml
-  ✅ Context file: docs/stories/story-context-3.5.xml (279 lines)
+Step 6: SM generates story-context-3.6.xml
+  ✅ Context file: docs/stories/story-context-3.6.xml (279 lines)
 
-Step 6: Dev implements story-3.5
+Step 7: Dev implements story-3.6
   ✅ Files created: 5
   ✅ Files modified: 8
   ✅ Build passed
   ✅ Status: completed
 
-Step 7: SM tests database operations
+Step 8: Build verification
+  ✅ npm run build: success
+  ✅ No TypeScript errors
+
+Step 9: SM tests database operations
   ✅ Migration executed
   ✅ RLS policies tested (all passed)
   ✅ Security advisors: 0 new issues
 
-Step 8: Dev pushes to GitHub
-  ✅ Commit: a1b2c3d "Implement Story 3.5: Save Template Flow"
+Step 10: Dev pushes to GitHub
+  ✅ Commit: b2c3d4e "Implement Story 3.6: Next Feature"
   ✅ Pushed to origin/main
 
-Step 9: SM generates completion report
-  ✅ Report: docs/complete-story-report-3.5.md
-  ✅ Next action: Run *approve-story workflow
+Step 11: SM generates completion report
+  ✅ Report: docs/complete-story-report-3.6.md
+  ✅ Next action: Manually test Story 3.6, then run *complete-story again for Story 3.7
 
 # Total time: ~15 minutes (fully automated)
+# User manually tests Story 3.6, then runs *complete-story again
 ```
 
 ---
