@@ -12,8 +12,8 @@ WORKFLOW_PATH: greenfield-level-2.yaml
 ## Current State
 
 CURRENT_PHASE: 4
-CURRENT_WORKFLOW: story-context
-CURRENT_AGENT: scrum-master
+CURRENT_WORKFLOW: dev-story
+CURRENT_AGENT: dev
 PHASE_1_COMPLETE: true
 PHASE_2_COMPLETE: true
 PHASE_3_COMPLETE: true
@@ -30,8 +30,8 @@ STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2
 
 ## Next Action
 
-NEXT_ACTION: Story Context XML generated for Story 3.4. Context file ready for DEV agent to begin implementation.
-NEXT_COMMAND: Load DEV agent and run dev-story workflow to implement Story 3.4
+NEXT_ACTION: Story 3.4 implementation complete and ready for review. All 5 CRUD endpoints implemented with Epic 3 schema, server-side authentication, and RLS policies. Database migration SQL created (NOT YET EXECUTED). TypeScript build warnings for 7 files using Epic 1 schema (follow-up work needed). Run story-approved workflow when Definition of Done is verified.
+NEXT_COMMAND: Run story-approved workflow to mark story done and advance queue
 NEXT_AGENT: dev (bmad/bmm/agents/dev.md)
 ## Story Backlog
 
