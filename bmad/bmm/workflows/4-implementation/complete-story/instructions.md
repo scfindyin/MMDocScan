@@ -29,13 +29,14 @@ This workflow is executed by the `context-manager` agent, which:
 5. **SM Agent** marks story as Ready for Development (`story-ready` workflow)
 6. **SM Agent** generates Story Context XML (`story-context` workflow)
 
-### **Phase 3: Implementation**
+### **Phase 3: Implementation & Verification**
 7. **Dev Agent** implements all tasks (`dev-story` workflow)
-8. **SM Agent** tests database operations via Supabase MCP (if applicable)
+8. **Dev Agent** runs build verification (`npm run build`) and fixes any errors
+9. **SM Agent** tests database operations via Supabase MCP (if applicable)
 
 ### **Phase 4: Finalization**
-9. **Dev Agent** pushes changes to GitHub with auto-generated commit message
-10. **SM Agent** generates completion report with next steps
+10. **Dev Agent** pushes changes to GitHub with auto-generated commit message (only if build succeeds)
+11. **SM Agent** generates completion report with next steps
 
 ---
 
@@ -206,7 +207,47 @@ workflow_file = "{project-root}/bmad/bmm/workflows/4-implementation/complete-sto
 - Abort workflow
 - Notify user of blockers
 
-### **Step 9: Test Database Operations (if applicable)**
+### **Step 9: Build Verification (CRITICAL)**
+
+**Condition:** Step 8 status == `completed`
+
+**Agent:** `general-purpose` (acting as Dev)
+**Task:** Run local build and fix any errors before git push
+
+**Build Process:**
+1. **Run build command:**
+   ```bash
+   npm run build
+   ```
+
+2. **If build succeeds:**
+   - Capture build output
+   - Proceed to Step 10 (Database Testing) or Step 11 (Git Push)
+
+3. **If build fails:**
+   - Capture all TypeScript/build errors
+   - Analyze each error (type mismatches, missing imports, etc.)
+   - Fix errors systematically:
+     - Update type definitions
+     - Fix property name mismatches (e.g., field_name → name)
+     - Add missing imports
+     - Resolve any schema compatibility issues
+   - Re-run build
+   - Repeat until build succeeds (max 3 attempts)
+
+**Expected Output:**
+- Build status: `success` or `failed`
+- Build errors: List of errors if any
+- Fixes applied: List of fixes if errors were found
+
+**On Failure (after max retries):**
+- Report all unresolved build errors
+- Abort workflow (DO NOT proceed to git push)
+- Generate detailed error report for manual intervention
+
+**CRITICAL:** Never push code that doesn't build. This step is mandatory before git operations.
+
+### **Step 10: Test Database Operations (if applicable)**
 
 **Condition:** Story involves database changes (check story tasks for migration/schema keywords)
 
@@ -238,11 +279,11 @@ workflow_file = "{project-root}/bmad/bmm/workflows/4-implementation/complete-sto
 
 **On Failure:**
 - Report failed tests
-- Continue to Step 10 (do not abort)
+- Continue to Step 11 (do not abort)
 
-### **Step 10: Push to GitHub**
+### **Step 11: Push to GitHub**
 
-**Condition:** Implementation status == `completed` AND auto_push_to_github == `true`
+**Condition:** Step 9 build_status == `success` AND auto_push_to_github == `true`
 
 **Agent:** `general-purpose` (acting as Dev)
 **Task:** Git commit and push
@@ -267,10 +308,10 @@ git push
 
 **On Failure:**
 - Report git errors
-- Continue to Step 11 (do not abort)
+- Continue to Step 12 (do not abort)
 - User can manually push later
 
-### **Step 11: Generate Completion Report**
+### **Step 12: Generate Completion Report**
 
 **Agent:** `general-purpose` (acting as SM)
 **Task:** Summarize workflow execution
