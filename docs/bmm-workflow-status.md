@@ -58,7 +58,7 @@ NEXT_AGENT: Context-manager (orchestrating SM, Architect, Dev agents)
 - Story 2.8: Excel Export and Download ✓
 - Story 2.9: Extraction Session Management ✓
 
-### Epic 3: Unified Batch Extraction Workflow (30 stories) 🚀 IN PROGRESS (6 of 30 complete)
+### Epic 3: Unified Batch Extraction Workflow (30 stories) 🚀 IN PROGRESS (10 of 30 complete)
 
 #### Phase 1: Foundation (Weeks 1-2) - Stories 3.1-3.7
 - Story 3.1: Unified Page Layout with Resizable Panels ✓
@@ -466,5 +466,10 @@ _Epic 3 Tech Spec Validated: 2025-10-24 (11/11 criteria PASS)_
 _Epic 3 Queued: 2025-10-24 (30 stories loaded into development queue)_
 _✅ Milestone Achieved: Epic 1 deliverable - Users can create, test, save, and edit validated extraction templates_
 _✅ Milestone Achieved: Epic 2 deliverable - Users can process documents, extract data, review results, refine prompts, export to Excel, and manage extraction history_
-_🚀 Epic 3 Status: IN PROGRESS - 6 of 30 stories complete (20%)_
-_📋 Next: Implement Story 3.7 (Basic Extraction with Results Table)_
+_Story 3.7 Approved: 2025-10-25_
+_Story 3.8 Approved: 2025-10-25_
+_Story 3.9 Approved: 2025-10-26_
+_Story 3.10 Approved: 2025-10-26_
+_🚀 Epic 3 Status: IN PROGRESS - 10 of 30 stories complete (33.3%)_
+_Progress: 29 of 49 total stories complete (59.2%)_
+_📋 Next: Story 3.11 (Batch Extraction API)_
