@@ -69,8 +69,8 @@ export function FieldTagsArea() {
       return; // No reordering needed
     }
 
-    const oldIndex = fields.findIndex((field) => field.id === active.id);
-    const newIndex = fields.findIndex((field) => field.id === over.id);
+    const oldIndex = fields.findIndex((field: ExtractionField) => field.id === active.id);
+    const newIndex = fields.findIndex((field: ExtractionField) => field.id === over.id);
 
     if (oldIndex === -1 || newIndex === -1) {
       return; // Invalid indices
@@ -95,11 +95,11 @@ export function FieldTagsArea() {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={fields.map((field) => field.id)}
+            items={fields.map((field: ExtractionField) => field.id)}
             strategy={verticalListSortingStrategy}
           >
             <div className="flex flex-wrap gap-1 min-h-[2rem]">
-              {fields.map((field) => (
+              {fields.map((field: ExtractionField) => (
                 <FieldTag
                   key={field.id}
                   field={field}

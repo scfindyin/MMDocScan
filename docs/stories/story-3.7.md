@@ -3,10 +3,12 @@
 ## Story Information
 - **Epic**: 3 - Unified Batch Extraction Workflow
 - **Story**: 3.7
-- **Status**: Ready
+- **Status**: Done
 - **Priority**: High
 - **Estimated Effort**: Large
 - **Prerequisites**: Story 3.5 (Save Template Flow), Story 3.6 (File Upload Section)
+- **Completion Date**: 2025-10-25
+- **Dev Notes**: Successfully implemented with loading indicator fix and proper results table formatting
 
 ## User Story
 As a user, I want to initiate an extraction on a single uploaded document and see the results in a table format, so that I can verify the extracted data and proceed with corrections if needed.

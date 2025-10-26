@@ -48,7 +48,7 @@ export function FieldEditModal({ isOpen, onClose, field }: FieldEditModalProps) 
     }
     // Check for duplicate names (excluding current field if editing)
     const isDuplicate = fields.some(
-      (f) => f.name.toLowerCase() === name.trim().toLowerCase() && f.id !== field?.id
+      (f: ExtractionField) => f.name.toLowerCase() === name.trim().toLowerCase() && f.id !== field?.id
     );
     if (isDuplicate) {
       setNameError('A field with this name already exists');

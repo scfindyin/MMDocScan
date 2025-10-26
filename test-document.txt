@@ -1,0 +1,6 @@
+Test Document for Extraction
+
+Invoice Number: INV-12345
+Customer Name: John Doe
+Total Amount: $150.00
+Date: 2025-10-25

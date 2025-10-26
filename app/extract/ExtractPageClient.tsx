@@ -15,27 +15,27 @@ export default function ExtractPageClient() {
   const leftPanelRef = useRef<ImperativePanelHandle>(null);
   const rightPanelRef = useRef<ImperativePanelHandle>(null);
 
-  const leftPanelSize = useExtractionStore((state) => state.leftPanelSize);
-  const rightPanelSize = useExtractionStore((state) => state.rightPanelSize);
-  const isLeftMaximized = useExtractionStore((state) => state.isLeftMaximized);
-  const isRightMaximized = useExtractionStore((state) => state.isRightMaximized);
-  const setPanelSizes = useExtractionStore((state) => state.setPanelSizes);
-  const maximizeLeft = useExtractionStore((state) => state.maximizeLeft);
-  const maximizeRight = useExtractionStore((state) => state.maximizeRight);
-  const restoreLeft = useExtractionStore((state) => state.restoreLeft);
-  const restoreRight = useExtractionStore((state) => state.restoreRight);
-  const uploadedFile = useExtractionStore((state) => state.uploadedFile);
-  const fields = useExtractionStore((state) => state.fields);
-  const extractionPrompt = useExtractionStore((state) => state.extractionPrompt);
-  const selectedTemplateId = useExtractionStore((state) => state.selectedTemplateId);
-  const selectedTemplateName = useExtractionStore((state) => state.selectedTemplateName);
-  const results = useExtractionStore((state) => state.results);
-  const isExtracting = useExtractionStore((state) => state.isExtracting);
-  const extractionError = useExtractionStore((state) => state.extractionError);
-  const setResults = useExtractionStore((state) => state.setResults);
-  const clearResults = useExtractionStore((state) => state.clearResults);
-  const setIsExtracting = useExtractionStore((state) => state.setIsExtracting);
-  const setExtractionError = useExtractionStore((state) => state.setExtractionError);
+  const leftPanelSize = useExtractionStore((state: any) => state.leftPanelSize);
+  const rightPanelSize = useExtractionStore((state: any) => state.rightPanelSize);
+  const isLeftMaximized = useExtractionStore((state: any) => state.isLeftMaximized);
+  const isRightMaximized = useExtractionStore((state: any) => state.isRightMaximized);
+  const setPanelSizes = useExtractionStore((state: any) => state.setPanelSizes);
+  const maximizeLeft = useExtractionStore((state: any) => state.maximizeLeft);
+  const maximizeRight = useExtractionStore((state: any) => state.maximizeRight);
+  const restoreLeft = useExtractionStore((state: any) => state.restoreLeft);
+  const restoreRight = useExtractionStore((state: any) => state.restoreRight);
+  const uploadedFile = useExtractionStore((state: any) => state.uploadedFile);
+  const fields = useExtractionStore((state: any) => state.fields);
+  const extractionPrompt = useExtractionStore((state: any) => state.extractionPrompt);
+  const selectedTemplateId = useExtractionStore((state: any) => state.selectedTemplateId);
+  const selectedTemplateName = useExtractionStore((state: any) => state.selectedTemplateName);
+  const results = useExtractionStore((state: any) => state.results);
+  const isExtracting = useExtractionStore((state: any) => state.isExtracting);
+  const extractionError = useExtractionStore((state: any) => state.extractionError);
+  const setResults = useExtractionStore((state: any) => state.setResults);
+  const clearResults = useExtractionStore((state: any) => state.clearResults);
+  const setIsExtracting = useExtractionStore((state: any) => state.setIsExtracting);
+  const setExtractionError = useExtractionStore((state: any) => state.setExtractionError);
 
   const handleResize = (sizes: number[]) => {
     if (sizes.length === 2) {

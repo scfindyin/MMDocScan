@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context>
+  <story-info>
+    <story-id>3.8</story-id>
+    <epic>3 - Unified Batch Extraction Workflow</epic>
+    <title>Multi-File Upload UI</title>
+    <status>Ready</status>
+    <prerequisites>Story 3.7 (Basic Extraction with Results Table)</prerequisites>
+    <generated-date>2025-10-25</generated-date>
+  </story-info>
+
+  <technical-context>
+    <summary>
+      This story transforms the single-file upload UI (Story 3.6/3.7) into a multi-file batch upload interface.
+      Key changes include: converting from single File to File[] array, adding file management UI,
+      implementing validation for 100 files/100MB limits, and preparing for batch processing pipeline.
+    </summary>
+
+    <key-dependencies>
+      - react-dropzone: Already installed for file upload
+      - nanoid: To be installed for unique file IDs
+      - zustand: Already installed for state management
+      - @dnd-kit: Already installed (can be reused for file list if needed)
+    </key-dependencies>
+
+    <architectural-considerations>
+      - Zustand store needs significant refactoring from single file to array
+      - FileUploadSection component requires complete rewrite for multi-file
+      - Must maintain backward compatibility with Story 3.7 extraction flow
+      - Performance: Consider virtualization for >20 files (future optimization)
+      - State management: Prevent race conditions with debouncing
+    </architectural-considerations>
+  </technical-context>
+
+  <existing-code>
+    <file path="/app/extract/components/FileUploadSection.tsx">
+      <current-implementation>
+        - Single file upload using react-dropzone
+        - File state: uploadedFile (single File object)
+        - Validation: 10MB max size, PDF only
+        - Remove button for single file
+        - Card-based UI with file metadata display
+      </current-implementation>
+      <required-changes>
+        - Remove multiple: false from dropzone config
+        - Change to handle File[] array
+        - Add file list display with scrollable container
+        - Add aggregate statistics display
+        - Implement "+ Add more files" button
+        - Update validation for cumulative limits
+      </required-changes>
+    </file>
+
+    <file path="/stores/extractionStore.ts">
+      <current-state>
+        ```typescript
+        // Current single file state
+        uploadedFile: File | null;
+
+        // Current actions
+        setUploadedFile: (file: File | null) => void;
+        removeUploadedFile: () => void;
+        ```
+      </current-state>
+      <target-state>
+        ```typescript
+        // New multi-file state
+        uploadedFiles: UploadedFile[];
+        isAddingFiles: boolean; // Prevent race conditions
+
+        // New file type
+        interface UploadedFile {
+          id: string; // nanoid generated
+          file: File;
+          filename: string;
+          size: number;
+          pageCount?: number; // "N/A" until Story 3.9
+          status: FileStatus;
+          errorMessage?: string;
+        }
+
+        type FileStatus = 'pending' | 'validating' | 'ready' | 'error';
+
+        // New actions
+        addFiles: (files: File[]) => void; // Debounced
+        removeFile: (fileId: string) => void;
+        clearFiles: () => void;
+        updateFileStatus: (fileId: string, status: FileStatus, error?: string) => void;
+        retryFile: (fileId: string) => void;
+        getTotalSize: () => number;
+        getFileCount: () => number;
+        ```
+      </target-state>
+    </file>
+  </existing-code>
+
+  <integration-points>
+    <upstream>
+      - Story 3.7: Basic extraction still works with first file in array
+      - Story 3.6: File upload patterns established
+      - Story 3.5: Template functionality unaffected
+    </upstream>
+    <downstream>
+      - Story 3.9: PDF parsing will populate pageCount field
+      - Story 3.10: Auto-detection will use file array
+      - Story 3.11: Batch extraction API will process all files
+      - Story 3.14: Results table will show multi-file results
+    </downstream>
+  </integration-points>
+
+  <implementation-notes>
+    <critical-paths>
+      1. Install nanoid first (required for file IDs)
+      2. Update Zustand store before UI components
+      3. Maintain extraction compatibility (use first file temporarily)
+      4. Test validation thoroughly (100 files, 100MB limits)
+    </critical-paths>
+
+    <potential-issues>
+      - Large file arrays may cause re-render performance issues
+      - Rapid file additions could cause state conflicts without debouncing
+      - Memory usage with many large files in browser
+      - File duplicate detection (same filename in different folders)
+    </potential-issues>
+
+    <testing-focus>
+      - Validation edge cases (exactly 100 files, exactly 100MB)
+      - Rapid file additions (drag 50 files at once)
+      - File removal and re-adding
+      - Mix of valid and invalid files
+      - Browser memory limits
+    </testing-focus>
+  </implementation-notes>
+
+  <ui-components>
+    <new-components>
+      - FileListItem: Individual file display with remove button
+      - FileStatistics: Aggregate stats display
+      - AddMoreFilesButton: Secondary action button
+    </new-components>
+
+    <modified-components>
+      - FileUploadSection: Complete rewrite for multi-file
+      - ExtractPageClient: Update to handle file array
+    </modified-components>
+
+    <styling-guidance>
+      - Maintain existing card-based design
+      - Scrollable container: max-height 400px for >5 files
+      - File status indicators: use existing color scheme
+      - Remove buttons: consistent with field tag remove buttons
+      - Loading states: match existing patterns
+    </styling-guidance>
+  </ui-components>
+
+  <validation-constants>
+    ```typescript
+    const FILE_UPLOAD_LIMITS = {
+      MAX_FILES: 100,
+      MAX_TOTAL_SIZE_MB: 100,
+      MAX_TOTAL_SIZE_BYTES: 100 * 1024 * 1024,
+      SCROLLABLE_THRESHOLD: 5,
+      DEBOUNCE_DELAY: 300 // ms
+    };
+    ```
+  </validation-constants>
+
+  <sample-code>
+    <file-list-item>
+      ```typescript
+      interface FileListItemProps {
+        file: UploadedFile;
+        onRemove: (id: string) => void;
+      }
+
+      function FileListItem({ file, onRemove }: FileListItemProps) {
+        return (
+          <div className="flex items-center gap-3 p-2 hover:bg-gray-50">
+            <FileText className="h-5 w-5 text-red-500" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm truncate">{file.filename}</p>
+              <p className="text-xs text-gray-500">
+                {formatFileSize(file.size)} • {file.pageCount || 'N/A'} pages
+              </p>
+            </div>
+            {file.status === 'error' && (
+              <span className="text-xs text-red-600">{file.errorMessage}</span>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onRemove(file.id)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      }
+      ```
+    </file-list-item>
+
+    <debounced-add-files>
+      ```typescript
+      import { nanoid } from 'nanoid';
+      import debounce from 'lodash.debounce';
+
+      const debouncedAddFiles = debounce((files: File[], store: any) => {
+        const uploadedFiles = files.map(file => ({
+          id: nanoid(),
+          file,
+          filename: file.name,
+          size: file.size,
+          status: 'validating' as FileStatus,
+        }));
+
+        // Validate total count and size
+        const currentFiles = store.uploadedFiles;
+        const totalCount = currentFiles.length + uploadedFiles.length;
+        const totalSize = [...currentFiles, ...uploadedFiles]
+          .reduce((sum, f) => sum + f.size, 0);
+
+        if (totalCount > FILE_UPLOAD_LIMITS.MAX_FILES) {
+          // Handle error
+          return;
+        }
+
+        if (totalSize > FILE_UPLOAD_LIMITS.MAX_TOTAL_SIZE_BYTES) {
+          // Handle error
+          return;
+        }
+
+        // Add validated files
+        store.setUploadedFiles([...currentFiles, ...uploadedFiles]);
+      }, FILE_UPLOAD_LIMITS.DEBOUNCE_DELAY);
+      ```
+    </debounced-add-files>
+  </sample-code>
+
+  <checklist>
+    - [ ] Install nanoid package
+    - [ ] Update extractionStore.ts with new file array structure
+    - [ ] Rewrite FileUploadSection.tsx for multi-file
+    - [ ] Create FileListItem component
+    - [ ] Implement file statistics display
+    - [ ] Add "+ Add more files" button
+    - [ ] Implement validation for 100 files/100MB
+    - [ ] Add debouncing for rapid file additions
+    - [ ] Test with various file combinations
+    - [ ] Update extraction to use first file (temporary)
+    - [ ] Verify no breaking changes to Story 3.7
+  </checklist>
+</story-context>

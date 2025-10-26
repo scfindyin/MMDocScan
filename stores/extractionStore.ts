@@ -1,10 +1,21 @@
 import { create } from 'zustand';
 import { TemplateField } from '@/types/template';
 import { ExtractedRow } from '@/types/extraction';
+import {
+  UploadedFile,
+  FileStatus,
+  createUploadedFile,
+  validateFiles,
+  debounce,
+  FILE_UPLOAD_LIMITS
+} from '@/lib/utils/file';
 
 // CRITICAL: Use TemplateField from @/types/template (Story 3.5 type alignment)
 // Re-export for backward compatibility
 export type ExtractionField = TemplateField;
+
+// Re-export file types for convenience
+export type { UploadedFile, FileStatus } from '@/lib/utils/file';
 
 // Template mode type
 export type TemplateMode = 'new' | 'existing';
@@ -35,8 +46,12 @@ interface ExtractionStore {
   extractionPrompt: string; // Global extraction instructions (0-2000 chars)
   isDirty: boolean; // True if template has unsaved changes
 
-  // File upload state (Story 3.6)
-  uploadedFile: File | null; // Uploaded file for extraction
+  // File upload state (Story 3.8 - Multi-file support)
+  uploadedFiles: UploadedFile[]; // Array of uploaded files
+  isAddingFiles: boolean; // Prevent race conditions during file addition
+
+  // Legacy support for Story 3.7 (will be removed in future)
+  uploadedFile: File | null; // Single file for backward compatibility
 
   // Extraction state (Story 3.7)
   results: ExtractionResponse | null; // Extraction results in ExtractedRow[] format
@@ -60,7 +75,19 @@ interface ExtractionStore {
   loadTemplate: (templateId: string, templateName: string, fields: ExtractionField[], prompt: string) => void;
   resetTemplate: () => void; // Clear all template state
 
-  // File upload actions (Story 3.6)
+  // File upload actions (Story 3.8 - Multi-file support)
+  addFiles: (files: File[]) => void;
+  removeFile: (fileId: string) => void;
+  clearAllFiles: () => void;
+  updateFileStatus: (fileId: string, status: FileStatus, errorMessage?: string) => void;
+  retryFile: (fileId: string) => void;
+
+  // Computed properties
+  getTotalSize: () => number;
+  getTotalPageCount: () => number;
+  getFileCount: () => number;
+
+  // Legacy actions for Story 3.7 compatibility
   setUploadedFile: (file: File | null) => void;
   removeUploadedFile: () => void;
 
@@ -76,7 +103,7 @@ interface ExtractionStore {
   setExtractionError: (error: string | null) => void;
 }
 
-export const useExtractionStore = create<ExtractionStore>()((set) => ({
+export const useExtractionStore = create<ExtractionStore>()((set, get) => ({
       // Initial state - default sizes
       leftPanelSize: 30, // 300px at 1000px viewport
       rightPanelSize: 70, // Fluid (remaining space)
@@ -91,8 +118,10 @@ export const useExtractionStore = create<ExtractionStore>()((set) => ({
       extractionPrompt: '',
       isDirty: false,
 
-      // File upload initial state (Story 3.6)
-      uploadedFile: null,
+      // File upload initial state (Story 3.8 - Multi-file)
+      uploadedFiles: [],
+      isAddingFiles: false,
+      uploadedFile: null, // Legacy support
 
       // Extraction initial state (Story 3.7)
       results: null,
@@ -220,15 +249,133 @@ export const useExtractionStore = create<ExtractionStore>()((set) => ({
           isDirty: false,
         }),
 
-      // File upload actions (Story 3.6)
-      setUploadedFile: (file) =>
+      // File upload actions (Story 3.8 - Multi-file support)
+      addFiles: debounce((files: File[]) => {
+        set((state) => {
+          // Prevent race conditions
+          if (state.isAddingFiles) return state;
+
+          // Validate files
+          const validation = validateFiles(state.uploadedFiles, files);
+          if (!validation.valid) {
+            alert(validation.error);
+            return state;
+          }
+
+          // Create UploadedFile objects
+          const newUploadedFiles = files.map(createUploadedFile);
+
+          // Check for duplicates by filename
+          const existingFilenames = new Set(state.uploadedFiles.map(f => f.filename));
+          const uniqueNewFiles = newUploadedFiles.filter(
+            f => !existingFilenames.has(f.filename)
+          );
+
+          if (uniqueNewFiles.length < newUploadedFiles.length) {
+            const duplicateCount = newUploadedFiles.length - uniqueNewFiles.length;
+            console.warn(`${duplicateCount} duplicate file(s) were not added`);
+          }
+
+          // Mark files as ready after brief validation
+          setTimeout(() => {
+            set((state) => ({
+              uploadedFiles: state.uploadedFiles.map(f =>
+                uniqueNewFiles.find(nf => nf.id === f.id)
+                  ? { ...f, status: 'ready' as FileStatus }
+                  : f
+              ),
+              isAddingFiles: false,
+            }));
+          }, 500);
+
+          // Update legacy single file for backward compatibility
+          const allFiles = [...state.uploadedFiles, ...uniqueNewFiles];
+          const legacyFile = allFiles.length > 0 ? allFiles[0].file : null;
+
+          return {
+            uploadedFiles: [...state.uploadedFiles, ...uniqueNewFiles],
+            isAddingFiles: true,
+            uploadedFile: legacyFile,
+          };
+        });
+      }, FILE_UPLOAD_LIMITS.DEBOUNCE_DELAY),
+
+      removeFile: (fileId) =>
+        set((state) => {
+          const updatedFiles = state.uploadedFiles.filter(f => f.id !== fileId);
+          const legacyFile = updatedFiles.length > 0 ? updatedFiles[0].file : null;
+
+          return {
+            uploadedFiles: updatedFiles,
+            uploadedFile: legacyFile,
+          };
+        }),
+
+      clearAllFiles: () =>
         set({
-          uploadedFile: file,
+          uploadedFiles: [],
+          uploadedFile: null,
+          isAddingFiles: false,
+        }),
+
+      updateFileStatus: (fileId, status, errorMessage) =>
+        set((state) => ({
+          uploadedFiles: state.uploadedFiles.map(f =>
+            f.id === fileId
+              ? { ...f, status, errorMessage }
+              : f
+          ),
+        })),
+
+      retryFile: (fileId) =>
+        set((state) => ({
+          uploadedFiles: state.uploadedFiles.map(f =>
+            f.id === fileId
+              ? { ...f, status: 'pending' as FileStatus, errorMessage: undefined }
+              : f
+          ),
+        })),
+
+      // Computed properties
+      getTotalSize: () => {
+        return get().uploadedFiles.reduce((sum, f) => sum + f.size, 0);
+      },
+
+      getTotalPageCount: () => {
+        return get().uploadedFiles.reduce(
+          (sum, f) => sum + (f.pageCount || 0),
+          0
+        );
+      },
+
+      getFileCount: () => {
+        return get().uploadedFiles.length;
+      },
+
+      // Legacy actions for Story 3.7 compatibility
+      setUploadedFile: (file) =>
+        set((state) => {
+          if (!file) {
+            return {
+              uploadedFile: null,
+              uploadedFiles: [],
+            };
+          }
+
+          // Convert single file to multi-file format
+          const uploadedFile = createUploadedFile(file);
+          uploadedFile.status = 'ready'; // Skip validation for legacy
+
+          return {
+            uploadedFile: file,
+            uploadedFiles: [uploadedFile],
+          };
         }),
 
       removeUploadedFile: () =>
         set({
           uploadedFile: null,
+          uploadedFiles: [],
         }),
 
       // Dirty tracking actions (Story 3.5)
