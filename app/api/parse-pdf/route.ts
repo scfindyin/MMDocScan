@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import PDFParser, { PDFParsingError, ErrorCode } from '@/lib/services/PDFParser';
 
-// Configure route to accept large file uploads (50MB)
+// Configure route to accept large file uploads
 export const runtime = 'nodejs';
-export const maxDuration = 60; // 60 second timeout
+export const maxDuration = 60; // 60 second timeout for PDF parsing
 export const dynamic = 'force-dynamic';
 
-// For Next.js 14+ App Router, use bodyParser config in route
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb',
-    },
-  },
-};
+// Note: Next.js 14 App Router handles FormData automatically without size limits
+// The maxDuration setting prevents timeout for large files
 
 /**
  * POST /api/parse-pdf
