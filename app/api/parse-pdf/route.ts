@@ -3,7 +3,7 @@ import PDFParser, { PDFParsingError, ErrorCode } from '@/lib/services/PDFParser'
 
 // Configure route to accept large file uploads
 export const runtime = 'nodejs';
-export const maxDuration = 60; // 60 second timeout for PDF parsing
+export const maxDuration = 300; // 5 minute timeout for large PDF parsing
 export const dynamic = 'force-dynamic';
 
 // Note: Next.js 14 App Router handles FormData automatically without size limits

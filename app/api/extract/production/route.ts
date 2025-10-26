@@ -13,7 +13,7 @@ import { TemplateField } from '@/types/template';
 
 // Configure route to handle large payloads (documents can be large)
 export const runtime = 'nodejs';
-export const maxDuration = 60; // 60 second timeout for Claude API
+export const maxDuration = 300; // 5 minute timeout for Claude API + PDF processing
 export const dynamic = 'force-dynamic';
 
 /**
