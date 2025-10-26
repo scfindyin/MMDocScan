@@ -1461,7 +1461,7 @@ The DocumentDetector service identifies document boundaries within multi-documen
 - ❌ **Integration Tests**: Not yet created (pending Task 12)
 - ❌ **AC16 Critical Test**: 100-page end-to-end test pending
 - ✅ **Build**: TypeScript compilation passing
-- ⚠️ **Database Migration**: Not yet applied to Supabase
+- ✅ **Database Migration**: Applied to Supabase (migration 006)
 
 ### Security Considerations
 - RLS policies on extraction_sessions and extraction_results tables
@@ -1472,7 +1472,7 @@ The DocumentDetector service identifies document boundaries within multi-documen
 - File type validation (PDF only)
 
 ### Next Steps
-1. Apply database migration (006) to Supabase
+1. ✅ ~~Apply database migration (006) to Supabase~~ - Complete
 2. Create unit tests for all services
 3. Create integration tests for all endpoints
 4. Run AC16 critical test (100-page multi-document PDF)
@@ -1638,7 +1638,7 @@ Ready for Architect review and approval.
 **Build Status**: ✅ TypeScript compilation passing with 0 errors
 
 **Pending Work**:
-- Database migration (006) needs to be applied to Supabase
+- ✅ ~~Database migration (006) needs to be applied to Supabase~~ - Complete
 - Unit tests for all services (Task 13)
 - Integration tests for all endpoints (Task 12)
 - AC16 critical test: 100-page end-to-end validation
@@ -1664,7 +1664,7 @@ Ready for Architect review and approval.
 - Map iterator conversion to array
 
 **Ready For**:
-- Database migration deployment
+- ✅ ~~Database migration deployment~~ - Complete
 - Manual testing with sample PDFs
 - Unit and integration test creation
 - AC16 critical acceptance test
