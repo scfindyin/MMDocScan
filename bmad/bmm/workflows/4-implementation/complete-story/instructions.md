@@ -1,7 +1,7 @@
 # Complete Story Workflow Instructions
 
 ## Purpose
-Automate the full story lifecycle from creation to implementation, testing, and GitHub push. This workflow uses the **context-manager** agent to orchestrate multiple sub-agents while preserving context and minimizing duplicate file reads.
+Automate the full story lifecycle from creation to implementation, testing, and GitHub push. This workflow is orchestrated by the **SM (Scrum Master)** agent who coordinates multiple sub-agents while preserving context and minimizing duplicate file reads.
 
 ## CRITICAL EXECUTION POLICY
 
@@ -11,26 +11,34 @@ Automate the full story lifecycle from creation to implementation, testing, and 
 - **DO NOT** stop after Step 6 asking "What would you like to do?"
 - **RUN ALL STEPS AUTOMATICALLY** from start to finish
 - **ONLY pause at Step 11** (completion report) for user to manually test features
-- **Purpose:** Minimize interruptions - work shouldn't pause waiting for approval between steps
+- **Purpose:** Minimize interruptions - work shouldn't pause waiting for approval between steps - the exception to this is if an issue arises that warrants my intevention
 
 **User Interaction Points:**
 - ✅ **Before workflow:** User triggers `*complete-story` command
 - ❌ **During workflow:** NO user input required (Steps 1-11 run automatically)
 - ✅ **After workflow:** User manually tests features, then runs `*complete-story` again for next story
 
-## Context-Manager Optimization
-This workflow is executed by the `context-manager` agent, which:
+## SM Agent Orchestration with Context Optimization
+This workflow is executed by the **SM (Scrum Master)** agent, which:
 1. **Pre-loads common documents ONCE** (config, epics, PRD, tech spec, workflow-status, solution-architecture)
 2. **Maintains documents in memory** throughout the workflow execution
-3. **Passes document context** to each sub-agent (SM, Architect, Dev) automatically
-4. **Eliminates duplicate file reads** (80% reduction in file I/O operations)
-5. **Preserves context across agents** (faster execution, lower token usage)
+3. **Spawns sub-agents using Task tool** for specialized work (Architect review, Dev implementation)
+4. **Passes document context** to each sub-agent by including full content in prompt text
+5. **Eliminates duplicate file reads** (80% reduction in file I/O operations)
+6. **Preserves context across agents** (faster execution, lower token usage)
+
+**CRITICAL INSTRUCTION FOR SM ORCHESTRATOR:**
+When instructions say "Spawn X agent", you MUST:
+- Use the Task tool to spawn the specialized agent
+- Include pre-loaded document content in the agent's prompt parameter
+- Instruct the agent "DO NOT read these files - they are provided above in your context"
+- Wait for agent completion before proceeding to next step
 
 **Efficiency Gains:**
 - **Before (without context-manager):** ~34+ file reads with duplicates across agents
 - **After (with context-manager):** ~6 file reads total (80% reduction)
 - **Token savings:** ~50k+ tokens across 6+ agent spawns
-- **Time savings:** 6-12 seconds eliminated from file search and duplicate reads
+- **Time savings:** 6-12 seconds eliminated from file search and duplicate reads. Also, this eliminates all the time wasted when agents are waiting for my response to continue work
 
 ## What This Workflow Does
 
@@ -40,7 +48,7 @@ This workflow is executed by the `context-manager` agent, which:
 ### **Phase 1: Story Creation & Review**
 2. **SM Agent** creates draft story using `create-story` workflow
 3. **Architect Agent** reviews for technical feasibility and alignment
-4. **If issues found:** SM Agent regenerates story with fixes (max 2 iterations)
+4. **If issues found:** SM Agent regenerates story with fixes (max 3 iterations)
 5. **If approved:** Continue to Phase 2
 
 ### **Phase 2: Preparation**
@@ -137,7 +145,7 @@ This workflow is executed by the `context-manager` agent, which:
 1. **Check for IN_PROGRESS story in workflow-status** (already loaded in context-manager memory)
 2. **If IN_PROGRESS_STORY exists:**
    - Read the story file at `{story_dir}/{in_progress_story_file}`
-   - Update story status from "Ready" → "Done"
+   - Update story status from "Ready" OR "Implemented" → "Done"
    - Add completion notes with date to Dev Agent Record section
    - Invoke `workflow-status` update action `complete_story`:
      - Move IN_PROGRESS → DONE
@@ -177,34 +185,54 @@ workflow_file = "{project-root}/bmad/bmm/workflows/4-implementation/complete-sto
 
 ### **Step 4: Spawn SM Agent for Story Creation**
 
+**CRITICAL:** Context-manager MUST use the Task tool to spawn the SM agent. Do not just describe what should happen - **actually execute the Task tool call**.
+
 **Agent:** `general-purpose` (acting as SM)
 **Task:** Execute `create-story` workflow
+**How to Execute:**
+```
+Use Task tool with:
+- subagent_type: "general-purpose"
+- description: "Create Story {epic_num}.{story_num}"
+- prompt: Include pre-loaded context (epics, PRD, tech_spec, workflow-status, config) in the prompt text
+```
+
 **Inputs:**
 - Epic number (from workflow-status in context)
 - Story number (from workflow-status in context - advanced by Step 1 if previous story existed)
 - Non-interactive mode: `true`
-- **Context passed automatically:** epics, PRD, tech_spec, solution_architecture (from context-manager memory)
+- **Context passed in prompt:** epics, PRD, tech_spec, solution_architecture (from context-manager memory)
 
 **Expected Output:**
 - Story file created at `{story_dir}/story-{epic_num}.{story_num}.md`
 - Story status: Draft
 
-**Note:** SM agent receives pre-loaded documents from context-manager - no file reads needed!
+**Note:** SM agent receives pre-loaded documents via prompt text - no file reads needed!
 
 ### **Step 5: Spawn Architect Agent for Review**
 
+**CRITICAL:** Context-manager MUST use the Task tool to spawn the architect-reviewer agent.
+
 **Agent:** `architect-reviewer`
 **Task:** Review story for technical feasibility
+**How to Execute:**
+```
+Use Task tool with:
+- subagent_type: "architect-reviewer"
+- description: "Review Story {epic_num}.{story_num}"
+- prompt: Include story file path and pre-loaded context in prompt
+```
+
 **Inputs:**
 - Story file path (from Step 4)
-- **Context passed automatically:** tech_spec, epics, solution_architecture (from context-manager memory)
+- **Context passed in prompt:** tech_spec, epics, solution_architecture (from context-manager memory)
 
 **Expected Output:**
 - Review verdict: `APPROVED` or `REQUIRES CHANGES`
 - List of issues (if any)
 - List of recommendations
 
-**Note:** Architect agent receives pre-loaded documents from context-manager - no duplicate file reads!
+**Note:** Architect agent receives pre-loaded documents via prompt - no duplicate file reads!
 
 ### **Step 6: Conditional - Regenerate Story (if needed)**
 
@@ -363,10 +391,16 @@ git commit -m "{commit_message}"
 git push
 ```
 
+**After Successful Push:**
+- Update story file status from "Ready" → "Implemented"
+- Update story file with completion date
+- This signals to Step 1 (next workflow run) that story is ready for approval
+
 **On Failure:**
 - Report git errors
-- Continue to Step 12 (do not abort)
+- Continue to Step 13 (do not abort)
 - User can manually push later
+- Do NOT update story status to "Implemented" if push fails
 
 ### **Step 13: Generate Completion Report**
 

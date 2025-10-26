@@ -3,11 +3,13 @@
 ## Story Information
 - **Epic**: 3 - Unified Batch Extraction Workflow
 - **Story**: 3.8
-- **Status**: Ready
+- **Status**: Done
 - **Priority**: High
 - **Estimated Effort**: Medium
 - **Prerequisites**: Story 3.7 (Basic Extraction with Results Table)
 - **Architect Approved**: 2025-10-25
+- **Completed**: 2025-10-25
+- **Approved**: 2025-10-25
 - **Revision Notes**: Added nanoid dependency, file status state machine, error recovery, debouncing for race conditions
 
 ## User Story

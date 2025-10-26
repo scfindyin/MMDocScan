@@ -1,8 +1,8 @@
 name: complete-story
 description: "Full story lifecycle automation: create story → architect review → fix if needed → ready → implement → build verification → test → push to GitHub"
 author: "BMad"
-version: "1.3.0"
-executor: "context-manager"  # Use context-manager agent to preserve context across sub-agents
+version: "1.4.0"
+executor: "SM"  # SM agent orchestrates and preserves context across sub-agents
 
 # CRITICAL EXECUTION POLICY
 # This workflow is designed for CONTINUOUS, UNINTERRUPTED execution from Step 1 through Step 11.

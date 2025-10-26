@@ -1,0 +1,1034 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context>
+  <story-info>
+    <epic>3</epic>
+    <story-number>3.9</story-number>
+    <title>PDF Parsing Service</title>
+    <status>Ready</status>
+    <priority>High</priority>
+    <estimated-effort>Medium</estimated-effort>
+    <architect-approved>2025-10-26</architect-approved>
+  </story-info>
+
+  <user-story>
+    As a developer, I want a reliable PDF parsing service, so that I can extract text and metadata from uploaded files.
+  </user-story>
+
+  <acceptance-criteria>
+    <criterion id="AC1">
+      <title>PDFParser Service Class Created</title>
+      <given>the application needs PDF parsing capabilities</given>
+      <when>the PDFParser service is implemented</when>
+      <then>a service class should exist at `services/PDFParser.ts` with proper TypeScript interfaces and error handling</then>
+    </criterion>
+
+    <criterion id="AC2">
+      <title>PDF-Parse Library Integration</title>
+      <given>the PDFParser service is being implemented</given>
+      <when>PDF files need to be parsed</when>
+      <then>the service should use the pdf-parse library (version 1.1.1 - exact version pinned) with proper type definitions</then>
+    </criterion>
+
+    <criterion id="AC3">
+      <title>ParsePDF Method Implementation</title>
+      <given>a PDF file is uploaded</given>
+      <when>`parsePDF(file: File)` is called</when>
+      <then>the method should return a Promise resolving to `{ pages: Page[], metadata: Metadata }`</then>
+    </criterion>
+
+    <criterion id="AC4">
+      <title>Page Data Structure</title>
+      <given>a PDF is being parsed</given>
+      <when>page data is extracted</when>
+      <then>each Page object should include: pageNumber (1-indexed), text (extracted content), and optionally height/width (in points) if available</then>
+    </criterion>
+
+    <criterion id="AC5">
+      <title>Metadata Extraction</title>
+      <given>a PDF file is parsed</given>
+      <when>metadata is extracted</when>
+      <then>the Metadata object should include: pageCount, title, author, createdDate (ISO format)</then>
+    </criterion>
+
+    <criterion id="AC6">
+      <title>Error Handling for Corrupted PDFs</title>
+      <given>a corrupted or unreadable PDF is uploaded</given>
+      <when>the parsing process encounters errors</when>
+      <then>the service should catch the error, log it, and throw a descriptive error message</then>
+    </criterion>
+
+    <criterion id="AC7">
+      <title>Comprehensive Unit Tests</title>
+      <given>the PDFParser service is implemented</given>
+      <when>running the test suite</when>
+      <then>tests should cover: valid PDFs, corrupted PDFs, multi-page PDFs, and edge cases</then>
+    </criterion>
+
+    <criterion id="AC8">
+      <title>Performance Requirements</title>
+      <given>a 100-page PDF file is uploaded</given>
+      <when>the parsing process executes</when>
+      <then>the complete parsing should finish in less than 10 seconds</then>
+    </criterion>
+
+    <criterion id="AC9">
+      <title>Memory Efficient Handling</title>
+      <given>large PDF files are being processed</given>
+      <when>the parsing occurs</when>
+      <then>the service should use efficient memory handling with file size limits (50MB max) to prevent excessive memory usage</then>
+    </criterion>
+
+    <criterion id="AC10">
+      <title>Debug Logging</title>
+      <given>the PDF parsing process is running</given>
+      <when>operations occur (start, progress, completion, errors)</when>
+      <then>the service should log detailed information for debugging purposes</then>
+    </criterion>
+  </acceptance-criteria>
+
+  <dependencies>
+    <prerequisite>Story 3.8 - Multi-File Upload UI (Status: Completed)</prerequisite>
+    <npm-packages>
+      <package name="pdf-parse" version="1.1.1" exact="true">
+        Main PDF parsing library using Mozilla's PDF.js internally
+      </package>
+      <package name="@types/pdf-parse" version="^1.1.4" dev="true">
+        TypeScript type definitions for pdf-parse
+      </package>
+    </npm-packages>
+    <integration-dependencies>
+      <story number="3.10" relationship="consumer">
+        Auto-detection service will use PDFParser as first step to extract text from uploaded files
+      </story>
+    </integration-dependencies>
+  </dependencies>
+
+  <technical-context>
+    <architecture>
+      <pattern>Singleton service pattern</pattern>
+      <location>lib/services/PDFParser.ts</location>
+      <server-side-only>true</server-side-only>
+      <reason>
+        pdf-parse requires Node.js Buffer API and cannot run in browser environment.
+        Must be called from Next.js API routes (e.g., /api/parse-pdf).
+      </reason>
+    </architecture>
+
+    <interfaces>
+      <interface name="Page">
+        <description>Represents a single page from a parsed PDF document</description>
+        <fields>
+          <field name="pageNumber" type="number" required="true">
+            1-indexed page number (first page = 1)
+          </field>
+          <field name="text" type="string" required="true">
+            Extracted text content from the page
+          </field>
+          <field name="height" type="number" required="false">
+            Page height in points (1/72 inch) - optional, deferred to Story 3.10+ (requires PDF.js pagerender option)
+          </field>
+          <field name="width" type="number" required="false">
+            Page width in points (1/72 inch) - optional, deferred to Story 3.10+ (requires PDF.js pagerender option)
+          </field>
+        </fields>
+      </interface>
+
+      <interface name="Metadata">
+        <description>Document metadata extracted from PDF</description>
+        <fields>
+          <field name="pageCount" type="number" required="true">
+            Total number of pages in the document
+          </field>
+          <field name="title" type="string" required="true">
+            Document title (or filename if missing)
+          </field>
+          <field name="author" type="string" required="true">
+            Document author (or "Unknown" if missing)
+          </field>
+          <field name="createdDate" type="string" required="true">
+            ISO 8601 format date string (e.g., "2025-10-26T12:00:00Z")
+          </field>
+        </fields>
+      </interface>
+
+      <interface name="ParseResult">
+        <description>Complete result from PDF parsing operation</description>
+        <fields>
+          <field name="pages" type="Page[]" required="true">
+            Array of parsed pages with text content
+          </field>
+          <field name="metadata" type="Metadata" required="true">
+            Document metadata information
+          </field>
+        </fields>
+      </interface>
+
+      <class name="PDFParsingError">
+        <description>Custom error class for PDF parsing failures</description>
+        <extends>Error</extends>
+        <fields>
+          <field name="code" type="ErrorCode" required="true">
+            Structured error code for programmatic handling
+          </field>
+          <field name="originalError" type="Error" required="false">
+            Original error from pdf-parse for debugging
+          </field>
+        </fields>
+      </class>
+
+      <enum name="ErrorCode">
+        <description>Enumeration of all possible PDF parsing error types</description>
+        <values>
+          <value name="CORRUPTED_FILE">File appears to be corrupted</value>
+          <value name="INVALID_FORMAT">File is not a valid PDF (magic number check failed)</value>
+          <value name="PASSWORD_PROTECTED">Password-protected PDFs not supported</value>
+          <value name="FILE_TOO_LARGE">File exceeds maximum size (50MB)</value>
+          <value name="PARSING_FAILED">General parsing failure</value>
+          <value name="UNSUPPORTED_PDF_VERSION">PDF version not supported. Try re-saving as PDF 1.7.</value>
+          <value name="PARSING_TIMEOUT">Parsing timeout exceeded (15 seconds)</value>
+        </values>
+      </enum>
+    </interfaces>
+
+    <integration-points>
+      <integration-point>
+        <story>3.8 - Multi-File Upload UI</story>
+        <direction>receives-from</direction>
+        <description>
+          Multi-file upload provides File objects via API route FormData.
+          Files are uploaded through FileUploadSection component, stored in Zustand extractionStore,
+          then sent to /api/parse-pdf endpoint where PDFParser processes them.
+        </description>
+      </integration-point>
+
+      <integration-point>
+        <story>3.10 - Auto-Detection Service</story>
+        <direction>provides-to</direction>
+        <description>
+          Auto-detection will consume Page[] output from PDFParser to analyze document text
+          and determine document type. The parsed text serves as input to pattern matching
+          and ML-based document classification.
+        </description>
+        <example-flow>
+          async function detectDocumentType(file: File) {
+            // Step 1: Parse PDF (Story 3.9)
+            const parseResult = await pdfParser.parsePDF(file);
+
+            // Step 2: Detect document type from parsed text (Story 3.10)
+            const detectionResult = await documentDetector.detect(parseResult.pages);
+
+            return { parseResult, detectionResult };
+          }
+        </example-flow>
+      </integration-point>
+
+      <integration-point>
+        <component>extractionStore (Zustand)</component>
+        <direction>indirect</direction>
+        <description>
+          PDFParser does NOT directly update Zustand store (violates single responsibility).
+          PDFParser is stateless and returns ParseResult.
+          API route or calling code manages store updates with parsed data.
+          Story 3.10 will handle store integration when implementing auto-detection flow.
+        </description>
+      </integration-point>
+    </integration-points>
+
+    <performance-requirements>
+      <requirement type="speed">
+        <metric>Parse 100-page PDF in less than 10 seconds</metric>
+        <target>10000ms</target>
+        <stretch-goal>5000ms</stretch-goal>
+        <measurement>End-to-end time from parsePDF() call to Promise resolution</measurement>
+      </requirement>
+
+      <requirement type="timeout">
+        <metric>Maximum parsing timeout</metric>
+        <target>15 seconds</target>
+        <error-code>PARSING_TIMEOUT</error-code>
+        <implementation>Use Promise.race() with timeout promise in API route</implementation>
+      </requirement>
+
+      <requirement type="file-size">
+        <metric>Maximum file size</metric>
+        <target>50MB</target>
+        <error-code>FILE_TOO_LARGE</error-code>
+        <validation>Check file.size before parsing begins</validation>
+      </requirement>
+
+      <requirement type="memory">
+        <metric>Memory usage for 100-page PDF</metric>
+        <target>Less than 100MB</target>
+        <note>pdf-parse loads full buffer into memory (no true streaming)</note>
+      </requirement>
+
+      <requirement type="benchmark">
+        <description>Performance benchmarks for various file sizes</description>
+        <benchmarks>
+          <benchmark pages="1" target="100ms" />
+          <benchmark pages="10" target="500ms" />
+          <benchmark pages="100" target="10000ms" />
+          <benchmark pages="500" target="30000ms" note="may hit timeout" />
+        </benchmarks>
+      </requirement>
+    </performance-requirements>
+
+    <security-considerations>
+      <consideration>
+        <title>File Validation</title>
+        <description>Always validate file is actually PDF before parsing using magic number check (%PDF)</description>
+        <implementation>Check buffer.toString('utf-8', 0, 4) === '%PDF'</implementation>
+      </consideration>
+
+      <consideration>
+        <title>Size Limits</title>
+        <description>Enforce maximum file size (50MB) to prevent DoS attacks</description>
+        <implementation>Validate file.size before creating buffer</implementation>
+      </consideration>
+
+      <consideration>
+        <title>Timeout Protection</title>
+        <description>Set parsing timeout (15s) to prevent infinite loops or resource exhaustion</description>
+        <implementation>Promise.race() with timeout promise</implementation>
+      </consideration>
+
+      <consideration>
+        <title>Memory Limits</title>
+        <description>Monitor memory usage during parsing to prevent OOM errors</description>
+        <implementation>File size limit acts as proxy for memory usage</implementation>
+      </consideration>
+    </security-considerations>
+
+    <library-usage>
+      <library name="pdf-parse">
+        <version>1.1.1</version>
+        <import>import pdfParse from 'pdf-parse';</import>
+        <description>
+          pdf-parse is a Node.js library that internally uses Mozilla's PDF.js to extract
+          text and metadata from PDF files. It requires Node.js Buffer API and cannot run
+          in browser environments.
+        </description>
+        <configuration>
+          <option name="max" value="0">Parse all pages (0 = no limit)</option>
+          <option name="version" value="v1.10.100">PDF.js version to use</option>
+        </configuration>
+        <output>
+          <field name="numpages" type="number">Total number of pages</field>
+          <field name="numrender" type="number">Number of pages rendered</field>
+          <field name="info" type="object">Metadata (Title, Author, CreationDate, etc.)</field>
+          <field name="metadata" type="any">Additional metadata</field>
+          <field name="text" type="string">All text concatenated</field>
+          <field name="version" type="string">PDF version</field>
+        </output>
+      </library>
+    </library-usage>
+
+    <known-limitations>
+      <limitation>
+        <title>No Password Support</title>
+        <description>Password-protected PDFs cannot be parsed</description>
+        <error-code>PASSWORD_PROTECTED</error-code>
+        <acceptable>true</acceptable>
+        <reason>Epic 3 MVP - future enhancement possible</reason>
+      </limitation>
+
+      <limitation>
+        <title>No OCR</title>
+        <description>Scanned PDFs without text layer will return empty text</description>
+        <acceptable>true</acceptable>
+        <reason>Epic 3 MVP - OCR is complex and resource-intensive</reason>
+      </limitation>
+
+      <limitation>
+        <title>No Form Data</title>
+        <description>Form fields are not extracted</description>
+        <acceptable>true</acceptable>
+        <reason>Epic 3 focuses on document text, not interactive elements</reason>
+      </limitation>
+
+      <limitation>
+        <title>No Annotations</title>
+        <description>Comments and annotations are ignored</description>
+        <acceptable>true</acceptable>
+        <reason>Not required for batch extraction workflow</reason>
+      </limitation>
+
+      <limitation>
+        <title>No Images</title>
+        <description>Image content is not extracted (text only)</description>
+        <acceptable>true</acceptable>
+        <reason>Epic 3 MVP - image extraction requires additional libraries</reason>
+      </limitation>
+
+      <limitation>
+        <title>No Page Rendering</title>
+        <description>No visual rendering, text extraction only</description>
+        <acceptable>true</acceptable>
+        <reason>Text extraction sufficient for document type detection</reason>
+      </limitation>
+
+      <limitation>
+        <title>No True Streaming</title>
+        <description>pdf-parse loads full PDF buffer into memory, no streaming support</description>
+        <acceptable>true</acceptable>
+        <mitigation>File size limit (50MB) prevents excessive memory usage</mitigation>
+      </limitation>
+    </known-limitations>
+  </technical-context>
+
+  <implementation-guidance>
+    <key-files>
+      <file path="lib/services/PDFParser.ts" type="implementation">
+        Main PDFParser service class with singleton pattern, parsePDF method,
+        error handling, and helper methods for buffer conversion and result formatting.
+      </file>
+
+      <file path="app/api/parse-pdf/route.ts" type="api-route">
+        Next.js API route endpoint for server-side PDF parsing. Handles FormData,
+        file validation, parsing with timeout, and returns ParseResult as JSON.
+      </file>
+
+      <file path="lib/services/__tests__/PDFParser.test.ts" type="test">
+        Comprehensive unit tests covering valid PDFs, corrupted files, multi-page documents,
+        edge cases, performance benchmarks, and error scenarios.
+      </file>
+
+      <file path="lib/services/__tests__/fixtures/" type="test-fixtures">
+        Test PDF files: valid-single.pdf, valid-multi.pdf, no-metadata.pdf,
+        corrupted.pdf, large-100-pages.pdf, unicode-text.pdf, password.pdf
+      </file>
+
+      <file path="lib/types/pdf.ts" type="types" optional="true">
+        Optional separate file for TypeScript interfaces (Page, Metadata, ParseResult, etc.)
+        if not defined inline in PDFParser.ts
+      </file>
+    </key-files>
+
+    <critical-requirements>
+      <requirement priority="critical">
+        Server-Side Only: PDFParser MUST run on server-side (API routes) only.
+        It cannot run in browser due to Node.js Buffer dependency.
+      </requirement>
+
+      <requirement priority="critical">
+        Exact Library Version: Use pdf-parse version 1.1.1 exactly (no caret ^).
+        Install with: npm install pdf-parse@1.1.1
+      </requirement>
+
+      <requirement priority="critical">
+        Correct Import: Use `import pdfParse from 'pdf-parse'` (NOT pdfjsLib).
+        pdf-parse is the library name, it internally uses PDF.js.
+      </requirement>
+
+      <requirement priority="critical">
+        Magic Number Validation: Always validate PDF magic number (%PDF) before parsing.
+        Check: buffer.toString('utf-8', 0, 4) === '%PDF'
+      </requirement>
+
+      <requirement priority="critical">
+        File Size Limit: Enforce 50MB maximum file size. Throw FILE_TOO_LARGE if exceeded.
+        Validate before creating buffer to prevent memory issues.
+      </requirement>
+
+      <requirement priority="critical">
+        Parsing Timeout: Implement 15-second timeout using Promise.race().
+        Throw PARSING_TIMEOUT error if exceeded.
+      </requirement>
+
+      <requirement priority="high">
+        Stateless Service: PDFParser must NOT update Zustand store directly.
+        Return ParseResult and let calling code handle store updates.
+      </requirement>
+
+      <requirement priority="high">
+        Optional Page Dimensions: Make height/width optional in Page interface.
+        Full dimension extraction deferred to Story 3.10+ (requires PDF.js pagerender).
+      </requirement>
+
+      <requirement priority="high">
+        Complete Error Coverage: Handle all error scenarios with specific ErrorCode values:
+        CORRUPTED_FILE, INVALID_FORMAT, PASSWORD_PROTECTED, FILE_TOO_LARGE,
+        PARSING_FAILED, UNSUPPORTED_PDF_VERSION, PARSING_TIMEOUT
+      </requirement>
+
+      <requirement priority="medium">
+        Performance Target: 100-page PDF should parse in less than 10 seconds.
+        Test with actual 100-page PDF in performance test suite.
+      </requirement>
+
+      <requirement priority="medium">
+        Comprehensive Logging: Log parsing start, completion, errors, and performance metrics.
+        Include filename, file size, page count, and duration in logs.
+      </requirement>
+
+      <requirement priority="medium">
+        85%+ Test Coverage: Unit tests must achieve at least 85% code coverage.
+        100% coverage for core functionality and error handling.
+      </requirement>
+    </critical-requirements>
+
+    <testing-strategy>
+      <test-category name="Valid PDF Parsing">
+        <test>Parse single-page PDF with full metadata</test>
+        <test>Parse multi-page PDF (10+ pages)</test>
+        <test>Verify page count accuracy</test>
+        <test>Verify text extraction accuracy</test>
+        <test>Verify 1-indexed page numbers</test>
+        <test>Handle PDF containing images (extract text only)</test>
+      </test-category>
+
+      <test-category name="Metadata Extraction">
+        <test>Extract full metadata (title, author, createdDate, pageCount)</test>
+        <test>Handle partial metadata (some fields missing)</test>
+        <test>Handle no metadata (use fallback values)</test>
+        <test>Parse and format createdDate to ISO 8601</test>
+        <test>Handle special characters in metadata fields</test>
+      </test-category>
+
+      <test-category name="Error Scenarios">
+        <test>Corrupted PDF file throws CORRUPTED_FILE error</test>
+        <test>Non-PDF file (wrong magic number) throws INVALID_FORMAT</test>
+        <test>Password-protected PDF throws PASSWORD_PROTECTED</test>
+        <test>Empty file throws appropriate error</test>
+        <test>File exceeding 50MB throws FILE_TOO_LARGE</test>
+        <test>Parsing timeout (15s) throws PARSING_TIMEOUT</test>
+        <test>Unsupported PDF version throws UNSUPPORTED_PDF_VERSION</test>
+        <test>Verify error messages are user-friendly</test>
+        <test>Verify originalError is captured for debugging</test>
+      </test-category>
+
+      <test-category name="Performance">
+        <test>Single page: parse in less than 100ms</test>
+        <test>10 pages: parse in less than 500ms</test>
+        <test>100 pages: parse in less than 10 seconds (AC8 requirement)</test>
+        <test>Measure memory usage for 100-page PDF (target: less than 100MB)</test>
+        <test>Profile for bottlenecks and optimization opportunities</test>
+      </test-category>
+
+      <test-category name="Edge Cases">
+        <test>PDF with unicode text (special characters)</test>
+        <test>PDF with rotated pages</test>
+        <test>PDF with non-standard page sizes</test>
+        <test>PDF with 1000+ pages (if feasible)</test>
+        <test>PDF with pages containing no text</test>
+        <test>PDF with mixed content (text, images, forms)</test>
+      </test-category>
+
+      <test-category name="Integration">
+        <test>Mock File objects in tests (using Node.js Buffer)</test>
+        <test>Use actual PDF files as test fixtures (not mocked)</test>
+        <test>Test with real pdf-parse library (not mocked)</test>
+        <test>Verify ParseResult format matches interfaces exactly</test>
+        <test>Test buffer conversion from File to Node.js Buffer</test>
+      </test-category>
+
+      <coverage-goals>
+        <goal category="core-functionality" target="100%">
+          parsePDF, formatParseResult, fileToBuffer
+        </goal>
+        <goal category="error-handling" target="100%">
+          All error paths and error code assignment
+        </goal>
+        <goal category="helpers" target="90%">
+          Metadata extraction, validation, utility functions
+        </goal>
+        <goal category="overall" target="85%">
+          Entire PDFParser service
+        </goal>
+      </coverage-goals>
+    </testing-strategy>
+
+    <code-examples>
+      <example name="PDFParser Service Structure">
+        <description>Singleton service class with parsePDF method</description>
+        <code language="typescript"><![CDATA[
+import pdfParse from 'pdf-parse';
+
+class PDFParser {
+  private static instance: PDFParser;
+  private logger: Logger;
+
+  private constructor() {
+    this.logger = new Logger('PDFParser');
+  }
+
+  static getInstance(): PDFParser {
+    if (!PDFParser.instance) {
+      PDFParser.instance = new PDFParser();
+    }
+    return PDFParser.instance;
+  }
+
+  async parsePDF(file: File): Promise<ParseResult> {
+    const startTime = performance.now();
+    this.logger.info(`Starting PDF parsing: ${file.name} (${file.size} bytes)`);
+
+    try {
+      // Validate file size (50MB max)
+      const MAX_FILE_SIZE = 50 * 1024 * 1024;
+      if (file.size > MAX_FILE_SIZE) {
+        throw new PDFParsingError(
+          'File exceeds maximum size (50MB)',
+          ErrorCode.FILE_TOO_LARGE
+        );
+      }
+
+      // Convert File to Buffer
+      const buffer = await this.fileToBuffer(file);
+
+      // Validate PDF magic number
+      if (!this.validatePDFMagicNumber(buffer)) {
+        throw new PDFParsingError(
+          'File is not a valid PDF',
+          ErrorCode.INVALID_FORMAT
+        );
+      }
+
+      // Parse PDF with pdf-parse
+      const data = await pdfParse(buffer);
+
+      // Extract and format results
+      const result = this.formatParseResult(data, file.name);
+
+      const duration = performance.now() - startTime;
+      this.logger.info(`PDF parsed successfully in ${duration.toFixed(2)}ms: ${result.metadata.pageCount} pages`);
+
+      return result;
+    } catch (error) {
+      this.logger.error(`PDF parsing failed for ${file.name}:`, error);
+      throw this.handleParsingError(error, file.name);
+    }
+  }
+
+  private async fileToBuffer(file: File): Promise<Buffer> {
+    const arrayBuffer = await file.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }
+
+  private validatePDFMagicNumber(buffer: Buffer): boolean {
+    const magicNumber = buffer.toString('utf-8', 0, 4);
+    return magicNumber === '%PDF';
+  }
+
+  private formatParseResult(data: any, filename: string): ParseResult {
+    // Extract pages (implementation details...)
+    // Extract metadata (implementation details...)
+    return { pages, metadata };
+  }
+
+  private handleParsingError(error: any, filename: string): PDFParsingError {
+    // Error classification and formatting (implementation details...)
+  }
+}
+
+export const pdfParser = PDFParser.getInstance();
+        ]]></code>
+      </example>
+
+      <example name="API Route Implementation">
+        <description>Next.js API route for server-side PDF parsing with timeout</description>
+        <code language="typescript"><![CDATA[
+// app/api/parse-pdf/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import pdfParse from 'pdf-parse';
+
+export async function POST(request: NextRequest) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+
+    if (!file) {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    }
+
+    // Validate file size (50MB max)
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: 'File too large. Maximum size is 50MB.' },
+        { status: 413 }
+      );
+    }
+
+    // Convert File to Buffer (server-side)
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Validate PDF magic number
+    const magicNumber = buffer.toString('utf-8', 0, 4);
+    if (magicNumber !== '%PDF') {
+      return NextResponse.json(
+        { error: 'File is not a valid PDF' },
+        { status: 400 }
+      );
+    }
+
+    // Parse PDF with 15-second timeout
+    const parsePromise = pdfParse(buffer);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('PARSING_TIMEOUT')), 15000)
+    );
+
+    const data = await Promise.race([parsePromise, timeoutPromise]);
+
+    // Return parsed result
+    return NextResponse.json({
+      pages: data.numpages,
+      text: data.text,
+      metadata: data.info,
+    });
+  } catch (error: any) {
+    if (error.message === 'PARSING_TIMEOUT') {
+      return NextResponse.json(
+        { error: 'Parsing timeout exceeded (15 seconds)' },
+        { status: 408 }
+      );
+    }
+    return NextResponse.json(
+      { error: 'Failed to parse PDF' },
+      { status: 500 }
+    );
+  }
+}
+        ]]></code>
+      </example>
+
+      <example name="Magic Number Validation">
+        <description>Validate PDF file using magic number before parsing</description>
+        <code language="typescript"><![CDATA[
+function validatePDFMagicNumber(buffer: Buffer): boolean {
+  // PDF files always start with %PDF (magic number)
+  const magicNumber = buffer.toString('utf-8', 0, 4);
+  return magicNumber === '%PDF';
+}
+
+// Usage in parsePDF method:
+async parsePDF(file: File): Promise<ParseResult> {
+  const buffer = await this.fileToBuffer(file);
+
+  // Validate magic number
+  if (!this.validatePDFMagicNumber(buffer)) {
+    throw new PDFParsingError(
+      'File is not a valid PDF',
+      ErrorCode.INVALID_FORMAT
+    );
+  }
+
+  // Validate file size (50MB max)
+  const MAX_FILE_SIZE = 50 * 1024 * 1024;
+  if (file.size > MAX_FILE_SIZE) {
+    throw new PDFParsingError(
+      'File exceeds maximum size (50MB)',
+      ErrorCode.FILE_TOO_LARGE
+    );
+  }
+
+  // Continue with parsing...
+}
+        ]]></code>
+      </example>
+
+      <example name="Story 3.10 Integration Pattern">
+        <description>How Story 3.10 will consume PDFParser for auto-detection</description>
+        <code language="typescript"><![CDATA[
+// Story 3.10 will implement this flow:
+async function detectDocumentType(file: File) {
+  // Step 1: Parse PDF (Story 3.9)
+  const parseResult = await pdfParser.parsePDF(file);
+
+  // Step 2: Detect document type from parsed text (Story 3.10)
+  const detectionResult = await documentDetector.detect(parseResult.pages);
+
+  // Step 3: Update Zustand store with results
+  extractionStore.setState((state) => ({
+    files: state.files.map((f) =>
+      f.id === file.name
+        ? {
+            ...f,
+            pageCount: parseResult.metadata.pageCount,
+            documentType: detectionResult.type,
+            status: 'ready'
+          }
+        : f
+    ),
+  }));
+
+  return { parseResult, detectionResult };
+}
+        ]]></code>
+      </example>
+    </code-examples>
+
+    <implementation-checklist>
+      <phase name="Setup">
+        <item>Install pdf-parse@1.1.1 (exact version)</item>
+        <item>Install @types/pdf-parse@^1.1.4 as dev dependency</item>
+        <item>Verify library imports work correctly</item>
+        <item>Create lib/services/PDFParser.ts file</item>
+        <item>Create lib/services/__tests__/PDFParser.test.ts file</item>
+        <item>Create test fixtures directory with sample PDFs</item>
+      </phase>
+
+      <phase name="Type Definitions">
+        <item>Define Page interface (pageNumber, text, height?, width?)</item>
+        <item>Define Metadata interface (pageCount, title, author, createdDate)</item>
+        <item>Define ParseResult interface (pages, metadata)</item>
+        <item>Define PDFParsingError class extending Error</item>
+        <item>Define ErrorCode enum with all 7 error types</item>
+        <item>Add JSDoc comments to all types</item>
+      </phase>
+
+      <phase name="Core Implementation">
+        <item>Create PDFParser singleton class structure</item>
+        <item>Implement getInstance() method</item>
+        <item>Implement fileToBuffer() helper method</item>
+        <item>Implement validatePDFMagicNumber() helper method</item>
+        <item>Implement parsePDF() main method with file size validation</item>
+        <item>Implement formatParseResult() to transform pdf-parse output</item>
+        <item>Implement handleParsingError() for error classification</item>
+        <item>Add comprehensive logging (start, completion, errors)</item>
+      </phase>
+
+      <phase name="Error Handling">
+        <item>Handle CORRUPTED_FILE errors from pdf-parse</item>
+        <item>Handle INVALID_FORMAT (magic number check)</item>
+        <item>Handle PASSWORD_PROTECTED PDFs</item>
+        <item>Handle FILE_TOO_LARGE (50MB limit)</item>
+        <item>Handle PARSING_TIMEOUT (15s limit in API route)</item>
+        <item>Handle UNSUPPORTED_PDF_VERSION</item>
+        <item>Handle general PARSING_FAILED cases</item>
+        <item>Test all error paths with unit tests</item>
+      </phase>
+
+      <phase name="API Route">
+        <item>Create app/api/parse-pdf/route.ts</item>
+        <item>Implement POST handler for FormData</item>
+        <item>Add file validation (presence, size, magic number)</item>
+        <item>Implement 15-second timeout using Promise.race()</item>
+        <item>Transform pdf-parse output to JSON response</item>
+        <item>Handle all error scenarios with appropriate HTTP status codes</item>
+        <item>Add request/response logging</item>
+      </phase>
+
+      <phase name="Testing">
+        <item>Create test fixtures (valid, corrupted, multi-page, etc.)</item>
+        <item>Write tests for valid PDF parsing</item>
+        <item>Write tests for metadata extraction</item>
+        <item>Write tests for all error scenarios</item>
+        <item>Write performance tests (100-page PDF benchmark)</item>
+        <item>Write edge case tests (unicode, large files, etc.)</item>
+        <item>Verify 85%+ code coverage</item>
+        <item>Run tests in CI/CD pipeline</item>
+      </phase>
+
+      <phase name="Documentation">
+        <item>Add JSDoc comments to all public methods</item>
+        <item>Document parameters and return types</item>
+        <item>Create usage examples in comments</item>
+        <item>Document error scenarios and recovery actions</item>
+        <item>Update tech-spec-epic-3.md with implementation details</item>
+        <item>Document integration patterns for Story 3.10</item>
+      </phase>
+
+      <phase name="Code Quality">
+        <item>Run ESLint and fix all errors</item>
+        <item>Format code with Prettier</item>
+        <item>Remove debug code and console.logs</item>
+        <item>Verify TypeScript strict mode compliance</item>
+        <item>Check for type errors (tsc --noEmit)</item>
+        <item>Verify build passes with no errors</item>
+      </phase>
+    </implementation-checklist>
+  </implementation-guidance>
+
+  <dev-notes>
+    <note category="architecture">
+      PDFParser is a stateless, server-side service that returns ParseResult.
+      It does NOT directly update Zustand store - calling code manages store updates.
+      This follows single responsibility principle and keeps the service testable.
+    </note>
+
+    <note category="integration">
+      Story 3.8 provides File objects via multi-file upload UI and Zustand store.
+      Story 3.10 will consume PDFParser output for document type auto-detection.
+      API route pattern: upload → /api/parse-pdf → ParseResult → store update
+    </note>
+
+    <note category="performance">
+      pdf-parse does NOT support true streaming - it loads full PDF buffer into memory.
+      File size limit (50MB) acts as memory usage proxy to prevent OOM errors.
+      15-second timeout prevents resource exhaustion from complex/malformed PDFs.
+    </note>
+
+    <note category="library">
+      Use exact version: pdf-parse@1.1.1 (no caret ^).
+      Correct import: `import pdfParse from 'pdf-parse'` (NOT pdfjsLib).
+      pdf-parse internally uses Mozilla's PDF.js library for actual parsing.
+    </note>
+
+    <note category="validation">
+      Always validate PDF magic number (%PDF) before parsing.
+      Check: buffer.toString('utf-8', 0, 4) === '%PDF'
+      This prevents wasted processing on invalid files.
+    </note>
+
+    <note category="dimensions">
+      Page dimensions (height/width) are optional in v1.
+      Full dimension extraction deferred to Story 3.10+ as it requires
+      PDF.js pagerender option which is more complex to implement.
+    </note>
+
+    <note category="limitations">
+      Known limitations acceptable for Epic 3 MVP:
+      - No password support (throw PASSWORD_PROTECTED error)
+      - No OCR (scanned PDFs return empty text)
+      - No form data extraction
+      - No annotations/comments
+      - No image extraction (text only)
+      - No page rendering (text extraction only)
+      Future enhancements can address these if needed.
+    </note>
+
+    <note category="error-handling">
+      Comprehensive error coverage with 7 error codes:
+      CORRUPTED_FILE, INVALID_FORMAT, PASSWORD_PROTECTED, FILE_TOO_LARGE,
+      PARSING_FAILED, UNSUPPORTED_PDF_VERSION, PARSING_TIMEOUT
+      All errors include user-friendly messages and originalError for debugging.
+    </note>
+
+    <note category="testing">
+      Test coverage goals:
+      - Core functionality: 100%
+      - Error handling: 100%
+      - Helpers: 90%+
+      - Overall: 85%+
+      Use actual PDF files as test fixtures (not mocked).
+      Test with real pdf-parse library to catch integration issues.
+    </note>
+
+    <note category="logging">
+      Comprehensive logging for debugging:
+      - Parsing start (filename, file size)
+      - Parsing completion (page count, duration)
+      - Progress updates (every 25 pages for large files)
+      - All errors with stack traces
+      Use appropriate log levels (info, debug, error).
+    </note>
+
+    <note category="security">
+      Security measures implemented:
+      - File size validation (50MB max) prevents DoS
+      - Magic number check prevents invalid file processing
+      - Timeout (15s) prevents resource exhaustion
+      - Server-side only (no browser exposure)
+      Consider sandboxing in future for additional isolation.
+    </note>
+  </dev-notes>
+
+  <revision-history>
+    <revision date="2025-10-26" version="1" author="Architect">
+      <description>Architect review fixes - all 8 issues resolved</description>
+      <changes>
+        <change priority="critical">
+          Fixed library import from pdfjsLib to pdfParse throughout all code examples
+        </change>
+        <change priority="critical">
+          Removed browser environment references, added server-side only warnings
+        </change>
+        <change priority="high">
+          Revised performance target from 5s to 10s for 100-page PDFs
+        </change>
+        <change priority="high">
+          Removed streaming language, clarified pdf-parse loads full buffer into memory
+        </change>
+        <change priority="high">
+          Removed store coupling, documented PDFParser as stateless service
+        </change>
+        <change priority="medium">
+          Made page dimensions (height/width) optional, deferred to Story 3.10+
+        </change>
+        <change priority="medium">
+          Added UNSUPPORTED_PDF_VERSION and PARSING_TIMEOUT error codes
+        </change>
+        <change priority="medium">
+          Added 15-second parsing timeout requirement
+        </change>
+        <change priority="low">
+          Pinned exact pdf-parse version: 1.1.1 (removed caret)
+        </change>
+        <change priority="low">
+          Added magic number validation code example with %PDF check
+        </change>
+        <change priority="low">
+          Added file size validation (50MB limit) throughout
+        </change>
+      </changes>
+    </revision>
+  </revision-history>
+
+  <related-files>
+    <file path="lib/services/PDFParser.ts" status="to-create">
+      Main PDFParser service class - primary deliverable for this story
+    </file>
+    <file path="lib/services/__tests__/PDFParser.test.ts" status="to-create">
+      Comprehensive unit test suite for PDFParser service
+    </file>
+    <file path="lib/services/__tests__/fixtures/" status="to-create">
+      Test PDF fixtures directory with sample files for testing
+    </file>
+    <file path="app/api/parse-pdf/route.ts" status="to-create">
+      Next.js API route for server-side PDF parsing with timeout
+    </file>
+    <file path="lib/types/pdf.ts" status="optional">
+      Optional separate file for TypeScript interfaces if not inline
+    </file>
+    <file path="stores/extractionStore.ts" status="existing">
+      Zustand store from Story 3.8, will be updated in Story 3.10 to consume PDFParser
+    </file>
+    <file path="app/extract/components/FileUploadSection.tsx" status="existing">
+      Multi-file upload component from Story 3.8, will integrate via API route
+    </file>
+    <file path="docs/tech-spec-epic-3.md" status="existing">
+      Technical specification to be updated with PDFParser implementation details
+    </file>
+    <file path="docs/stories/story-3.8.md" status="completed">
+      Previous story - Multi-File Upload UI that provides File objects
+    </file>
+    <file path="docs/stories/story-3.10.md" status="next">
+      Next story - Auto-detection service that will consume PDFParser output
+    </file>
+    <file path="package.json" status="to-update">
+      Add pdf-parse@1.1.1 and @types/pdf-parse@^1.1.4 dependencies
+    </file>
+  </related-files>
+
+  <definition-of-done>
+    <criteria>
+      <criterion>All 10 acceptance criteria are met and verified</criterion>
+      <criterion>PDFParser service class implemented in lib/services/PDFParser.ts</criterion>
+      <criterion>pdf-parse@1.1.1 and @types/pdf-parse@^1.1.4 installed</criterion>
+      <criterion>All interfaces defined (Page, Metadata, ParseResult, PDFParsingError, ErrorCode)</criterion>
+      <criterion>parsePDF method fully implemented with proper typing</criterion>
+      <criterion>File size validation (50MB max) implemented</criterion>
+      <criterion>Magic number validation (%PDF check) implemented</criterion>
+      <criterion>Metadata extraction working (pageCount, title, author, createdDate)</criterion>
+      <criterion>Error handling implemented for all 7 error codes</criterion>
+      <criterion>Custom error types created (PDFParsingError, ErrorCode enum)</criterion>
+      <criterion>API route created at app/api/parse-pdf/route.ts</criterion>
+      <criterion>15-second parsing timeout implemented in API route</criterion>
+      <criterion>Unit tests written and passing (85%+ coverage)</criterion>
+      <criterion>Test fixtures created (valid, corrupted, multi-page PDFs)</criterion>
+      <criterion>Performance requirement verified (100-page PDF in less than 10 seconds)</criterion>
+      <criterion>Memory efficiency verified (50MB file size limit enforced)</criterion>
+      <criterion>Logging implemented for debugging (start, completion, errors, metrics)</criterion>
+      <criterion>Code reviewed and approved by tech lead</criterion>
+      <criterion>No TypeScript errors or warnings (tsc --noEmit passes)</criterion>
+      <criterion>ESLint passes with no errors</criterion>
+      <criterion>All tests pass in CI/CD pipeline</criterion>
+      <criterion>Documentation complete (JSDoc, API docs, integration patterns)</criterion>
+      <criterion>Integration points documented for Story 3.10</criterion>
+      <criterion>Build passes with no errors (npm run build)</criterion>
+      <criterion>Code follows project conventions and style guide</criterion>
+    </criteria>
+  </definition-of-done>
+</story-context>
