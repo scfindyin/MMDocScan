@@ -22,16 +22,16 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "3.16", "3.17", "3.18", "3.19", "3.20", "3.21", "3.22", "3.23", "3.24", "3.25", "3.26", "3.27", "3.28", "3.29", "3.30"]
-TODO_STORY: 3.10
-TODO_TITLE: Auto-Detection Algorithm
-IN_PROGRESS_STORY: 3.9
-IN_PROGRESS_TITLE: PDF Parsing Service
-STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8"]
+TODO_STORY: 3.11
+TODO_TITLE: Batch Extraction API
+IN_PROGRESS_STORY: 3.10
+IN_PROGRESS_TITLE: Auto-Detection Algorithm
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8", "3.9"]
 
 ## Next Action
 
-NEXT_ACTION: Story 3.8 (Multi-File Upload UI) completed and approved. Story 3.9 (PDF Parsing Service) now IN_PROGRESS. Next: Create and implement Story 3.9 with complete-story workflow.
-NEXT_COMMAND: Run complete-story workflow for Story 3.9
+NEXT_ACTION: Story 3.9 (PDF Parsing Service) completed and approved. Story 3.10 (Auto-Detection Algorithm) now IN_PROGRESS. Next: Create and implement Story 3.10 with complete-story workflow.
+NEXT_COMMAND: Run complete-story workflow for Story 3.10
 NEXT_AGENT: Context-manager (orchestrating SM, Architect, Dev agents)
 ## Story Backlog
 
@@ -70,9 +70,9 @@ NEXT_AGENT: Context-manager (orchestrating SM, Architect, Dev agents)
 - Story 3.7: Basic Extraction with Results Table 🚧 IN PROGRESS
 
 #### Phase 2: Batch Processing (Weeks 3-4) - Stories 3.8-3.14
-- Story 3.8: Multi-File Upload UI
-- Story 3.9: PDF Parsing Service
-- Story 3.10: Auto-Detection Algorithm
+- Story 3.8: Multi-File Upload UI ✓
+- Story 3.9: PDF Parsing Service ✓
+- Story 3.10: Auto-Detection Algorithm 🚧 IN PROGRESS
 - Story 3.11: Batch Extraction API
 - Story 3.12: Extraction Queue with Concurrency
 - Story 3.13: Progress Tracking UI

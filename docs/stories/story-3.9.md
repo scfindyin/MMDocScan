@@ -3,11 +3,12 @@
 ## Story Information
 - **Epic**: 3 - Unified Batch Extraction Workflow
 - **Story**: 3.9
-- **Status**: Ready
+- **Status**: Implemented
 - **Priority**: High
 - **Estimated Effort**: Medium
 - **Prerequisites**: Story 3.8 (Multi-File Upload UI)
 - **Architect Approved**: 2025-10-26
+- **Completed**: 2025-10-26
 
 ## User Story
 As a developer, I want a reliable PDF parsing service, so that I can extract text and metadata from uploaded files.

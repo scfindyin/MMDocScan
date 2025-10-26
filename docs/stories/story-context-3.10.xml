@@ -1,0 +1,1032 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context>
+  <metadata>
+    <epic>3 - Unified Batch Extraction Workflow</epic>
+    <story-number>3.10</story-number>
+    <story-title>Auto-Detection Algorithm</story-title>
+    <status>Ready</status>
+    <architect-approved>2025-10-26</architect-approved>
+    <priority>High</priority>
+    <estimated-effort>Large</estimated-effort>
+    <prerequisites>
+      <prerequisite>Story 3.9 - PDF Parsing Service (COMPLETE)</prerequisite>
+    </prerequisites>
+    <generated-date>2025-10-26</generated-date>
+    <agent>SM (Scrum Master)</agent>
+  </metadata>
+
+  <story-overview>
+    <user-story>
+      As a developer, I want an algorithm that automatically detects document boundaries in multi-document PDFs, so that users don't have to manually split files.
+    </user-story>
+
+    <story-description>
+      This story implements the core intelligence of the batch extraction pipeline - an algorithm that automatically identifies document boundaries within multi-document PDF files. The DocumentDetector service uses a rule-based heuristic approach with an AGGRESSIVE detection strategy that prefers over-splitting (false positives) to under-splitting (false negatives), ensuring users never miss documents.
+
+      The algorithm analyzes the first 200 characters of each page using four heuristics:
+      1. Invoice/Receipt Keywords (confidence 0.7) - "invoice", "receipt", "bill"
+      2. Invoice Number Patterns (confidence 0.6) - INV-, #, No. followed by digits
+      3. Date Patterns (confidence 0.5) - MM/DD/YYYY, DD-MM-YYYY, YYYY-MM-DD
+      4. Page Boundary (confidence 0.3) - AGGRESSIVE strategy splits on every page
+
+      The service returns DetectedDocument[] with start/end page numbers and confidence scores, enabling the batch extraction pipeline to process each detected document independently.
+    </story-description>
+
+    <implementation-summary>
+      Create a stateless DocumentDetector service (singleton pattern) that:
+      - Accepts parsed PDF pages from Story 3.9 (PDFParser)
+      - Applies heuristic-based detection to identify document boundaries
+      - Returns document boundaries with confidence scores
+      - Implements AGGRESSIVE strategy with 0.3 confidence threshold
+      - Includes fallback logic for PDFs with no indicators
+      - Provides comprehensive error handling and logging
+      - Achieves <1 second performance for 100-page PDFs
+    </implementation-summary>
+  </story-overview>
+
+  <story-content>
+    <![CDATA[
+# Story 3.10: Auto-Detection Algorithm
+
+## Story Information
+- **Epic**: 3 - Unified Batch Extraction Workflow
+- **Story**: 3.10
+- **Status**: Ready
+- **Architect Approved**: 2025-10-26
+- **Priority**: High
+- **Estimated Effort**: Large
+- **Prerequisites**: Story 3.9 (PDF Parsing Service)
+- **Completed**: Pending
+
+## User Story
+As a developer, I want an algorithm that automatically detects document boundaries in multi-document PDFs, so that users don't have to manually split files.
+
+## Acceptance Criteria
+
+### AC1: DocumentDetector Service Class Created
+**Given** the application needs document boundary detection capabilities
+**When** the DocumentDetector service is implemented
+**Then** a service class should exist at `services/DocumentDetector.ts` with proper TypeScript interfaces and error handling
+
+### AC2: Detect Method Implementation
+**Given** a parsed PDF with multiple pages
+**When** `detect(pages: Page[])` is called
+**Then** the method should return a Promise resolving to `DetectedDocument[]` containing document boundaries
+
+### AC3: DetectedDocument Data Structure
+**Given** document boundaries are detected
+**When** the detection completes
+**Then** each DetectedDocument object should include: startPage (1-indexed), endPage (1-indexed), pageCount (derived), and confidence score (0-1 scale)
+
+### AC4: AGGRESSIVE Detection Strategy
+**Given** the detection algorithm is processing pages
+**When** making split decisions
+**Then** the algorithm should prefer false positives (over-splitting) over false negatives (missing documents), ensuring no multi-document PDFs are incorrectly treated as single documents
+
+### AC5: Invoice/Receipt Keyword Detection
+**Given** a page is being analyzed
+**When** the first 200 characters contain keywords "invoice", "receipt", or "bill" (case-insensitive)
+**Then** the page should be marked as a potential document start with confidence ≥0.7
+
+### AC6: Invoice Number Pattern Detection
+**Given** a page is being analyzed
+**When** the first 200 characters contain invoice number patterns (INV-, #, No. followed by digits)
+**Then** the page should be marked as a potential document start with confidence ≥0.6
+
+### AC7: Date Pattern Detection
+**Given** a page is being analyzed
+**When** the first 200 characters contain date patterns (MM/DD/YYYY, DD-MM-YYYY, YYYY-MM-DD)
+**Then** the page should be marked as a potential document start with confidence ≥0.5
+
+### AC8: Page Boundary Heuristic
+**Given** no other indicators are detected
+**When** the detection strategy is AGGRESSIVE
+**Then** each page should be treated as a potential new document (confidence 0.3) to maximize document isolation
+
+### AC9: Multi-Indicator Confidence Scoring
+**Given** multiple heuristics match on a single page
+**When** calculating confidence scores
+**Then** the confidence should be the maximum of all detected indicators (not cumulative)
+
+### AC10: Fallback for No Indicators
+**Given** an entire PDF has no document boundary indicators
+**When** detection completes
+**Then** the algorithm should return a single DetectedDocument spanning all pages with confidence 1.0
+
+### AC11: Comprehensive Unit Tests
+**Given** the DocumentDetector service is implemented
+**When** running the test suite
+**Then** tests should cover: single document, 3 documents, ambiguous cases, edge cases, and all heuristics
+
+### AC12: Test Data - Invoice Keywords
+**Given** test data contains invoice keywords
+**When** detection is performed
+**Then** the algorithm should correctly split at pages with keywords
+
+### AC13: Test Data - No Keywords
+**Given** test data contains no keywords or patterns
+**When** detection is performed
+**Then** the algorithm should return a single document (fallback behavior)
+
+### AC14: Performance Requirements
+**Given** a 100-page PDF is processed
+**When** the detection algorithm runs
+**Then** the complete detection should finish in less than 1 second
+
+[Full story content continues as read from story-3.10.md file...]
+    ]]>
+  </story-content>
+
+  <related-stories>
+    <related-story>
+      <story-number>3.9</story-number>
+      <story-title>PDF Parsing Service</story-title>
+      <status>COMPLETE</status>
+      <relationship>Direct Dependency - Provides Page interface and parsed PDF pages</relationship>
+      <key-interfaces>
+        <interface name="Page">
+          <property name="pageNumber" type="number" description="1-indexed page number" />
+          <property name="text" type="string" description="Extracted text content from page" />
+          <property name="height" type="number" optional="true" description="Page height in points (optional, deferred)" />
+          <property name="width" type="number" optional="true" description="Page width in points (optional, deferred)" />
+        </interface>
+        <interface name="Metadata">
+          <property name="pageCount" type="number" description="Total number of pages in PDF" />
+          <property name="title" type="string" optional="true" />
+          <property name="author" type="string" optional="true" />
+          <property name="createdDate" type="string" optional="true" description="ISO 8601 format" />
+        </interface>
+        <interface name="ParseResult">
+          <property name="pages" type="Page[]" />
+          <property name="metadata" type="Metadata" />
+          <property name="parseTime" type="number" description="Parse duration in milliseconds" />
+        </interface>
+      </key-interfaces>
+      <integration-notes>
+        DocumentDetector will receive Page[] from PDFParser.parsePDF() output and analyze page text to identify document boundaries.
+      </integration-notes>
+    </related-story>
+
+    <related-story>
+      <story-number>3.11</story-number>
+      <story-title>Batch Extraction Store Integration (Future)</story-title>
+      <status>NOT STARTED</status>
+      <relationship>Will Consume - Story 3.11 will use DocumentDetector service</relationship>
+      <integration-notes>
+        Story 3.11 will integrate DocumentDetector with Zustand store:
+        1. User uploads multi-file PDF
+        2. PDFParser extracts pages
+        3. DocumentDetector identifies document boundaries
+        4. Store is updated with detected documents
+        5. UI displays detected documents for user review/confirmation
+      </integration-notes>
+    </related-story>
+  </related-stories>
+
+  <codebase-context>
+    <existing-services>
+      <service name="PDFParser">
+        <location>C:\SourceCode\mmscan\MMDocScan\lib\services\PDFParser.ts</location>
+        <description>PDF parsing service using pdf-parse library</description>
+        <pattern>Singleton pattern with getInstance()</pattern>
+        <key-features>
+          <feature>Validates PDF magic number (%PDF)</feature>
+          <feature>File size validation (50MB max)</feature>
+          <feature>15-second parsing timeout</feature>
+          <feature>Comprehensive error handling with custom error codes</feature>
+          <feature>Extracts pages with 1-indexed page numbers</feature>
+          <feature>Performance logging with console.log</feature>
+        </key-features>
+        <exports>
+          <export>PDFParser class (default export)</export>
+          <export>Page interface</export>
+          <export>Metadata interface</export>
+          <export>ParseResult interface</export>
+          <export>PDFParsingError class</export>
+          <export>ErrorCode enum</export>
+        </exports>
+      </service>
+    </existing-services>
+
+    <testing-patterns>
+      <pattern name="Test Location">
+        Tests located in: lib/services/__tests__/[ServiceName].test.ts
+      </pattern>
+      <pattern name="Test Framework">
+        Uses Jest with @testing-library for testing
+      </pattern>
+      <pattern name="Test Organization">
+        describe blocks for: Singleton Pattern, Valid Cases, Error Handling, Performance, Edge Cases
+      </pattern>
+      <pattern name="Test Fixtures">
+        Test fixtures in: lib/services/__tests__/fixtures/
+        PDFParser uses pdfTestData.ts with helper functions like createSinglePagePDF()
+      </pattern>
+      <pattern name="Error Testing">
+        Uses expect().rejects.toThrow() and expect().rejects.toMatchObject() for error assertions
+      </pattern>
+      <pattern name="Singleton Testing">
+        Verifies getInstance() returns same instance: expect(instance1).toBe(instance2)
+      </pattern>
+      <pattern name="Performance Testing">
+        Measures duration with Date.now() and verifies within thresholds
+      </pattern>
+    </testing-patterns>
+
+    <service-patterns>
+      <pattern name="Singleton Pattern">
+        <code-example><![CDATA[
+class ServiceName {
+  private static instance: ServiceName;
+
+  private constructor() {
+    // Private constructor
+  }
+
+  public static getInstance(): ServiceName {
+    if (!ServiceName.instance) {
+      ServiceName.instance = new ServiceName();
+    }
+    return ServiceName.instance;
+  }
+
+  // Public methods...
+}
+
+export default ServiceName;
+        ]]></code-example>
+      </pattern>
+
+      <pattern name="Error Handling">
+        <code-example><![CDATA[
+export enum ErrorCode {
+  INVALID_INPUT = 'INVALID_INPUT',
+  EMPTY_PAGES = 'EMPTY_PAGES',
+  DETECTION_FAILED = 'DETECTION_FAILED',
+}
+
+export class ServiceNameError extends Error {
+  constructor(
+    message: string,
+    public code: ErrorCode,
+    public originalError?: Error
+  ) {
+    super(message);
+    this.name = 'ServiceNameError';
+  }
+}
+
+// Usage:
+throw new ServiceNameError(
+  'Descriptive message',
+  ErrorCode.INVALID_INPUT,
+  error as Error
+);
+        ]]></code-example>
+      </pattern>
+
+      <pattern name="Logging Pattern">
+        <code-example><![CDATA[
+// Start logging
+console.log('[ServiceName] Operation starting', { context });
+
+// Success logging
+console.log(`[ServiceName] Operation completed in ${duration}ms`, { results });
+
+// Error logging
+console.error('[ServiceName] Operation failed:', error);
+        ]]></code-example>
+      </pattern>
+
+      <pattern name="Performance Measurement">
+        <code-example><![CDATA[
+const startTime = Date.now();
+
+// ... perform operation ...
+
+const parseTime = Date.now() - startTime;
+console.log(`[ServiceName] Completed in ${parseTime}ms`);
+
+return { data, parseTime };
+        ]]></code-example>
+      </pattern>
+    </service-patterns>
+
+    <typescript-configuration>
+      <strict-mode>true</strict-mode>
+      <target>ES Next</target>
+      <module>ES Next</module>
+      <lib>["dom", "dom.iterable", "esnext"]</lib>
+      <moduleResolution>bundler</moduleResolution>
+      <paths>
+        <path alias="@/*" target="./*" />
+      </paths>
+      <notes>
+        TypeScript strict mode is enabled. All services must have proper type definitions with no 'any' types unless absolutely necessary.
+      </notes>
+    </typescript-configuration>
+
+    <testing-configuration>
+      <framework>Jest with Next.js integration</framework>
+      <test-environment>node</test-environment>
+      <test-match>
+        <pattern>**/__tests__/**/*.test.ts</pattern>
+        <pattern>**/__tests__/**/*.test.tsx</pattern>
+      </test-match>
+      <coverage>
+        <collect-from>lib/**/*.{ts,tsx}</collect-from>
+        <exclude>**/__tests__/**</exclude>
+      </coverage>
+      <notes>
+        Tests use Jest with next/jest configuration. Test files must be in __tests__ folders with .test.ts extension.
+      </notes>
+    </testing-configuration>
+
+    <project-structure>
+      <folder name="lib/services">
+        Location: C:\SourceCode\mmscan\MMDocScan\lib\services\
+        Purpose: Business logic services (PDFParser, DocumentDetector, etc.)
+      </folder>
+      <folder name="lib/services/__tests__">
+        Location: C:\SourceCode\mmscan\MMDocScan\lib\services\__tests__\
+        Purpose: Service unit tests
+      </folder>
+      <folder name="lib/services/__tests__/fixtures">
+        Location: C:\SourceCode\mmscan\MMDocScan\lib\services\__tests__\fixtures\
+        Purpose: Test data and helper functions
+      </folder>
+      <folder name="docs/stories">
+        Location: C:\SourceCode\mmscan\MMDocScan\docs\stories\
+        Purpose: Story documentation files
+      </folder>
+    </project-structure>
+  </codebase-context>
+
+  <technical-specifications>
+    <interfaces>
+      <interface name="DetectedDocument">
+        <description>Represents a detected document with page boundaries</description>
+        <code><![CDATA[
+interface DetectedDocument {
+  startPage: number;      // 1-indexed starting page
+  endPage: number;        // 1-indexed ending page (inclusive)
+  pageCount: number;      // Derived: endPage - startPage + 1
+  confidence: number;     // Confidence score [0, 1]
+}
+        ]]></code>
+      </interface>
+
+      <interface name="DetectionResult">
+        <description>Internal type for page-level detection results</description>
+        <code><![CDATA[
+interface DetectionResult {
+  pageNumber: number;     // 1-indexed page number
+  indicators: string[];   // List of matched heuristics
+  confidence: number;     // Maximum confidence from all indicators
+}
+        ]]></code>
+      </interface>
+
+      <interface name="DetectionHeuristic">
+        <description>Internal type for heuristic definitions</description>
+        <code><![CDATA[
+interface DetectionHeuristic {
+  name: string;           // Heuristic identifier
+  pattern: RegExp | null; // Regex pattern (null for keyword lists)
+  confidence: number;     // Base confidence score [0, 1]
+  description: string;    // Human-readable description
+}
+        ]]></code>
+      </interface>
+
+      <interface name="DetectionStrategy">
+        <description>Detection strategy enum (AGGRESSIVE is v1 default)</description>
+        <code><![CDATA[
+enum DetectionStrategy {
+  AGGRESSIVE = 'AGGRESSIVE',     // Prefer false positives (v1 default)
+  BALANCED = 'BALANCED',         // Balanced approach (future)
+  CONSERVATIVE = 'CONSERVATIVE', // Prefer false negatives (future)
+}
+        ]]></code>
+      </interface>
+
+      <interface name="DocumentDetectionError">
+        <description>Custom error type for detection failures</description>
+        <code><![CDATA[
+class DocumentDetectionError extends Error {
+  constructor(
+    message: string,
+    public code: ErrorCode,
+    public pageNumber?: number,
+    public originalError?: Error
+  ) {
+    super(message);
+    this.name = 'DocumentDetectionError';
+  }
+}
+
+enum ErrorCode {
+  INVALID_INPUT = 'INVALID_INPUT',
+  EMPTY_PAGES = 'EMPTY_PAGES',
+  DETECTION_FAILED = 'DETECTION_FAILED',
+  INVALID_PAGE_DATA = 'INVALID_PAGE_DATA',
+}
+        ]]></code>
+      </interface>
+    </interfaces>
+
+    <service-implementation>
+      <class-structure>
+        <name>DocumentDetector</name>
+        <pattern>Singleton</pattern>
+        <location>lib/services/DocumentDetector.ts</location>
+        <description>Stateless service for detecting document boundaries in multi-document PDFs</description>
+      </class-structure>
+
+      <constants>
+        <constant name="KEYWORDS">
+          <value>['invoice', 'receipt', 'bill']</value>
+          <confidence>0.7</confidence>
+        </constant>
+        <constant name="INVOICE_NUMBER_PATTERNS">
+          <value>[/INV-?\d{3,}/i, /#\s?\d{3,}/, /No\.?\s?\d{3,}/i]</value>
+          <confidence>0.6</confidence>
+          <notes>Requires minimum 3 digits to avoid false positives</notes>
+        </constant>
+        <constant name="DATE_PATTERNS">
+          <value>[/\d{2}\/\d{2}\/\d{4}/, /\d{2}-\d{2}-\d{4}/, /\d{4}-\d{2}-\d{2}/]</value>
+          <confidence>0.5</confidence>
+          <notes>Supports MM/DD/YYYY, DD-MM-YYYY, YYYY-MM-DD formats</notes>
+        </constant>
+        <constant name="PAGE_BOUNDARY_CONFIDENCE">
+          <value>0.3</value>
+          <notes>AGGRESSIVE strategy treats every page as potential document start</notes>
+        </constant>
+        <constant name="AGGRESSIVE_THRESHOLD">
+          <value>0.3</value>
+          <notes>Split on any confidence >= 0.3</notes>
+        </constant>
+        <constant name="HEADER_TEXT_LENGTH">
+          <value>200</value>
+          <notes>Only analyze first 200 characters of each page</notes>
+        </constant>
+      </constants>
+
+      <public-methods>
+        <method name="detect">
+          <signature><![CDATA[
+async detect(pages: Page[]): Promise<DetectedDocument[]>
+          ]]></signature>
+          <description>Main detection method that analyzes pages and returns document boundaries</description>
+          <parameters>
+            <parameter name="pages" type="Page[]">Array of parsed pages from PDFParser</parameter>
+          </parameters>
+          <returns type="Promise<DetectedDocument[]>">Array of detected documents with boundaries</returns>
+          <throws>DocumentDetectionError for invalid input or detection failures</throws>
+          <algorithm>
+            1. Validate input (non-empty pages array)
+            2. Analyze each page for indicators (loop through pages)
+            3. Calculate max confidence per page from all heuristics
+            4. Determine document boundaries based on confidence threshold
+            5. Apply fallback logic if no splits detected
+            6. Return DetectedDocument[] with page ranges
+          </algorithm>
+        </method>
+      </public-methods>
+
+      <private-methods>
+        <method name="analyzePage">
+          <signature>private analyzePage(page: Page): DetectionResult</signature>
+          <description>Analyze single page for document boundary indicators</description>
+          <returns>DetectionResult with matched indicators and max confidence</returns>
+        </method>
+
+        <method name="extractHeaderText">
+          <signature>private extractHeaderText(text: string, length = 200): string</signature>
+          <description>Extract first N characters from page text for analysis</description>
+          <returns>Lowercase header text substring</returns>
+        </method>
+
+        <method name="detectInvoiceKeywords">
+          <signature>private detectInvoiceKeywords(headerText: string): boolean</signature>
+          <description>Check for invoice/receipt/bill keywords with word boundaries</description>
+          <returns>True if keyword found, false otherwise</returns>
+        </method>
+
+        <method name="detectInvoiceNumber">
+          <signature>private detectInvoiceNumber(headerText: string): boolean</signature>
+          <description>Check for invoice number patterns (INV-, #, No.)</description>
+          <returns>True if pattern matched, false otherwise</returns>
+        </method>
+
+        <method name="detectDatePattern">
+          <signature>private detectDatePattern(headerText: string): boolean</signature>
+          <description>Check for date patterns (MM/DD/YYYY, etc.)</description>
+          <returns>True if date pattern found, false otherwise</returns>
+        </method>
+
+        <method name="determineDocumentBoundaries">
+          <signature>private determineDocumentBoundaries(results: DetectionResult[], totalPages: number): DetectedDocument[]</signature>
+          <description>Convert page-level results to document boundaries</description>
+          <returns>Array of DetectedDocument with start/end pages</returns>
+        </method>
+
+        <method name="createFallbackDocument">
+          <signature>private createFallbackDocument(totalPages: number): DetectedDocument</signature>
+          <description>Create single document for PDFs with no indicators</description>
+          <returns>Single DetectedDocument spanning all pages with confidence 1.0</returns>
+        </method>
+      </private-methods>
+
+      <detection-algorithm>
+        <step number="1">
+          <name>Input Validation</name>
+          <description>Validate pages array is non-empty and has valid Page objects</description>
+          <error-handling>Throw DocumentDetectionError with EMPTY_PAGES or INVALID_INPUT code</error-handling>
+        </step>
+
+        <step number="2">
+          <name>Page Analysis Loop</name>
+          <description>For each page, extract first 200 characters and apply all heuristics</description>
+          <heuristics>
+            <heuristic name="KEYWORD" confidence="0.7">Invoice/receipt/bill keywords with word boundaries</heuristic>
+            <heuristic name="INVOICE_NUMBER" confidence="0.6">INV-, #[0-9]+, No. [0-9]+ patterns (min 3 digits)</heuristic>
+            <heuristic name="DATE_PATTERN" confidence="0.5">MM/DD/YYYY, DD-MM-YYYY, YYYY-MM-DD patterns</heuristic>
+            <heuristic name="PAGE_BOUNDARY" confidence="0.3">Always applied in AGGRESSIVE strategy</heuristic>
+          </heuristics>
+          <output>DetectionResult[] with indicators and max confidence per page</output>
+        </step>
+
+        <step number="3">
+          <name>Confidence Scoring</name>
+          <description>Calculate max confidence from all matched indicators (not cumulative)</description>
+          <example>If keyword (0.7) and invoice# (0.6) both match, use max = 0.7</example>
+        </step>
+
+        <step number="4">
+          <name>Boundary Determination</name>
+          <description>Split pages into documents based on confidence threshold</description>
+          <rules>
+            <rule>If page confidence >= 0.3 AND not first page, start new document</rule>
+            <rule>Group consecutive pages below threshold into same document</rule>
+            <rule>First page always starts a document</rule>
+            <rule>Calculate startPage, endPage, pageCount for each document</rule>
+          </rules>
+        </step>
+
+        <step number="5">
+          <name>Fallback Logic</name>
+          <description>If no documents created (all below threshold), return single document</description>
+          <fallback-condition>No splits detected across entire PDF</fallback-condition>
+          <fallback-result>Single DetectedDocument: { startPage: 1, endPage: totalPages, pageCount: totalPages, confidence: 1.0 }</fallback-result>
+        </step>
+
+        <step number="6">
+          <name>Return Results</name>
+          <description>Return DetectedDocument[] with performance logging</description>
+          <logging>Log detection duration, page count, detected document count</logging>
+        </step>
+      </detection-algorithm>
+    </service-implementation>
+
+    <performance-requirements>
+      <requirement name="Detection Speed">
+        <metric>Complete detection for 100-page PDF in less than 1 second</metric>
+        <optimization-strategies>
+          <strategy>Compile regex patterns once at class level (not per-page)</strategy>
+          <strategy>Cache extracted header text to avoid repeated substring operations</strategy>
+          <strategy>Short-circuit on first high-confidence match (optional optimization)</strategy>
+          <strategy>Use efficient Math.max() for confidence calculation</strategy>
+          <strategy>Minimize object creation in tight loops</strategy>
+        </optimization-strategies>
+      </requirement>
+
+      <requirement name="Memory Efficiency">
+        <metric>Process large PDFs without excessive memory usage</metric>
+        <notes>Service is stateless - no caching, no memory retention between calls</notes>
+      </requirement>
+    </performance-requirements>
+
+    <testing-requirements>
+      <coverage-goals>
+        <goal category="Core functionality">100% coverage (detect, analyzePage, determineDocumentBoundaries)</goal>
+        <goal category="Heuristics">100% coverage (all detection methods)</goal>
+        <goal category="Error handling">100% coverage (all error paths)</goal>
+        <goal category="Helpers">90%+ coverage (extractHeaderText, confidence calculation)</goal>
+        <goal category="Overall">90%+ code coverage</goal>
+      </coverage-goals>
+
+      <test-categories>
+        <category name="Singleton Pattern Tests">
+          <test>Verify getInstance() returns same instance</test>
+        </category>
+
+        <category name="Valid Detection Tests">
+          <test>Single document detection (no indicators) - returns 1 document</test>
+          <test>Multi-document detection (3 pages with keywords) - returns 3 documents</test>
+          <test>Mixed indicators - verify correct confidence scoring</test>
+          <test>Sequential page numbers - verify 1-indexed numbering</test>
+        </category>
+
+        <category name="Heuristic Tests">
+          <test>Keyword detection: "invoice", "receipt", "bill" (case-insensitive)</test>
+          <test>Word boundary check: "billion" should NOT match "bill"</test>
+          <test>Invoice number patterns: INV-12345, #12345, No. 12345</test>
+          <test>Date patterns: 01/15/2024, 15-01-2024, 2024-01-15</test>
+          <test>Position requirement: indicators beyond 200 chars should be ignored</test>
+          <test>Minimum digits: invoice numbers need 3+ digits</test>
+        </category>
+
+        <category name="Confidence Scoring Tests">
+          <test>Single indicator returns its confidence</test>
+          <test>Multiple indicators return max confidence (not cumulative)</test>
+          <test>Confidence stays in [0, 1] range</test>
+          <test>AGGRESSIVE threshold (0.3) correctly applied</test>
+        </category>
+
+        <category name="Edge Case Tests">
+          <test>Empty pages array throws error</test>
+          <test>Null pages array throws error</test>
+          <test>Single-page PDF returns 1 document</test>
+          <test>All pages with indicators - each becomes separate document</test>
+          <test>Empty page text - continues previous document</test>
+          <test>Pages with only whitespace - handled gracefully</test>
+          <test>Special characters in text - no parsing errors</test>
+          <test>Unicode text - handled correctly</test>
+        </category>
+
+        <category name="Fallback Tests">
+          <test>PDF with no indicators returns single document (confidence 1.0)</test>
+          <test>Fallback logging - verify log message present</test>
+        </category>
+
+        <category name="Performance Tests">
+          <test>100-page PDF detection completes in <1 second</test>
+          <test>Measure and log detection time per test</test>
+          <test>Profile for bottlenecks if performance degrades</test>
+        </category>
+
+        <category name="Error Handling Tests">
+          <test>Empty pages array throws EMPTY_PAGES error</test>
+          <test>Invalid Page objects throw INVALID_INPUT error</test>
+          <test>Error messages are descriptive</test>
+          <test>Original error preserved in DocumentDetectionError</test>
+        </category>
+
+        <category name="Integration Tests">
+          <test>Use real PDFParser output as input</test>
+          <test>Verify Page interface compatibility</test>
+          <test>Test with actual PDF files parsed by PDFParser</test>
+        </category>
+      </test-categories>
+
+      <test-fixtures>
+        <fixture name="Single Document">
+          <pages>3 pages with no indicators</pages>
+          <expected-result>1 document (1-3), confidence 1.0 (fallback)</expected-result>
+        </fixture>
+
+        <fixture name="Three Documents">
+          <pages>3 pages, each with invoice keyword</pages>
+          <expected-result>3 documents (1-1, 2-2, 3-3), confidence 0.7 each</expected-result>
+        </fixture>
+
+        <fixture name="Ambiguous Case">
+          <pages>Page 1 with date (0.5), pages 2-3 with no indicators (0.3)</pages>
+          <expected-result>3 documents due to AGGRESSIVE strategy</expected-result>
+        </fixture>
+
+        <fixture name="Mixed Indicators">
+          <pages>Page 1: invoice + invoice# + date → max 0.7</pages>
+          <expected-result>Verify max confidence used, not cumulative</expected-result>
+        </fixture>
+
+        <fixture name="Position Test">
+          <pages>Page with keyword at char 250 (beyond 200)</pages>
+          <expected-result>Should NOT detect keyword (position requirement)</expected-result>
+        </fixture>
+
+        <fixture name="Edge Cases">
+          <pages>Empty text, null text, unicode, special chars</pages>
+          <expected-result>Handled gracefully without errors</expected-result>
+        </fixture>
+
+        <fixture name="Performance Test">
+          <pages>100 pages with various indicators</pages>
+          <expected-result>Detection completes in <1 second</expected-result>
+        </fixture>
+      </test-fixtures>
+    </testing-requirements>
+  </technical-specifications>
+
+  <implementation-guidelines>
+    <file-locations>
+      <file type="Service">C:\SourceCode\mmscan\MMDocScan\lib\services\DocumentDetector.ts</file>
+      <file type="Test">C:\SourceCode\mmscan\MMDocScan\lib\services\__tests__\DocumentDetector.test.ts</file>
+      <file type="Test Fixtures">C:\SourceCode\mmscan\MMDocScan\lib\services\__tests__\fixtures\detectionTestData.ts</file>
+    </file-locations>
+
+    <implementation-phases>
+      <phase number="1" name="Setup and Interfaces">
+        <tasks>
+          <task>Create DocumentDetector.ts file in lib/services/</task>
+          <task>Define TypeScript interfaces (DetectedDocument, DetectionResult, etc.)</task>
+          <task>Define error types (DocumentDetectionError, ErrorCode enum)</task>
+          <task>Create class structure with singleton pattern</task>
+        </tasks>
+      </phase>
+
+      <phase number="2" name="Core Detection Logic">
+        <tasks>
+          <task>Implement detect() method skeleton with validation</task>
+          <task>Implement analyzePage() method</task>
+          <task>Implement extractHeaderText() helper</task>
+          <task>Add performance logging (start/end times)</task>
+        </tasks>
+      </phase>
+
+      <phase number="3" name="Heuristics Implementation">
+        <tasks>
+          <task>Define constant arrays and regex patterns at class level</task>
+          <task>Implement detectInvoiceKeywords() with word boundaries</task>
+          <task>Implement detectInvoiceNumber() with 3+ digit requirement</task>
+          <task>Implement detectDatePattern() with multiple formats</task>
+          <task>Add debug logging for each heuristic match</task>
+        </tasks>
+      </phase>
+
+      <phase number="4" name="Boundary Determination">
+        <tasks>
+          <task>Implement determineDocumentBoundaries() method</task>
+          <task>Apply AGGRESSIVE threshold (0.3) logic</task>
+          <task>Calculate startPage, endPage, pageCount correctly</task>
+          <task>Ensure no gaps or overlaps in page ranges</task>
+          <task>Implement createFallbackDocument() method</task>
+        </tasks>
+      </phase>
+
+      <phase number="5" name="Error Handling">
+        <tasks>
+          <task>Add input validation (empty array, null checks)</task>
+          <task>Add try-catch in detect() method</task>
+          <task>Handle edge cases (empty text, malformed data)</task>
+          <task>Add descriptive error messages</task>
+          <task>Test all error paths</task>
+        </tasks>
+      </phase>
+
+      <phase number="6" name="Testing">
+        <tasks>
+          <task>Create DocumentDetector.test.ts file</task>
+          <task>Create test fixture helper functions in detectionTestData.ts</task>
+          <task>Write singleton pattern tests</task>
+          <task>Write heuristic tests (all 4 heuristics individually)</task>
+          <task>Write multi-document detection tests</task>
+          <task>Write single document / fallback tests</task>
+          <task>Write edge case tests</task>
+          <task>Write performance tests (100-page fixture)</task>
+          <task>Write integration tests with real PDFParser output</task>
+          <task>Verify 90%+ code coverage</task>
+        </tasks>
+      </phase>
+
+      <phase number="7" name="Optimization and Polish">
+        <tasks>
+          <task>Profile performance with 100-page test</task>
+          <task>Optimize regex compilation (class-level constants)</task>
+          <task>Optimize string operations (minimize substring calls)</task>
+          <task>Add JSDoc comments to all public methods</task>
+          <task>Run linter and fix issues</task>
+          <task>Verify TypeScript strict mode compliance</task>
+        </tasks>
+      </phase>
+    </implementation-phases>
+
+    <code-style-guidelines>
+      <guideline name="TypeScript Strict Mode">
+        All code must compile with strict mode enabled. No 'any' types unless absolutely necessary with justification.
+      </guideline>
+
+      <guideline name="Naming Conventions">
+        - Class names: PascalCase (DocumentDetector)
+        - Method names: camelCase (detectInvoiceKeywords)
+        - Constants: UPPER_SNAKE_CASE (AGGRESSIVE_THRESHOLD)
+        - Interfaces: PascalCase (DetectedDocument)
+        - Private methods: camelCase with 'private' modifier
+      </guideline>
+
+      <guideline name="Error Handling">
+        - Always throw custom error types (DocumentDetectionError)
+        - Include error codes from ErrorCode enum
+        - Preserve original error in catch blocks
+        - Provide descriptive, user-friendly error messages
+      </guideline>
+
+      <guideline name="Logging">
+        - Use console.log for info/debug logging
+        - Use console.error for error logging
+        - Prefix all logs with [DocumentDetector]
+        - Include relevant context (page numbers, durations, etc.)
+      </guideline>
+
+      <guideline name="Comments and Documentation">
+        - Add JSDoc comments to all public methods
+        - Document parameters, return types, and exceptions
+        - Include usage examples in comments
+        - Document algorithm steps inline for complex logic
+      </guideline>
+
+      <guideline name="Performance">
+        - Compile regex patterns once (class-level constants)
+        - Avoid repeated string operations in loops
+        - Use efficient data structures (arrays, not linked lists)
+        - Minimize object creation in hot paths
+      </guideline>
+    </code-style-guidelines>
+
+    <integration-notes>
+      <note>
+        <title>Import Page Interface from PDFParser</title>
+        <description>
+          Import Page type from existing PDFParser service:
+          import { Page } from './PDFParser';
+
+          Ensure compatibility with PDFParser output format.
+        </description>
+      </note>
+
+      <note>
+        <title>Service is Stateless</title>
+        <description>
+          DocumentDetector maintains no state between calls. Each detect() call is independent.
+          Store management will be handled by calling code in Story 3.11.
+        </description>
+      </note>
+
+      <note>
+        <title>Integration with Story 3.11</title>
+        <description>
+          Story 3.11 will integrate this service:
+
+          const parseResult = await pdfParser.parsePDF(buffer);
+          const detectedDocuments = await documentDetector.detect(parseResult.pages);
+          extractionStore.updateDetectedDocuments(fileId, detectedDocuments);
+        </description>
+      </note>
+
+      <note>
+        <title>Export Pattern</title>
+        <description>
+          Export singleton instance (not class):
+
+          export const documentDetector = DocumentDetector.getInstance();
+          export default DocumentDetector;
+
+          Also export interfaces and error types for consumers.
+        </description>
+      </note>
+    </integration-notes>
+
+    <dependencies>
+      <dependency>
+        <name>Page Interface</name>
+        <source>lib/services/PDFParser.ts</source>
+        <usage>Input type for detect() method</usage>
+      </dependency>
+
+      <dependency>
+        <name>Jest Testing Framework</name>
+        <source>package.json devDependencies</source>
+        <version>30.2.0</version>
+        <usage>Unit testing</usage>
+      </dependency>
+
+      <dependency>
+        <name>TypeScript</name>
+        <source>package.json devDependencies</source>
+        <version>5.3.0</version>
+        <usage>Type checking and compilation</usage>
+      </dependency>
+    </dependencies>
+
+    <best-practices>
+      <practice>
+        <title>Single Responsibility Principle</title>
+        <description>DocumentDetector only detects boundaries. It does NOT parse PDFs or update stores.</description>
+      </practice>
+
+      <practice>
+        <title>Stateless Design</title>
+        <description>No instance variables except constants. All state passed via parameters and return values.</description>
+      </practice>
+
+      <practice>
+        <title>Fail Fast</title>
+        <description>Validate inputs immediately and throw descriptive errors. Don't attempt to process invalid data.</description>
+      </practice>
+
+      <practice>
+        <title>Performance First</title>
+        <description>Optimize for speed from the start. Compile regex once, cache computed values, minimize allocations.</description>
+      </practice>
+
+      <practice>
+        <title>Test-Driven Development</title>
+        <description>Write tests alongside implementation. Aim for 90%+ coverage. Test edge cases thoroughly.</description>
+      </practice>
+
+      <practice>
+        <title>Clear Logging</title>
+        <description>Log key decision points and performance metrics. Make debugging easy for future developers.</description>
+      </practice>
+    </best-practices>
+  </implementation-guidelines>
+
+  <definition-of-done>
+    <criteria>
+      <item>All 14 acceptance criteria met and verified</item>
+      <item>DocumentDetector service class implemented in lib/services/DocumentDetector.ts</item>
+      <item>All interfaces defined (DetectedDocument, DetectionResult, DetectionHeuristic, ErrorCode)</item>
+      <item>detect() method fully implemented with proper typing</item>
+      <item>All 4 heuristics implemented (keywords, invoice number, date, page boundary)</item>
+      <item>AGGRESSIVE detection strategy implemented with 0.3 threshold</item>
+      <item>Confidence scoring logic implemented (max of all indicators, not cumulative)</item>
+      <item>Fallback logic implemented (single document when no indicators)</item>
+      <item>Document boundary merging logic implemented with correct page ranges</item>
+      <item>Error handling implemented for all edge cases</item>
+      <item>Custom error types created (DocumentDetectionError, ErrorCode enum)</item>
+      <item>Unit tests written and passing (>90% coverage)</item>
+      <item>Test fixtures created in detectionTestData.ts</item>
+      <item>All heuristics tested individually with multiple test cases</item>
+      <item>Multi-document detection tested (3+ documents)</item>
+      <item>Single document / fallback detection tested</item>
+      <item>Ambiguous cases tested (weak indicators, AGGRESSIVE strategy)</item>
+      <item>Edge cases tested (empty text, null values, special chars, unicode)</item>
+      <item>Performance requirement verified (<1 second for 100 pages)</item>
+      <item>Performance optimizations implemented (regex compilation, string caching)</item>
+      <item>Logging implemented for debugging (start/end, heuristic matches, boundaries)</item>
+      <item>Integration with PDFParser tested with real parsed data</item>
+      <item>Code reviewed and approved</item>
+      <item>No TypeScript errors or warnings</item>
+      <item>ESLint passes with no errors</item>
+      <item>All tests pass in CI/CD pipeline (npm test)</item>
+      <item>JSDoc documentation complete for all public methods</item>
+      <item>Integration points documented for Story 3.11</item>
+      <item>Build passes with no errors (npm run build)</item>
+      <item>Code follows project conventions and style guide</item>
+    </criteria>
+  </definition-of-done>
+
+  <additional-context>
+    <agile-story-pattern>
+      This story follows the pattern established by Story 3.9 (PDF Parsing Service):
+      - Singleton service pattern
+      - Comprehensive error handling with custom error types
+      - Performance logging with Date.now()
+      - Jest tests in __tests__/ folder
+      - Test fixtures in fixtures/ subfolder
+      - Exports both class (default) and singleton instance
+      - 90%+ test coverage goal
+    </agile-story-pattern>
+
+    <aggressive-strategy-rationale>
+      The AGGRESSIVE strategy is chosen for v1 because:
+      1. False positives (over-splitting) are less problematic than false negatives (missing documents)
+      2. Users can easily merge documents in the UI, but cannot easily split incorrectly merged documents
+      3. Better to isolate documents that should be together than combine documents that should be separate
+      4. Future versions can add BALANCED or CONSERVATIVE strategies based on user feedback
+    </aggressive-strategy-rationale>
+
+    <confidence-score-interpretation>
+      | Confidence | Interpretation | Heuristic Source |
+      |------------|----------------|------------------|
+      | 1.0 | Fallback (no indicators) | Single document certainty |
+      | 0.7 | Strong indicator (keyword) | invoice/receipt/bill keywords |
+      | 0.6 | Medium indicator (invoice#) | INV-, #, No. patterns |
+      | 0.5 | Weak indicator (date) | Date patterns |
+      | 0.3 | Page boundary only | AGGRESSIVE strategy default |
+
+      AGGRESSIVE threshold: Split on confidence >= 0.3
+    </confidence-score-interpretation>
+
+    <known-limitations>
+      v1 Limitations (acceptable for MVP):
+      1. No layout analysis - relies only on text content
+      2. No visual analysis - ignores images, formatting, fonts
+      3. Header-only analysis - only first 200 characters
+      4. No context awareness - doesn't consider document relationships
+      5. Rule-based only - no machine learning
+      6. English keywords only - no multi-language support
+
+      Future enhancements can address these limitations.
+    </known-limitations>
+
+    <success-metrics>
+      <metric>Detection accuracy: >90% correct splits on test dataset</metric>
+      <metric>Performance: <1 second for 100-page PDFs</metric>
+      <metric>Code coverage: >90% test coverage</metric>
+      <metric>Error handling: 100% of error paths tested</metric>
+      <metric>Integration: Seamless integration with PDFParser (Story 3.9)</metric>
+    </success-metrics>
+  </additional-context>
+</story-context>
