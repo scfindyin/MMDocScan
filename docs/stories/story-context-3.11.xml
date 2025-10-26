@@ -1,0 +1,595 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context>
+  <story-id>3.11</story-id>
+  <story-title>Batch Extraction API with Rate Limit Mitigation</story-title>
+  <epic-id>3</epic-id>
+  <epic-title>Unified Batch Extraction Workflow</epic-title>
+
+  <overview>
+    <summary>
+      Create a comprehensive batch extraction API endpoint that processes multiple PDFs with integrated rate limiting capabilities to prevent Claude API 429 errors. The solution combines prompt caching (90% cost reduction), token estimation, three-tier chunking strategy, and proactive rate limit management to handle 100+ page multi-document PDFs efficiently.
+    </summary>
+    <business-value>
+      - Enable batch processing of multiple PDF files in a single API call
+      - Prevent 429 rate limit errors through intelligent token management
+      - Reduce API costs by 90% through prompt caching
+      - Support enterprise workloads (100+ page documents)
+      - Provide real-time status tracking and results retrieval
+    </business-value>
+    <technical-value>
+      - Production-ready rate limiting solution
+      - Scalable architecture for batch processing
+      - Integration foundation for Stories 3.12-3.14
+      - Demonstrates best practices for Claude API usage
+    </technical-value>
+  </overview>
+
+  <scope>
+    <in-scope>
+      - Batch extraction API endpoint (POST /api/extractions/batch)
+      - Session status endpoint (GET /api/extractions/:sessionId/status)
+      - Results retrieval endpoint (GET /api/extractions/:sessionId/results)
+      - RateLimitManager service with TPM tracking
+      - Token estimation using count_tokens API
+      - Three-tier chunking strategy (whole/document-boundary/page-split)
+      - Prompt caching with 90% cost reduction
+      - Result merger for chunked extractions
+      - Background processing (non-blocking)
+      - Comprehensive error handling
+      - Database schema for sessions and results
+      - Integration with PDFParser (Story 3.9)
+      - Integration with DocumentDetector (Story 3.10)
+      - End-to-end testing with 100-page PDF
+    </in-scope>
+    <out-of-scope>
+      - UI components (covered in Stories 3.13-3.14)
+      - Extraction queue management (covered in Story 3.12)
+      - Parallel file processing (future enhancement)
+      - WebSocket-based progress streaming (future enhancement)
+      - Resume capability for timed-out sessions (future enhancement)
+      - Template CRUD operations (covered in Epic 3 Phase 1)
+    </out-of-scope>
+  </scope>
+
+  <acceptance-criteria>
+    <criteria id="AC1" priority="high">
+      <description>Batch Extraction API Endpoint Created</description>
+      <verification>POST endpoint exists at /api/extractions/batch accepting multipart/form-data</verification>
+    </criteria>
+    <criteria id="AC2" priority="high">
+      <description>Template ID and File Upload Handling</description>
+      <verification>Endpoint accepts template ID and array of file uploads</verification>
+    </criteria>
+    <criteria id="AC3" priority="high">
+      <description>Extraction Session Creation</description>
+      <verification>Session created in database with unique session ID</verification>
+    </criteria>
+    <criteria id="AC4" priority="high">
+      <description>Session ID and Initial Status Response</description>
+      <verification>Returns session ID and initial status without blocking</verification>
+    </criteria>
+    <criteria id="AC5" priority="high">
+      <description>Background Processing</description>
+      <verification>Extractions process in background without blocking HTTP response</verification>
+    </criteria>
+    <criteria id="AC6" priority="high">
+      <description>Session Status Query Endpoint</description>
+      <verification>GET /api/extractions/:sessionId/status returns current status and progress</verification>
+    </criteria>
+    <criteria id="AC7" priority="high">
+      <description>Results Retrieval Endpoint</description>
+      <verification>GET /api/extractions/:sessionId/results returns all extracted results</verification>
+    </criteria>
+    <criteria id="AC8" priority="medium">
+      <description>Invalid Template ID Error Handling</description>
+      <verification>Returns 404 response with descriptive error message</verification>
+    </criteria>
+    <criteria id="AC9" priority="medium">
+      <description>Unsupported File Type Error Handling</description>
+      <verification>Returns 400 response with descriptive error message</verification>
+    </criteria>
+    <criteria id="AC10" priority="medium">
+      <description>Comprehensive Logging</description>
+      <verification>Logs session start, progress, and completion with metadata</verification>
+    </criteria>
+    <criteria id="AC11" priority="critical">
+      <description>Prompt Caching Implementation</description>
+      <verification>Implements cache_control for prompts and PDFs, verifies 90% cost reduction on cache hits</verification>
+    </criteria>
+    <criteria id="AC12" priority="critical">
+      <description>Token Estimation</description>
+      <verification>Uses count_tokens API for accurate token estimation before extraction</verification>
+    </criteria>
+    <criteria id="AC13" priority="critical">
+      <description>Three-Tier Chunking Strategy</description>
+      <verification>Implements whole/document-boundary/page-split chunking respecting DocumentDetector boundaries</verification>
+    </criteria>
+    <criteria id="AC14" priority="critical">
+      <description>Rate Limit Manager Implementation</description>
+      <verification>Implements RateLimitManager with TPM tracking, sliding window, throttling, and 85% safety buffer</verification>
+    </criteria>
+    <criteria id="AC15" priority="critical">
+      <description>Result Merger for Chunked Extractions</description>
+      <verification>Combines chunked results, preserves metadata, handles partial failures</verification>
+    </criteria>
+    <criteria id="AC16" priority="critical">
+      <description>100-Page Integration Test</description>
+      <verification>End-to-end test with 100-page PDF completes without 429 errors in &lt;5 minutes with all data extracted</verification>
+    </criteria>
+  </acceptance-criteria>
+
+  <technical-architecture>
+    <components>
+      <component name="Batch Extraction API">
+        <file>app/api/extractions/batch/route.ts</file>
+        <responsibilities>
+          - Accept multipart/form-data with template ID and files
+          - Validate inputs (template exists, files are PDFs)
+          - Create extraction session in database
+          - Trigger background processing
+          - Return session ID immediately
+        </responsibilities>
+      </component>
+      <component name="Session Status API">
+        <file>app/api/extractions/[sessionId]/status/route.ts</file>
+        <responsibilities>
+          - Query session status from database
+          - Return progress information
+          - Include rate limit statistics
+        </responsibilities>
+      </component>
+      <component name="Results Retrieval API">
+        <file>app/api/extractions/[sessionId]/results/route.ts</file>
+        <responsibilities>
+          - Query extraction results from database
+          - Format results with metadata
+          - Return complete extraction data
+        </responsibilities>
+      </component>
+      <component name="RateLimitManager">
+        <file>lib/services/RateLimitManager.ts</file>
+        <responsibilities>
+          - Track token usage in 60-second sliding window
+          - Enforce 30k TPM limit with 85% safety buffer (25.5k effective)
+          - Throttle requests when approaching limit
+          - Handle 429 errors with exponential backoff
+          - Provide rate limit statistics
+        </responsibilities>
+      </component>
+      <component name="TokenEstimator">
+        <file>lib/services/TokenEstimator.ts</file>
+        <responsibilities>
+          - Use Anthropic count_tokens API for accurate estimation
+          - Cache estimations per PDF hash
+          - Return token count before extraction
+        </responsibilities>
+      </component>
+      <component name="ChunkingStrategy">
+        <file>lib/services/ChunkingStrategy.ts</file>
+        <responsibilities>
+          - Determine chunking tier based on token count
+          - Tier 1: Whole PDF (&lt;25k tokens)
+          - Tier 2: Document boundary chunking (25k-100k tokens)
+          - Tier 3: Page split chunking (&gt;100k tokens)
+          - Always respect DocumentDetector boundaries
+          - Use pdf-parse for page extraction
+        </responsibilities>
+      </component>
+      <component name="ResultMerger">
+        <file>lib/services/ResultMerger.ts</file>
+        <responsibilities>
+          - Merge results from multiple chunks
+          - Preserve source metadata (pages, confidence)
+          - Handle partial failures gracefully
+          - Calculate aggregate statistics
+        </responsibilities>
+      </component>
+      <component name="Database Operations">
+        <file>lib/db/extractions.ts</file>
+        <responsibilities>
+          - CRUD operations for extraction_sessions table
+          - CRUD operations for extraction_results table
+          - Session status updates
+          - Progress tracking
+        </responsibilities>
+      </component>
+    </components>
+
+    <data-models>
+      <model name="extraction_sessions">
+        <fields>
+          - id: UUID (primary key)
+          - user_id: UUID (foreign key to auth.users)
+          - template_id: UUID (foreign key to templates)
+          - template_snapshot: JSONB (template configuration)
+          - files: JSONB (uploaded files metadata)
+          - custom_columns: JSONB (optional custom columns)
+          - status: VARCHAR(50) (queued, processing, completed, failed, timeout)
+          - progress: INTEGER (0-100)
+          - created_at: TIMESTAMPTZ
+          - completed_at: TIMESTAMPTZ
+        </fields>
+      </model>
+      <model name="extraction_results">
+        <fields>
+          - id: UUID (primary key)
+          - session_id: UUID (foreign key to extraction_sessions)
+          - file_id: VARCHAR(255) (file identifier)
+          - source_file: VARCHAR(500) (original filename)
+          - page_number: INTEGER (page number in source)
+          - detection_confidence: DECIMAL(3,2) (confidence from DocumentDetector)
+          - extracted_data: JSONB (extracted field values)
+          - raw_api_response: JSONB (original Claude response)
+          - error: TEXT (error message if failed)
+          - created_at: TIMESTAMPTZ
+        </fields>
+      </model>
+    </data-models>
+
+    <integrations>
+      <integration name="PDFParser (Story 3.9)">
+        <description>Parse uploaded PDFs and extract page content</description>
+        <interface>pdfParser.parsePDF(buffer: ArrayBuffer): Promise&lt;ParseResult&gt;</interface>
+      </integration>
+      <integration name="DocumentDetector (Story 3.10)">
+        <description>Detect document boundaries in multi-document PDFs</description>
+        <interface>documentDetector.detect(pages: Page[]): Promise&lt;DetectedDocument[]&gt;</interface>
+      </integration>
+      <integration name="Anthropic Claude API">
+        <description>Token estimation and PDF extraction</description>
+        <betas>["pdfs-2024-09-25", "prompt-caching-2024-07-31"]</betas>
+        <model>claude-sonnet-4-5-20250926</model>
+      </integration>
+    </integrations>
+
+    <dependencies>
+      <dependency type="story" id="3.9">
+        <name>PDF Parsing Service</name>
+        <reason>Provides PDFParser for parsing uploaded PDFs</reason>
+        <status>Completed</status>
+      </dependency>
+      <dependency type="story" id="3.10">
+        <name>Document Detection</name>
+        <reason>Provides DocumentDetector for identifying document boundaries</reason>
+        <status>Completed</status>
+      </dependency>
+      <dependency type="package">
+        <name>@anthropic-ai/sdk</name>
+        <reason>Claude API client with count_tokens and prompt caching support</reason>
+      </dependency>
+      <dependency type="package">
+        <name>pdf-parse</name>
+        <reason>PDF parsing library (from Story 3.9)</reason>
+      </dependency>
+    </dependencies>
+  </technical-architecture>
+
+  <implementation-notes>
+    <rate-limiting-strategy>
+      <overview>
+        Comprehensive rate limiting solution to prevent 429 errors when processing large PDFs:
+      </overview>
+      <prompt-caching>
+        - Use ephemeral cache_control on system prompts and PDF content
+        - 5-minute cache duration (default)
+        - Verify 90% cost reduction on cache hits
+        - Monitor cache_read_input_tokens vs input_tokens
+      </prompt-caching>
+      <token-estimation>
+        - Use Anthropic's count_tokens API (not heuristic)
+        - Accurate token counts before extraction
+        - Cache estimations per PDF hash
+        - Guide chunking strategy selection
+      </token-estimation>
+      <chunking-strategy>
+        - Tier 1: &lt;25k tokens → send whole PDF (single API call)
+        - Tier 2: 25k-100k tokens → chunk by detected documents
+        - Tier 3: &gt;100k tokens → split large documents by pages (10-15 pages each)
+        - Always respect DocumentDetector boundaries (never split across documents)
+        - Use pdf-parse for page extraction (NOT pdf-lib)
+      </chunking-strategy>
+      <rate-limit-manager>
+        - Track tokens used per minute (sliding window)
+        - 30k TPM limit for Tier 1 Claude
+        - 85% safety buffer (25.5k effective limit)
+        - Throttle requests when approaching limit
+        - Wait for window reset if needed
+        - Exponential backoff on 429 errors (1s, 2s, 4s, 8s, 16s)
+        - Max 5 retry attempts
+        - Log all throttling events
+      </rate-limit-manager>
+    </rate-limiting-strategy>
+
+    <background-processing>
+      <workflow>
+        1. Receive POST request with template ID and files
+        2. Validate inputs and create session (status: queued)
+        3. Return session ID immediately (don't block)
+        4. Start background processing async
+        5. Update status to processing
+        6. For each file:
+           a. Parse PDF with PDFParser
+           b. Detect documents with DocumentDetector
+           c. Estimate tokens with TokenEstimator
+           d. Determine chunking strategy
+           e. Process chunks with rate limiting
+           f. Merge results if chunked
+           g. Store results in database
+           h. Update progress
+        7. Update status to completed
+      </workflow>
+    </background-processing>
+
+    <error-handling>
+      <invalid-template>Return 404 with message: "Template not found"</invalid-template>
+      <unsupported-file>Return 400 with message: "Only PDF files are supported"</unsupported-file>
+      <pdf-parsing-failure>Log error, mark file as failed, continue with other files</pdf-parsing-failure>
+      <api-failure>Retry with exponential backoff for 429, log and fail for other errors</api-failure>
+      <partial-failure>Store successful results, mark failed chunks, include warnings</partial-failure>
+      <timeout>Mark session as timeout, preserve partial results, allow future resume</timeout>
+    </error-handling>
+
+    <performance-targets>
+      <small-pdf>5 pages, single document, &lt;30 seconds</small-pdf>
+      <medium-pdf>30 pages, 3 documents, &lt;2 minutes</medium-pdf>
+      <large-pdf>100 pages, 10 documents, &lt;5 minutes (AC16 critical test)</large-pdf>
+      <cache-hit-rate>Target &gt;80% for repeated PDFs</cache-hit-rate>
+      <cost-reduction>90% reduction with prompt caching</cost-reduction>
+    </performance-targets>
+
+    <testing-strategy>
+      <unit-tests>
+        - RateLimitManager (throttling, sliding window, backoff)
+        - TokenEstimator (estimation, caching)
+        - ChunkingStrategy (all three tiers, boundary respect)
+        - ResultMerger (merging, metadata, partial failures)
+        - Database operations (CRUD, transactions)
+      </unit-tests>
+      <integration-tests>
+        - Batch extraction endpoint (POST with valid/invalid inputs)
+        - Session status endpoint (GET with various states)
+        - Results retrieval endpoint (GET with complete/incomplete sessions)
+        - Small PDF processing (Tier 1)
+        - Medium PDF processing (Tier 2)
+        - Large PDF processing (Tier 3)
+        - Rate limiting simulation
+        - Prompt caching verification
+      </integration-tests>
+      <e2e-tests>
+        - AC16: 100-page multi-document PDF end-to-end
+        - No 429 errors throughout processing
+        - Completion time &lt;5 minutes
+        - All data extracted correctly
+        - All documents detected correctly
+        - Metadata preserved correctly
+      </e2e-tests>
+    </testing-strategy>
+
+    <logging-requirements>
+      <session-lifecycle>
+        - Log session creation (session_id, user_id, template_id, file_count)
+        - Log session start (timestamp)
+        - Log progress updates (percentage, files_processed)
+        - Log session completion (duration, total_documents)
+      </session-lifecycle>
+      <processing-pipeline>
+        - Log PDF parsing (file_name, pages_found)
+        - Log document detection (documents_found, confidence_scores)
+        - Log token estimation (token_count, strategy_chosen)
+        - Log chunking decisions (tier, chunk_count)
+        - Log cache hits/misses (cache_read_tokens)
+        - Log rate limit events (throttling, waiting, resets)
+      </processing-pipeline>
+      <api-interactions>
+        - Log Claude API calls (tokens, model, cache_status)
+        - Log API response times
+        - Log 429 errors and backoff delays
+        - Log token usage tracking
+      </api-interactions>
+      <errors>
+        - Log all errors with stack traces
+        - Include context (session_id, file_id, chunk_id)
+        - Log error type and code
+        - Log recovery actions taken
+      </errors>
+    </logging-requirements>
+  </implementation-notes>
+
+  <testing-requirements>
+    <critical-test id="AC16">
+      <name>100-Page Multi-Document PDF End-to-End Test</name>
+      <description>
+        Process a realistic 100-page PDF containing 10 separate documents through the complete extraction pipeline.
+      </description>
+      <verification>
+        - No 429 rate limit errors occur
+        - Total processing time is less than 5 minutes
+        - All 10 documents are correctly detected
+        - All data is extracted correctly from all pages
+        - Metadata (page numbers, confidence scores) is preserved
+        - Results are properly merged from all chunks
+        - Session status updates correctly throughout
+      </verification>
+      <priority>Critical - This is the primary acceptance test</priority>
+    </critical-test>
+    <rate-limit-tests>
+      - Simulate high token usage near 25.5k TPM limit
+      - Verify RateLimitManager throttles requests appropriately
+      - Verify waiting for window reset works
+      - Verify processing resumes after reset
+      - Verify no 429 errors occur during throttling
+    </rate-limit-tests>
+    <caching-tests>
+      - Process same PDF twice
+      - Verify first call has low cache_read_tokens
+      - Verify second call has high cache_read_tokens (~90% of input_tokens)
+      - Test cache expiry after 5 minutes
+      - Verify cost reduction metrics
+    </caching-tests>
+    <chunking-tests>
+      - Test Tier 1 with 5-page PDF (&lt;25k tokens)
+      - Test Tier 2 with 30-page PDF (25k-100k tokens)
+      - Test Tier 3 with 100-page PDF (&gt;100k tokens)
+      - Verify boundaries always respect DocumentDetector results
+      - Verify no page overlaps or gaps
+    </chunking-tests>
+    <error-tests>
+      - Invalid template ID (expect 404)
+      - Unsupported file type (expect 400)
+      - Corrupted PDF (expect graceful failure)
+      - API 500 error (expect retry logic)
+      - Partial chunk failure (expect merged results with warnings)
+    </error-tests>
+  </testing-requirements>
+
+  <security-considerations>
+    <authentication>
+      - Validate user authentication before session creation
+      - Verify template ownership before extraction
+      - Verify session ownership before status/results queries
+    </authentication>
+    <input-validation>
+      - Validate template ID exists and belongs to user
+      - Validate file types (only PDFs)
+      - Validate file sizes (reasonable limits)
+      - Sanitize file names to prevent injection
+    </input-validation>
+    <api-security>
+      - Never expose ANTHROPIC_API_KEY in logs or responses
+      - Rate limit API endpoints to prevent abuse
+      - Use HTTPS for all API calls
+      - Validate session IDs format (UUID)
+    </api-security>
+    <data-security>
+      - Encrypt PDFs at rest (if stored)
+      - Clear PDFs from memory after processing
+      - Don't log sensitive extracted data
+      - Implement data retention policies
+    </data-security>
+  </security-considerations>
+
+  <future-enhancements>
+    <parallel-processing>
+      Process multiple files in parallel with coordinated rate limiting
+    </parallel-processing>
+    <websocket-streaming>
+      Real-time progress updates via WebSocket instead of polling
+    </websocket-streaming>
+    <resume-capability>
+      Checkpoint system to resume timed-out sessions
+    </resume-capability>
+    <adaptive-chunking>
+      Dynamic chunk size based on content density
+    </adaptive-chunking>
+    <chunk-retry>
+      Retry failed chunks independently without failing entire file
+    </chunk-retry>
+    <multi-tenant-rate-limiting>
+      Per-user or per-organization rate limit tracking
+    </multi-tenant-rate-limiting>
+  </future-enhancements>
+
+  <code-artifacts>
+    <artifact>
+      <path>lib/services/PDFParser.ts</path>
+      <kind>service</kind>
+      <symbol>PDFParser.parsePDF</symbol>
+      <lines>75-153</lines>
+      <reason>Use for PDF parsing in batch extraction pipeline. Returns ParseResult with pages[] and metadata. Handles file size validation and error cases.</reason>
+    </artifact>
+    <artifact>
+      <path>lib/services/DocumentDetector.ts</path>
+      <kind>service</kind>
+      <symbol>DocumentDetector.detect</symbol>
+      <lines>137-179</lines>
+      <reason>Use for detecting document boundaries before chunking. Returns DetectedDocument[] with startPage/endPage boundaries. Critical for Tier 2 and Tier 3 chunking strategies.</reason>
+    </artifact>
+    <artifact>
+      <path>lib/db/extractions.ts</path>
+      <kind>database</kind>
+      <symbol>createExtraction, getExtractionById, getRecentExtractions</symbol>
+      <lines>21-146</lines>
+      <reason>Pattern reference for new extraction session database operations. Shows Supabase query patterns, error handling, and JOIN operations for template data.</reason>
+    </artifact>
+    <artifact>
+      <path>lib/services/__tests__/PDFParser.test.ts</path>
+      <kind>test</kind>
+      <symbol>PDFParser test suite</symbol>
+      <lines>1-80</lines>
+      <reason>Testing pattern for singleton services with fixtures. Shows beforeEach setup, async test structure, and error scenario testing.</reason>
+    </artifact>
+    <artifact>
+      <path>lib/services/__tests__/DocumentDetector.test.ts</path>
+      <kind>test</kind>
+      <symbol>DocumentDetector test suite</symbol>
+      <lines>all</lines>
+      <reason>Service testing pattern with mock data, coverage assertions, and heuristic validation testing.</reason>
+    </artifact>
+    <artifact>
+      <path>app/api/extractions/route.ts</path>
+      <kind>api-route</kind>
+      <symbol>GET, POST handlers</symbol>
+      <lines>all</lines>
+      <reason>Existing API route pattern. Reference for Next.js route handler structure, error responses, and Supabase integration.</reason>
+    </artifact>
+  </code-artifacts>
+
+  <development-constraints>
+    <constraint>Next.js serverless functions have 5-minute timeout - use export const maxDuration = 300</constraint>
+    <constraint>Claude API rate limit: 30k TPM for Tier 1, must stay under 25.5k effective (85% safety buffer)</constraint>
+    <constraint>TypeScript strict mode required - avoid any types, use proper interfaces</constraint>
+    <constraint>All database operations must respect Supabase RLS policies - user_id matching</constraint>
+    <constraint>Always respect DocumentDetector boundaries (never split across documents) in chunking</constraint>
+    <constraint>pdf-parse does NOT support page range extraction - use text concatenation for chunks</constraint>
+    <constraint>Background processing must update session status in real-time via database</constraint>
+    <constraint>Vercel deployment requires stateless API routes - store session state in Supabase</constraint>
+    <constraint>Token estimation caching uses SHA-256 hash of PDF base64 content as key</constraint>
+    <constraint>Prompt caching uses ephemeral cache_control (5-minute default, not configurable)</constraint>
+  </development-constraints>
+
+  <page-extraction-implementation>
+    <method>Text-based extraction (NOT full PDF slicing)</method>
+    <rationale>pdf-parse does not support page range extraction; pdf-lib adds unnecessary complexity</rationale>
+    <approach>
+      1. Use PDFParser to get Page[] array
+      2. For chunks, slice Page[] by index (e.g., pages.slice(10, 20))
+      3. Concatenate page.text fields with newline separators
+      4. Send concatenated text to Claude API as type: 'text' (not type: 'document')
+      5. This avoids need for pdf-lib and maintains token accuracy
+    </approach>
+    <example>
+      const docPages = parseResult.pages.slice(doc.startPage - 1, doc.endPage);
+      const docText = docPages.map(p => p.text).join('\n\n');
+      // Send to Claude
+      content: [{ type: 'text', text: docText }]
+    </example>
+  </page-extraction-implementation>
+
+  <references>
+    <story>docs/stories/story-3.9.md - PDF Parsing Service</story>
+    <story>docs/stories/story-3.10.md - Document Detection</story>
+    <epic>docs/epic-3.md - Unified Batch Extraction Workflow</epic>
+    <tech-spec>docs/tech-spec-epic-3.md - Technical Specification</tech-spec>
+    <api-docs>docs/rate-limiting-solution.md - Rate Limiting Design</api-docs>
+    <anthropic-docs>https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching - Prompt Caching</anthropic-docs>
+    <anthropic-docs>https://docs.anthropic.com/en/docs/build-with-claude/token-counting - Token Counting</anthropic-docs>
+  </references>
+
+  <change-log>
+    <change date="2025-10-26" author="SM Agent">
+      Initial creation of Story 3.11 with augmented scope per Architect approval.
+      Combined original batch extraction features (AC1-10) with rate limiting mitigation (AC11-16).
+      Story effort increased from Medium to Large (12-15 hours) due to expanded scope.
+      Epic 3 Phase 2 updated to reflect augmented Story 3.11.
+    </change>
+    <change date="2025-10-26" author="Claude Code (BMAD story-context workflow)">
+      Executed story-context workflow validation and enhancement.
+      Added code-artifacts section with 6 reference files from Stories 3.9 and 3.10.
+      Added development-constraints section with 10 critical constraints for DEV agent.
+      Added page-extraction-implementation section clarifying text-based chunking approach.
+      Validated all 16 acceptance criteria are specific, measurable, and testable.
+      Confirmed all dependencies exist and are implemented (Stories 3.9, 3.10).
+      Story completeness score: 9.5/10 - Ready for DEV agent execution.
+    </change>
+  </change-log>
+</story-context>
