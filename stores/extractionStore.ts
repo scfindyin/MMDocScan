@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { TemplateField } from '@/types/template';
 import { ExtractedRow } from '@/types/extraction';
 
@@ -77,9 +76,7 @@ interface ExtractionStore {
   setExtractionError: (error: string | null) => void;
 }
 
-export const useExtractionStore = create<ExtractionStore>()(
-  persist(
-    (set) => ({
+export const useExtractionStore = create<ExtractionStore>()((set) => ({
       // Initial state - default sizes
       leftPanelSize: 30, // 300px at 1000px viewport
       rightPanelSize: 70, // Fluid (remaining space)
@@ -263,26 +260,11 @@ export const useExtractionStore = create<ExtractionStore>()(
           extractionError: null,
         }),
 
-      setIsExtracting: (isExtracting) =>
-        set({
-          isExtracting,
-        }),
+      setIsExtracting: (isExtracting) => set({ isExtracting }),
 
       setExtractionError: (error) =>
         set({
           extractionError: error,
           isExtracting: false,
         }),
-    }),
-    {
-      name: 'extraction-store', // localStorage key
-      // Only persist panel sizes and maximized state
-      partialize: (state) => ({
-        leftPanelSize: state.leftPanelSize,
-        rightPanelSize: state.rightPanelSize,
-        isLeftMaximized: state.isLeftMaximized,
-        isRightMaximized: state.isRightMaximized,
-      }),
-    }
-  )
-);
+}));

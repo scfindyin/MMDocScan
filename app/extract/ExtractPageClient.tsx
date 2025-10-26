@@ -15,29 +15,27 @@ export default function ExtractPageClient() {
   const leftPanelRef = useRef<ImperativePanelHandle>(null);
   const rightPanelRef = useRef<ImperativePanelHandle>(null);
 
-  const {
-    leftPanelSize,
-    rightPanelSize,
-    isLeftMaximized,
-    isRightMaximized,
-    setPanelSizes,
-    maximizeLeft,
-    maximizeRight,
-    restoreLeft,
-    restoreRight,
-    uploadedFile,
-    fields,
-    extractionPrompt,
-    selectedTemplateId,
-    selectedTemplateName,
-    results,
-    isExtracting,
-    extractionError,
-    setResults,
-    clearResults,
-    setIsExtracting,
-    setExtractionError,
-  } = useExtractionStore();
+  const leftPanelSize = useExtractionStore((state) => state.leftPanelSize);
+  const rightPanelSize = useExtractionStore((state) => state.rightPanelSize);
+  const isLeftMaximized = useExtractionStore((state) => state.isLeftMaximized);
+  const isRightMaximized = useExtractionStore((state) => state.isRightMaximized);
+  const setPanelSizes = useExtractionStore((state) => state.setPanelSizes);
+  const maximizeLeft = useExtractionStore((state) => state.maximizeLeft);
+  const maximizeRight = useExtractionStore((state) => state.maximizeRight);
+  const restoreLeft = useExtractionStore((state) => state.restoreLeft);
+  const restoreRight = useExtractionStore((state) => state.restoreRight);
+  const uploadedFile = useExtractionStore((state) => state.uploadedFile);
+  const fields = useExtractionStore((state) => state.fields);
+  const extractionPrompt = useExtractionStore((state) => state.extractionPrompt);
+  const selectedTemplateId = useExtractionStore((state) => state.selectedTemplateId);
+  const selectedTemplateName = useExtractionStore((state) => state.selectedTemplateName);
+  const results = useExtractionStore((state) => state.results);
+  const isExtracting = useExtractionStore((state) => state.isExtracting);
+  const extractionError = useExtractionStore((state) => state.extractionError);
+  const setResults = useExtractionStore((state) => state.setResults);
+  const clearResults = useExtractionStore((state) => state.clearResults);
+  const setIsExtracting = useExtractionStore((state) => state.setIsExtracting);
+  const setExtractionError = useExtractionStore((state) => state.setExtractionError);
 
   const handleResize = (sizes: number[]) => {
     if (sizes.length === 2) {
@@ -76,12 +74,15 @@ export default function ExtractPageClient() {
       return; // Button should be disabled
     }
 
-    console.log('🚀 Starting extraction, setting isExtracting to true');
-
-    // Start extraction
-    setIsExtracting(true);
+    // Clear old data FIRST
     clearResults();
     setExtractionError(null);
+
+    // Turn on loading indicator
+    setIsExtracting(true);
+
+    // Wait for React to render it
+    await new Promise(resolve => setTimeout(resolve, 0));
 
     try {
       // Create FormData
@@ -98,7 +99,7 @@ export default function ExtractPageClient() {
         formData.append('template_name', selectedTemplateName);
       }
 
-      // Call API
+      // Call API (this will take 10+ seconds)
       const response = await fetch('/api/extractions/single', {
         method: 'POST',
         body: formData,
@@ -118,6 +119,7 @@ export default function ExtractPageClient() {
       const errorMessage = error instanceof Error ? error.message : 'Extraction failed. Please try again.';
       setExtractionError(errorMessage);
     } finally {
+      // Turn off loading indicator
       setIsExtracting(false);
     }
   };
