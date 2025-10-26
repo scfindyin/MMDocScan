@@ -22,17 +22,17 @@ PHASE_4_COMPLETE: false
 ## Development Queue
 
 STORIES_SEQUENCE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "3.16", "3.17", "3.18", "3.19", "3.20", "3.21", "3.22", "3.23", "3.24", "3.25", "3.26", "3.27", "3.28", "3.29", "3.30"]
-TODO_STORY: 3.11
-TODO_TITLE: Batch Extraction API
-IN_PROGRESS_STORY: 3.10
-IN_PROGRESS_TITLE: Auto-Detection Algorithm
-STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8", "3.9"]
+TODO_STORY: 3.12
+TODO_TITLE: Extraction Queue with Concurrency
+IN_PROGRESS_STORY: 3.11
+IN_PROGRESS_TITLE: Batch Extraction API (Ready for Review)
+STORIES_DONE: ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.1", "2.2", "2.3", "1.9", "1.10", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8", "3.9", "3.10"]
 
 ## Next Action
 
-NEXT_ACTION: Story 3.9 (PDF Parsing Service) completed and approved. Story 3.10 (Auto-Detection Algorithm) now IN_PROGRESS. Next: Create and implement Story 3.10 with complete-story workflow.
-NEXT_COMMAND: Run complete-story workflow for Story 3.10
-NEXT_AGENT: Context-manager (orchestrating SM, Architect, Dev agents)
+NEXT_ACTION: Story 3.11 (Batch Extraction API) implementation complete with comprehensive testing. 103 tests passing (37 new unit tests for RateLimitManager and TokenEstimator). Build passing. Ready for review and approval.
+NEXT_COMMAND: Run story-approved workflow when Definition of Done is verified
+NEXT_AGENT: Dev (for story-approved workflow) or Review (for code review)
 ## Story Backlog
 
 ### Epic 1: Project Foundation & Template Management with AI-Assisted Creation (10 stories) ✅ COMPLETE (10 of 10 complete)

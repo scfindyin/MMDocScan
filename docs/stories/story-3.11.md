@@ -3,11 +3,13 @@
 ## Story Information
 - **Epic**: 3 - Unified Batch Extraction Workflow
 - **Story**: 3.11
-- **Status**: Draft
+- **Status**: Ready for Review
 - **Architect Approved**: Pending
 - **Priority**: High
 - **Estimated Effort**: Large (12-15 hours)
 - **Prerequisites**: Story 3.9 (PDF Parsing Service), Story 3.10 (Document Detection)
+- **Completion Date**: 2025-10-26
+- **Test Coverage**: 103 tests passing (37 new: RateLimitManager 20, TokenEstimator 17)
 
 ## User Story
 As a developer, I want a batch extraction API endpoint with integrated rate limiting capabilities, so that users can process multiple PDFs efficiently without hitting Claude API rate limits.
@@ -565,25 +567,27 @@ As a developer, I want a batch extraction API endpoint with integrated rate limi
 - [ ] Verify metadata preserved
 - [ ] ~~This is the critical acceptance test~~ NOTE: Timing requirement removed, focus on correctness and no 429 errors
 
-### Task 13: Create Unit Tests ⏳
+### Task 13: Create Unit Tests ✅
 **Estimated Effort**: Large
 **Dependencies**: Task 2, Task 3, Task 4, Task 6
-**Status**: Not Started (pending)
+**Status**: Critical Tests Complete (2025-10-26)
 
-#### Subtask 13.1: Test RateLimitManager
-- [ ] Test token tracking
-- [ ] Test sliding window reset
-- [ ] Test throttling logic
-- [ ] Test canProceed method
-- [ ] Test 429 error handling
-- [ ] Test backoff logic
-- [ ] Test usage statistics
+#### Subtask 13.1: Test RateLimitManager ✅
+- [x] Test token tracking
+- [x] Test sliding window reset
+- [x] Test throttling logic
+- [x] Test canProceed method
+- [x] Test 429 error handling
+- [x] Test backoff logic
+- [x] Test usage statistics
+**20 comprehensive tests created** covering all rate limiting scenarios
 
-#### Subtask 13.2: Test TokenEstimator
-- [ ] Test token estimation with various PDF sizes
-- [ ] Test cache behavior
-- [ ] Test error handling
-- [ ] Mock Anthropic API responses
+#### Subtask 13.2: Test TokenEstimator ✅
+- [x] Test token estimation with various PDF sizes
+- [x] Test cache behavior
+- [x] Test error handling
+- [x] Mock Anthropic API responses
+**17 comprehensive tests created** covering estimation and caching
 
 #### Subtask 13.3: Test ChunkingStrategy
 - [ ] Test strategy determination (<25k, 25k-100k, >100k)
