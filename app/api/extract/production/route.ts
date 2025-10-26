@@ -11,6 +11,11 @@ import {
 } from '@/types/extraction';
 import { TemplateField } from '@/types/template';
 
+// Configure route to handle large payloads (documents can be large)
+export const runtime = 'nodejs';
+export const maxDuration = 60; // 60 second timeout for Claude API
+export const dynamic = 'force-dynamic';
+
 /**
  * Calculate confidence score for an extracted row
  * Based on field completeness and data type validation

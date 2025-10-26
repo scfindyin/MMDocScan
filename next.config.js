@@ -29,7 +29,14 @@ const nextConfig = {
   // Configure externals to prevent build issues
   experimental: {
     serverComponentsExternalPackages: ['pdf-parse']
-  }
+  },
+  // Increase API route body size limit to 50MB (for PDF uploads)
+  // Default is 4MB which is too small for typical PDF documents
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+  },
 }
 
 module.exports = nextConfig
