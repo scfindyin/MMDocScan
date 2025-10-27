@@ -1,5 +1,5 @@
 /**
- * GET /api/extractions/batch/:sessionId/stream
+ * GET /api/extractions/batch/:id/stream
  * Story 3.11: SSE endpoint for real-time progress updates
  */
 
@@ -10,9 +10,9 @@ import { SSEEventData } from '@/types/sseEvents';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: { id: string } }
 ) {
-  const { sessionId } = params;
+  const sessionId = params.id;
 
   // Verify session exists
   const session = sessionStore.getSession(sessionId);
