@@ -58,6 +58,15 @@ interface ExtractionStore {
   isExtracting: boolean; // True during extraction API call
   extractionError: string | null; // Error message from failed extraction
 
+  // Batch extraction state (Story 3.11)
+  sessionId: string | null; // Current batch extraction session ID
+  progressStatus: string | null; // Current phase: parsing, detecting, extracting, completed
+  progressPercent: number; // 0-100
+  filesProcessed: number; // Count of files processed
+  totalFiles: number; // Total files in batch
+  documentsProcessed: number; // Count of documents processed
+  totalDocuments: number; // Total documents detected
+
   // Actions
   setPanelSizes: (left: number, right: number) => void;
   maximizeLeft: () => void;
@@ -101,6 +110,13 @@ interface ExtractionStore {
   clearResults: () => void;
   setIsExtracting: (isExtracting: boolean) => void;
   setExtractionError: (error: string | null) => void;
+
+  // Batch extraction actions (Story 3.11)
+  setSessionId: (sessionId: string | null) => void;
+  setProgressStatus: (status: string | null) => void;
+  setProgressPercent: (percent: number) => void;
+  updateProgress: (filesProcessed: number, totalFiles: number, documentsProcessed: number, totalDocuments: number) => void;
+  resetProgress: () => void;
 }
 
 export const useExtractionStore = create<ExtractionStore>()((set, get) => ({
@@ -127,6 +143,15 @@ export const useExtractionStore = create<ExtractionStore>()((set, get) => ({
       results: null,
       isExtracting: false,
       extractionError: null,
+
+      // Batch extraction initial state (Story 3.11)
+      sessionId: null,
+      progressStatus: null,
+      progressPercent: 0,
+      filesProcessed: 0,
+      totalFiles: 0,
+      documentsProcessed: 0,
+      totalDocuments: 0,
 
       // Actions
       setPanelSizes: (left, right) =>
@@ -413,5 +438,32 @@ export const useExtractionStore = create<ExtractionStore>()((set, get) => ({
         set({
           extractionError: error,
           isExtracting: false,
+        }),
+
+      // Batch extraction actions (Story 3.11)
+      setSessionId: (sessionId) => set({ sessionId }),
+
+      setProgressStatus: (status) => set({ progressStatus: status }),
+
+      setProgressPercent: (percent) => set({ progressPercent: percent }),
+
+      updateProgress: (filesProcessed, totalFiles, documentsProcessed, totalDocuments) =>
+        set({
+          filesProcessed,
+          totalFiles,
+          documentsProcessed,
+          totalDocuments,
+          progressPercent: totalFiles > 0 ? Math.round((filesProcessed / totalFiles) * 100) : 0,
+        }),
+
+      resetProgress: () =>
+        set({
+          sessionId: null,
+          progressStatus: null,
+          progressPercent: 0,
+          filesProcessed: 0,
+          totalFiles: 0,
+          documentsProcessed: 0,
+          totalDocuments: 0,
         }),
 }));

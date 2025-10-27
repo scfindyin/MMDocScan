@@ -37,6 +37,15 @@ export default function ExtractPageClient() {
   const setIsExtracting = useExtractionStore((state: any) => state.setIsExtracting);
   const setExtractionError = useExtractionStore((state: any) => state.setExtractionError);
 
+  // Batch extraction state (Story 3.11)
+  const sessionId = useExtractionStore((state: any) => state.sessionId);
+  const progressStatus = useExtractionStore((state: any) => state.progressStatus);
+  const progressPercent = useExtractionStore((state: any) => state.progressPercent);
+  const setSessionId = useExtractionStore((state: any) => state.setSessionId);
+  const setProgressStatus = useExtractionStore((state: any) => state.setProgressStatus);
+  const updateProgress = useExtractionStore((state: any) => state.updateProgress);
+  const resetProgress = useExtractionStore((state: any) => state.resetProgress);
+
   const handleResize = (sizes: number[]) => {
     if (sizes.length === 2) {
       setPanelSizes(sizes[0], sizes[1]);
@@ -67,7 +76,7 @@ export default function ExtractPageClient() {
     rightPanelRef.current?.resize(70);
   };
 
-  // Extract button handler (Story 3.7)
+  // Extract button handler (Story 3.11 - Batch API with SSE)
   const handleExtract = async () => {
     // Validation: check uploadedFile and fields
     if (!uploadedFile || fields.length === 0) {
@@ -77,50 +86,154 @@ export default function ExtractPageClient() {
     // Clear old data FIRST
     clearResults();
     setExtractionError(null);
+    resetProgress();
 
     // Turn on loading indicator
     setIsExtracting(true);
+    setProgressStatus('Initializing...');
 
     // Wait for React to render it
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    try {
-      // Create FormData
-      const formData = new FormData();
-      formData.append('file', uploadedFile);
-      formData.append('fields', JSON.stringify(fields));
-      if (extractionPrompt) {
-        formData.append('extraction_prompt', extractionPrompt);
-      }
-      if (selectedTemplateId) {
-        formData.append('template_id', selectedTemplateId);
-      }
-      if (selectedTemplateName) {
-        formData.append('template_name', selectedTemplateName);
-      }
+    let eventSource: EventSource | null = null;
 
-      // Call API (this will take 10+ seconds)
-      const response = await fetch('/api/extractions/single', {
+    try {
+      // Create FormData with template snapshot
+      const formData = new FormData();
+
+      const template = {
+        fields,
+        extraction_prompt: extractionPrompt || null,
+      };
+
+      formData.append('template', JSON.stringify(template));
+      formData.append('files', uploadedFile);
+
+      // Create batch extraction session
+      const response = await fetch('/api/extractions/batch', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Extraction failed');
+        throw new Error(errorData.error || 'Failed to create extraction session');
       }
 
-      const data = await response.json();
+      const { sessionId: newSessionId } = await response.json();
+      setSessionId(newSessionId);
+      setProgressStatus('Connecting to progress stream...');
 
-      // Store API response (now in ExtractedRow[] format)
-      setResults(data);
+      // Connect to SSE stream for real-time progress
+      eventSource = new EventSource(`/api/extractions/batch/${newSessionId}/stream`);
+
+      eventSource.onopen = () => {
+        console.log('[SSE] Connected to progress stream');
+      };
+
+      eventSource.addEventListener('session_started', ((event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        console.log('[SSE] Session started:', data);
+        setProgressStatus('Session started');
+        updateProgress(0, data.data.totalFiles, 0, 0);
+      }) as EventListener);
+
+      eventSource.addEventListener('file_parsing', ((event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        console.log('[SSE] Parsing file:', data.data.filename);
+        setProgressStatus(`Parsing: ${data.data.filename}`);
+      }) as EventListener);
+
+      eventSource.addEventListener('file_parsed', ((event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        console.log('[SSE] File parsed:', data.data.filename, `(${data.data.pageCount} pages)`);
+      }) as EventListener);
+
+      eventSource.addEventListener('document_detected', ((event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        console.log('[SSE] Documents detected:', data.data.documentCount);
+        setProgressStatus(`Detected ${data.data.documentCount} document(s)`);
+      }) as EventListener);
+
+      eventSource.addEventListener('extraction_started', ((event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        console.log('[SSE] Extraction started:', data.data.chunkingStrategy);
+        setProgressStatus(`Extracting data (${data.data.chunkingStrategy} strategy)`);
+      }) as EventListener);
+
+      eventSource.addEventListener('extraction_progress', ((event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        console.log('[SSE] Progress:', data.data.progress + '%');
+        updateProgress(
+          data.data.filesProcessed,
+          data.data.totalFiles,
+          data.data.documentsProcessed,
+          data.data.totalDocuments
+        );
+        setProgressStatus(`Processing... ${data.data.progress}%`);
+      }) as EventListener);
+
+      eventSource.addEventListener('extraction_completed', ((event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        console.log('[SSE] Extraction completed:', data.data.rowCount, 'rows');
+      }) as EventListener);
+
+      eventSource.addEventListener('session_completed', (async (event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        console.log('[SSE] Session completed:', data);
+        setProgressStatus('Fetching results...');
+
+        // Fetch final results
+        const resultsResponse = await fetch(`/api/extractions/batch/${newSessionId}/results`);
+        if (resultsResponse.ok) {
+          const resultsData = await resultsResponse.json();
+          setResults({
+            success: true,
+            data: resultsData.results || [],
+            rowCount: resultsData.results?.length || 0,
+            filename: uploadedFile?.name || 'batch',
+          });
+          setProgressStatus('Completed');
+        } else {
+          throw new Error('Failed to fetch results');
+        }
+
+        // Close SSE connection
+        eventSource?.close();
+        setIsExtracting(false);
+      }) as EventListener);
+
+      eventSource.addEventListener('session_failed', ((event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        console.error('[SSE] Session failed:', data.data.error);
+        throw new Error(data.data.error || 'Extraction failed');
+      }) as EventListener);
+
+      eventSource.addEventListener('extraction_failed', ((event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        console.error('[SSE] Extraction failed:', data.data.error);
+        setExtractionError(`Extraction failed: ${data.data.error}`);
+      }) as EventListener);
+
+      eventSource.addEventListener('rate_limit_wait', ((event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        const waitTimeSec = Math.ceil(data.data.waitTimeMs / 1000);
+        console.log('[SSE] Rate limit - waiting:', waitTimeSec + 's');
+        setProgressStatus(`Rate limit - waiting ${waitTimeSec}s...`);
+      }) as EventListener);
+
+      eventSource.onerror = (error) => {
+        console.error('[SSE] Error:', error);
+        eventSource?.close();
+        // Don't throw immediately - session might still complete
+      };
+
     } catch (error) {
       console.error('Extraction error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Extraction failed. Please try again.';
       setExtractionError(errorMessage);
-    } finally {
-      // Turn off loading indicator
       setIsExtracting(false);
+      eventSource?.close();
     }
   };
 
@@ -129,10 +242,19 @@ export default function ExtractPageClient() {
 
   // Tooltip message for disabled Extract button
   const getExtractTooltip = () => {
-    if (isExtracting) return 'Extraction in progress...';
+    if (isExtracting) {
+      return progressStatus || 'Extraction in progress...';
+    }
     if (!uploadedFile) return 'Please upload a file first';
     if (fields.length === 0) return 'Please add at least one field';
     return 'Extract data from document';
+  };
+
+  // Get button text based on extraction state
+  const getButtonText = () => {
+    if (!isExtracting) return 'Extract';
+    if (progressStatus) return progressStatus;
+    return 'Extracting...';
   };
 
   // Restore panel sizes on mount from localStorage
@@ -223,7 +345,12 @@ export default function ExtractPageClient() {
                                 {isExtracting ? (
                                   <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Extracting...
+                                    <div className="flex flex-col items-start">
+                                      <span>{getButtonText()}</span>
+                                      {progressPercent > 0 && (
+                                        <span className="text-xs opacity-70">{progressPercent}%</span>
+                                      )}
+                                    </div>
                                   </>
                                 ) : (
                                   <>
