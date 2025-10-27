@@ -54,14 +54,20 @@ Transform MMDocScan from single-file processing to a powerful batch extraction p
 ---
 
 ### Phase 2: Batch Processing (Weeks 3-4)
-**Stories 3.8 - 3.14**
+**Stories 3.8 - 3.11, 3.14** (Note: Story 3.11 uses SSE progress streaming; Stories 3.12-3.13 deferred)
 
-- **Story 3.8:** Multi-File Upload UI
-- **Story 3.9:** PDF Parsing Service
-- **Story 3.10:** Auto-Detection Algorithm
-- **Story 3.11:** Batch Extraction API
-- **Story 3.12:** Extraction Queue with Concurrency
-- **Story 3.13:** Progress Tracking UI
+- **Story 3.8:** Multi-File Upload UI ✓
+- **Story 3.9:** PDF Parsing Service ✓
+- **Story 3.10:** Auto-Detection Algorithm ✓
+- **Story 3.11:** Batch Extraction API with Rate Limit Mitigation & SSE Progress Streaming
+  - **Implementation Pattern**: In-memory sessions, SSE streaming, no database persistence
+  - **Core Features**: Batch extraction, real-time SSE progress updates, session cleanup (5 min TTL)
+  - **Rate Limiting**: Prompt caching (90% cost reduction), token estimation, three-tier chunking, TPM tracking
+  - **Progress Tracking**: Built-in via SSE (eliminates need for Story 3.13)
+  - **Effort**: Large (4-6 hours for clean implementation)
+  - **Note**: Start fresh - previous overcomplicated implementation rolled back
+- **Story 3.12:** ~~Extraction Queue with Concurrency~~ **DEFERRED** - Optional post-MVP enhancement
+- **Story 3.13:** ~~Progress Tracking UI~~ **DEFERRED** - Integrated into Story 3.11 via SSE
 - **Story 3.14:** Results Table with Source Tracking
 
 ---
@@ -102,13 +108,38 @@ Transform MMDocScan from single-file processing to a powerful batch extraction p
 ---
 
 ### Phase 7: Polish & Production Ready (Weeks 7-8)
-**Stories 3.26 - 3.30**
+**Stories 3.26, 3.27, 3.29, 3.30** (Story 3.28 deferred)
 
 - **Story 3.26:** Header Navigation Links
 - **Story 3.27:** Error Handling & Edge Cases
-- **Story 3.28:** Session Persistence & Retention Settings
+- **Story 3.28:** ~~Session Persistence & Retention Settings~~ **DEFERRED** - Database session persistence not required for MVP
 - **Story 3.29:** Accessibility Audit & Fixes
 - **Story 3.30:** Performance Optimization & Final QA
+
+---
+
+## Deferred Stories (Post-MVP Enhancements)
+
+The following stories have been deferred from MVP scope based on Sprint Change Proposal dated 2025-10-26:
+
+### Story 3.12: Extraction Queue with Concurrency
+- **Reason**: In-memory processing in Story 3.11 handles batch extraction sufficiently for MVP
+- **Future Value**: Could add if users need persistent job queue or extremely large batches (>50 files)
+- **Effort**: Medium (3-4 hours)
+- **Prerequisites**: None (can be added independently)
+
+### Story 3.13: Progress Tracking UI
+- **Reason**: Progress tracking integrated into Story 3.11 via SSE streaming
+- **Status**: Functionality delivered via alternate implementation
+- **Future Considerations**: Current SSE approach provides real-time updates; no additional UI needed
+
+### Story 3.28: Session Persistence & Retention Settings
+- **Reason**: Users export results immediately; no recall requirement identified
+- **Future Value**: Could add if business case emerges for extraction history/audit trail
+- **Effort**: Medium-Large (6-8 hours - requires database schema, retention policies, settings UI)
+- **Prerequisites**: Would need database migrations and batch_extractions table
+
+**Note**: These stories remain in backlog and can be implemented post-MVP if user feedback indicates need.
 
 ---
 
