@@ -131,38 +131,44 @@ export default function ExtractPageClient() {
         console.log('[SSE] Connected to progress stream');
       };
 
-      eventSource.addEventListener('session_started', ((event: MessageEvent) => {
-        const data = JSON.parse(event.data);
+      eventSource.addEventListener('session_started', ((event: Event) => {
+        const messageEvent = event as MessageEvent;
+        const data = JSON.parse(messageEvent.data);
         console.log('[SSE] Session started:', data);
         setProgressStatus('Session started');
         updateProgress(0, data.data.totalFiles, 0, 0);
       }) as EventListener);
 
-      eventSource.addEventListener('file_parsing', ((event: MessageEvent) => {
-        const data = JSON.parse(event.data);
+      eventSource.addEventListener('file_parsing', ((event: Event) => {
+        const messageEvent = event as MessageEvent;
+        const data = JSON.parse(messageEvent.data);
         console.log('[SSE] Parsing file:', data.data.filename);
         setProgressStatus(`Parsing: ${data.data.filename}`);
       }) as EventListener);
 
-      eventSource.addEventListener('file_parsed', ((event: MessageEvent) => {
-        const data = JSON.parse(event.data);
+      eventSource.addEventListener('file_parsed', ((event: Event) => {
+        const messageEvent = event as MessageEvent;
+        const data = JSON.parse(messageEvent.data);
         console.log('[SSE] File parsed:', data.data.filename, `(${data.data.pageCount} pages)`);
       }) as EventListener);
 
-      eventSource.addEventListener('document_detected', ((event: MessageEvent) => {
-        const data = JSON.parse(event.data);
+      eventSource.addEventListener('document_detected', ((event: Event) => {
+        const messageEvent = event as MessageEvent;
+        const data = JSON.parse(messageEvent.data);
         console.log('[SSE] Documents detected:', data.data.documentCount);
         setProgressStatus(`Detected ${data.data.documentCount} document(s)`);
       }) as EventListener);
 
-      eventSource.addEventListener('extraction_started', ((event: MessageEvent) => {
-        const data = JSON.parse(event.data);
+      eventSource.addEventListener('extraction_started', ((event: Event) => {
+        const messageEvent = event as MessageEvent;
+        const data = JSON.parse(messageEvent.data);
         console.log('[SSE] Extraction started:', data.data.chunkingStrategy);
         setProgressStatus(`Extracting data (${data.data.chunkingStrategy} strategy)`);
       }) as EventListener);
 
-      eventSource.addEventListener('extraction_progress', ((event: MessageEvent) => {
-        const data = JSON.parse(event.data);
+      eventSource.addEventListener('extraction_progress', ((event: Event) => {
+        const messageEvent = event as MessageEvent;
+        const data = JSON.parse(messageEvent.data);
         console.log('[SSE] Progress:', data.data.progress + '%');
         updateProgress(
           data.data.filesProcessed,
@@ -173,50 +179,62 @@ export default function ExtractPageClient() {
         setProgressStatus(`Processing... ${data.data.progress}%`);
       }) as EventListener);
 
-      eventSource.addEventListener('extraction_completed', ((event: MessageEvent) => {
-        const data = JSON.parse(event.data);
+      eventSource.addEventListener('extraction_completed', ((event: Event) => {
+        const messageEvent = event as MessageEvent;
+        const data = JSON.parse(messageEvent.data);
         console.log('[SSE] Extraction completed:', data.data.rowCount, 'rows');
       }) as EventListener);
 
-      eventSource.addEventListener('session_completed', (async (event: MessageEvent) => {
-        const data = JSON.parse(event.data);
+      eventSource.addEventListener('session_completed', ((event: Event) => {
+        const messageEvent = event as MessageEvent;
+        const data = JSON.parse(messageEvent.data);
         console.log('[SSE] Session completed:', data);
         setProgressStatus('Fetching results...');
 
-        // Fetch final results
-        const resultsResponse = await fetch(`/api/extractions/batch/${newSessionId}/results`);
-        if (resultsResponse.ok) {
-          const resultsData = await resultsResponse.json();
-          setResults({
-            success: true,
-            data: resultsData.results || [],
-            rowCount: resultsData.results?.length || 0,
-            filename: uploadedFile?.name || 'batch',
+        // Fetch final results (async but don't await in event handler)
+        fetch(`/api/extractions/batch/${newSessionId}/results`)
+          .then(async (resultsResponse) => {
+            if (resultsResponse.ok) {
+              const resultsData = await resultsResponse.json();
+              setResults({
+                success: true,
+                data: resultsData.results || [],
+                rowCount: resultsData.results?.length || 0,
+                filename: uploadedFile?.name || 'batch',
+              });
+              setProgressStatus('Completed');
+            } else {
+              throw new Error('Failed to fetch results');
+            }
+          })
+          .catch((error) => {
+            console.error('[SSE] Error fetching results:', error);
+            setExtractionError('Failed to fetch results');
+          })
+          .finally(() => {
+            // Close SSE connection
+            eventSource?.close();
+            setIsExtracting(false);
           });
-          setProgressStatus('Completed');
-        } else {
-          throw new Error('Failed to fetch results');
-        }
-
-        // Close SSE connection
-        eventSource?.close();
-        setIsExtracting(false);
       }) as EventListener);
 
-      eventSource.addEventListener('session_failed', ((event: MessageEvent) => {
-        const data = JSON.parse(event.data);
+      eventSource.addEventListener('session_failed', ((event: Event) => {
+        const messageEvent = event as MessageEvent;
+        const data = JSON.parse(messageEvent.data);
         console.error('[SSE] Session failed:', data.data.error);
         throw new Error(data.data.error || 'Extraction failed');
       }) as EventListener);
 
-      eventSource.addEventListener('extraction_failed', ((event: MessageEvent) => {
-        const data = JSON.parse(event.data);
+      eventSource.addEventListener('extraction_failed', ((event: Event) => {
+        const messageEvent = event as MessageEvent;
+        const data = JSON.parse(messageEvent.data);
         console.error('[SSE] Extraction failed:', data.data.error);
         setExtractionError(`Extraction failed: ${data.data.error}`);
       }) as EventListener);
 
-      eventSource.addEventListener('rate_limit_wait', ((event: MessageEvent) => {
-        const data = JSON.parse(event.data);
+      eventSource.addEventListener('rate_limit_wait', ((event: Event) => {
+        const messageEvent = event as MessageEvent;
+        const data = JSON.parse(messageEvent.data);
         const waitTimeSec = Math.ceil(data.data.waitTimeMs / 1000);
         console.log('[SSE] Rate limit - waiting:', waitTimeSec + 's');
         setProgressStatus(`Rate limit - waiting ${waitTimeSec}s...`);
